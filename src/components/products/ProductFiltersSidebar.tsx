@@ -1,355 +1,248 @@
 "use client";
 
-import { useState } from "react";
+/**
+ * ProductFiltersSidebar
+ *
+ * All active filters are stored in the URL (searchParams), NOT in useState.
+ * This means:
+ *  - Google can crawl every filtered combination
+ *  - Users can bookmark / share filtered URLs
+ *  - Browser back/forward restores filters correctly
+ *  - No hydration mismatch between server and client
+ *
+ * On every checkbox / radio change we call router.push() with the
+ * updated URLSearchParams, which triggers a server re-render of the
+ * page (and a fresh product list fetch) while keeping the sidebar interactive.
+ */
 
-const ProductFiltersSidebar = () => {
-  const [isCategoryOpen, setIsCategoryOpen] = useState(true);
-  const [isPriceOpen, setIsPriceOpen] = useState(true);
-  const [isBrandOpen, setIsBrandOpen] = useState(true);
-  const [isTagsOpen, setIsTagsOpen] = useState(true);
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 920]);
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { useCallback, useState, useTransition }     from "react";
+import type { FilterOptions }        from "@/lib/api/filters";
+import type { ProductsSearchParams } from "@/app/products/page";
 
-  const categories = [
-    { name: "Aluminum", count: 0 },
-    { name: "Baby", count: 1 },
-    { name: "Beauty", count: 1 },
-    { name: "Bottle", count: 1 },
-    { name: "Champagne", count: 5 },
-    { name: "Concrete", count: 1 },
-    { name: "Gin", count: 0 },
-    { name: "Home", count: 1 },
-    { name: "Liqueur", count: 7 },
-    { name: "Pants", count: 0 },
-    { name: "Tequila", count: 6 },
-    { name: "Uncategorized", count: 1 },
-    { name: "Vodka", count: 8 },
-    { name: "Whisky", count: 5 },
-    { name: "Win Accessories", count: 5 },
-    { name: "Wine", count: 4 },
-  ];
 
-  const brands = [
-    { name: "Alcohol", count: 0 },
-    { name: "Bourbon", count: 0 },
-    { name: "Cocktail Bar", count: 0 },
-    { name: "Cocktails", count: 4 },
-    { name: "Glenfiddich", count: 5 },
-    { name: "Patron", count: 6 },
-    { name: "Vodka", count: 3 },
-    { name: "Wineclub", count: 2 },
-  ];
+/* ── Helpers ─────────────────────────────────────────────────── */
+const toIds  = (val?: string): number[] =>
+  val ? val.split(",").map(Number).filter(Boolean) : [];
 
-  const tags = [
-    "ad",
-    "adipisci",
-    "awesome",
-    "Beer",
-    "Beverage",
-    "Beverages",
-    "ergonomic",
-    "est",
-    "et",
-    "eveniet",
-    "expedita",
-    "fantastic",
-    "hic",
-    "illo",
-    "Liqueur",
-    "Luxury Drinks",
-    "Miniatures",
-    "qui",
-    "recusandae",
-    "Vodka",
-    "Whiskey",
-    "White Wine",
-  ];
+const fromIds = (ids: number[]): string => ids.join(",");
 
-  const handleTagToggle = (tag: string) => {
-    setSelectedTags((prev) =>
-      prev.includes(tag)
-        ? prev.filter((t) => t !== tag)
-        : [...prev, tag]
-    );
+/* ── Sub-components ──────────────────────────────────────────── */
+const Chevron = ({ open }: { open: boolean }) => (
+  <svg
+    className={`w-5 h-5 shrink-0 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+    fill="none" stroke="currentColor" viewBox="0 0 24 24"
+  >
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+  </svg>
+);
+
+const Section = ({
+  title, open, onToggle, children,
+}: { title: string; open: boolean; onToggle: () => void; children: React.ReactNode }) => (
+  <div className="border-b border-gray-100 last:border-0 last:pb-0">
+    <button
+      onClick={onToggle}
+      className="w-full flex items-center justify-between text-sm font-semibold text-[#1D1D1D] mb-3"
+    >
+      {title}
+      <Chevron open={open} />
+    </button>
+    {open && children}
+  </div>
+);
+
+/* ── Props ───────────────────────────────────────────────────── */
+interface Props {
+  filterOptions: FilterOptions | null;
+  searchParams:  ProductsSearchParams;
+}
+
+/* ── Main component ──────────────────────────────────────────── */
+export default function ProductFiltersSidebar({ filterOptions, searchParams }: Props) {
+  const router   = useRouter();
+  const pathname = usePathname();
+  const params   = useSearchParams();
+  const [isPending, startTransition] = useTransition();
+
+  /* Derive active filters from URL */
+  const activeSubcatIds = toIds(params.get("subcats") ?? searchParams.subcats);
+  const activeBrandIds    = toIds(params.get("brands")     ?? searchParams.brands);
+  const activePrice       = params.get("price") ?? searchParams.price ?? "All";
+
+  /* Local accordion state only */
+  const [openSections, setOpenSections] = useState({
+    subcat: true, price: true, brand: true,
+  });
+  const toggle = (key: keyof typeof openSections) =>
+    setOpenSections((p) => ({ ...p, [key]: !p[key] }));
+
+  const [brandSearch, setBrandSearch] = useState("");
+
+  /* Core URL-push helper */
+  const pushFilter = useCallback((key: string, value: string) => {
+    const next = new URLSearchParams(params.toString());
+    if (!value || value === "All") {
+      next.delete(key);
+    } else {
+      next.set(key, value);
+    }
+    startTransition(() => {
+      router.push(`${pathname}?${next.toString()}`, { scroll: false });
+    });
+  }, [params, pathname, router]);
+
+  /* Toggle helpers */
+  const toggleId = (key: string, current: number[], id: number) => {
+    const next = current.includes(id)
+      ? current.filter((x) => x !== id)
+      : [...current, id];
+    pushFilter(key, fromIds(next));
   };
 
+  const data = {
+    prices:  filterOptions?.priceRangeArray  ?? [],
+    subcats: filterOptions?.subcategoryArray ?? [],
+    brands:  filterOptions?.brandArray       ?? [],
+  };
+
+  const filteredBrands = data.brands.filter((b) =>
+    b.name.toLowerCase().includes(brandSearch.toLowerCase())
+  );
+
+  const hasActiveFilters =
+    activeSubcatIds.length > 0 ||
+    activeBrandIds.length  > 0 ||
+    (activePrice !== "All" && activePrice !== "");
+
+  const clearAll = () => {
+    startTransition(() => {
+      router.push(pathname, { scroll: false });
+    });
+  };
+
+  /* ── Render ──────────────────────────────────────────────── */
   return (
     <>
-      <style>{`
-        .slider-input::-webkit-slider-thumb {
-          appearance: none;
-          width: 18px;
-          height: 18px;
-          border-radius: 50%;
-          background: #F02A0B;
-          cursor: pointer;
-          border: 2px solid white;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-          position: relative;
-          z-index: 20;
-        }
-        .slider-input::-moz-range-thumb {
-          width: 18px;
-          height: 18px;
-          border-radius: 50%;
-          background: #F02A0B;
-          cursor: pointer;
-          border: 2px solid white;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-          position: relative;
-          z-index: 20;
-        }
-        .slider-input::-webkit-slider-runnable-track {
-          background: transparent;
-        }
-        .slider-input::-moz-range-track {
-          background: transparent;
-        }
-      `}</style>
-      {/* Mobile Filter Dropdowns */}
+      {/* ── Mobile dropdowns ───────────────────────────────── */}
       <div className="md:hidden mb-4 space-y-3">
-        <select className="w-full px-4 py-2.5 border border-[#ECECEC] rounded-lg bg-white text-sm text-[#646057] focus:outline-none focus:ring-2 focus:ring-[#F02A0B]">
-          <option value="">Shop by category</option>
-          {categories.map((category) => (
-            <option key={category.name} value={category.name}>
-              {category.name} ({category.count})
-            </option>
-          ))}
-        </select>
-        <select className="w-full px-4 py-2.5 border border-[#ECECEC] rounded-lg bg-white text-sm text-[#646057] focus:outline-none focus:ring-2 focus:ring-[#F02A0B]">
+        <select
+          className="w-full px-4 py-2.5 border border-[#ECECEC] rounded-lg bg-white text-sm text-[#646057] focus:outline-none focus:ring-2 focus:ring-[#F02A0B]"
+          onChange={(e) => pushFilter("price", e.target.value)}
+        >
           <option value="">Filter by price</option>
-          <option value="0-100">$0 - $100</option>
-          <option value="100-300">$100 - $300</option>
-          <option value="300-500">$300 - $500</option>
-          <option value="500-920">$500 - $920</option>
+          {data.prices.map((p) => (
+            <option key={p.title} value={p.title}>{p.title}</option>
+          ))}
         </select>
-        <select className="w-full px-4 py-2.5 border border-[#ECECEC] rounded-lg bg-white text-sm text-[#646057] focus:outline-none focus:ring-2 focus:ring-[#F02A0B]">
+        <select
+          className="w-full px-4 py-2.5 border border-[#ECECEC] rounded-lg bg-white text-sm text-[#646057] focus:outline-none focus:ring-2 focus:ring-[#F02A0B]"
+          onChange={(e) => pushFilter("brands", e.target.value)}
+        >
           <option value="">Product Brands</option>
-          {brands.map((brand) => (
-            <option key={brand.name} value={brand.name}>
-              {brand.name} ({brand.count})
-            </option>
-          ))}
-        </select>
-        <select className="w-full px-4 py-2.5 border border-[#ECECEC] rounded-lg bg-white text-sm text-[#646057] focus:outline-none focus:ring-2 focus:ring-[#F02A0B]">
-          <option value="">Product tags</option>
-          {tags.map((tag) => (
-            <option key={tag} value={tag}>
-              {tag}
-            </option>
+          {data.brands.map((b) => (
+            <option key={b.id} value={String(b.id)}>{b.name}</option>
           ))}
         </select>
       </div>
-      {/* Desktop Filter Sidebar */}
-      <aside className="hidden md:block w-full md:w-64 lg:w-80 flex-shrink-0 mb-8 md:mb-0">
-        <div className="border border-[#ECECEC] rounded-lg p-4 md:p-6 bg-white">
-          <div className="space-y-6">
-        {/* Shop by category */}
-        <div className="border-b border-gray-200 pb-4">
-          <button
-            onClick={() => setIsCategoryOpen(!isCategoryOpen)}
-            className="w-full flex items-center justify-between text-base font-semibold text-[#1D1D1D] mb-4"
-          >
-            <span>Shop by category</span>
-            <svg
-              className={`w-5 h-5 transition-transform duration-200 ${
-                isCategoryOpen ? "rotate-180" : ""
-              }`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M19 9l-7 7-7-7"
-              />
-            </svg>
-          </button>
-          {isCategoryOpen && (
-            <div className="space-y-2">
-              {categories.map((category) => (
-                <div
-                  key={category.name}
-                  className="flex items-center justify-between text-sm text-[#646057] cursor-pointer hover:text-[#F02A0B] transition-colors"
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#646057]"></span>
-                    <span>{category.name}</span>
-                  </div>
-                  <span className="text-gray-500">({category.count})</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
 
-        {/* Filter by price */}
-        <div className="border-b border-gray-200 pb-4">
-          <button
-            onClick={() => setIsPriceOpen(!isPriceOpen)}
-            className="w-full flex items-center justify-between text-base font-semibold text-[#1D1D1D] mb-4"
-          >
-            <span>Filter by price</span>
-            <svg
-              className={`w-5 h-5 transition-transform duration-200 ${
-                isPriceOpen ? "rotate-180" : ""
-              }`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M19 9l-7 7-7-7"
-              />
-            </svg>
-          </button>
-          {isPriceOpen && (
-            <div className="space-y-4">
-              <div className="relative">
-                <div className="relative h-2 bg-gray-200 rounded-lg">
-                  <div
-                    className="absolute h-2 bg-[#F02A0B] rounded-lg"
-                    style={{
-                      left: `${(priceRange[0] / 920) * 100}%`,
-                      width: `${((priceRange[1] - priceRange[0]) / 920) * 100}%`,
-                    }}
-                  ></div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="920"
-                    value={priceRange[0]}
-                    onChange={(e) => {
-                      const val = parseInt(e.target.value);
-                      if (val <= priceRange[1]) {
-                        setPriceRange([val, priceRange[1]]);
-                      }
-                    }}
-                    className="absolute top-0 w-full h-2 bg-transparent appearance-none cursor-pointer z-10 slider-input"
-                  />
-                  <input
-                    type="range"
-                    min="0"
-                    max="920"
-                    value={priceRange[1]}
-                    onChange={(e) => {
-                      const val = parseInt(e.target.value);
-                      if (val >= priceRange[0]) {
-                        setPriceRange([priceRange[0], val]);
-                      }
-                    }}
-                    className="absolute top-0 w-full h-2 bg-transparent appearance-none cursor-pointer z-10 slider-input"
-                  />
+      {/* ── Desktop sidebar ────────────────────────────────── */}
+      <aside
+        aria-label="Product filters"
+        className={`hidden md:block w-full md:w-60 lg:w-64 flex-shrink-0 mb-8 md:mb-0 transition-opacity ${isPending ? "opacity-60 pointer-events-none" : ""}`}
+      >
+        <div className="border border-[#ECECEC] rounded-xl p-5 bg-white sticky top-[88px]">
+
+          {/* Header */}
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-base font-bold text-[#1D1D1D]">Filters</h2>
+            {hasActiveFilters && (
+              <button
+                onClick={clearAll}
+                className="text-xs text-[#F02A0B] font-medium hover:underline"
+              >
+                Clear all
+              </button>
+            )}
+          </div>
+
+          <div className="space-y-5">
+
+            {/* ── 1. Sub-category ──────────────────────────── */}
+            {data.subcats.length > 0 && (
+              <Section title="Sub-category" open={openSections.subcat} onToggle={() => toggle("subcat")}>
+                <div className="space-y-2 max-h-52 overflow-y-auto pr-1 scrollbar-thin">
+                  {data.subcats.map((s) => (
+                    <label key={s.id} className="flex items-center gap-2.5 cursor-pointer group">
+                      <input
+                        type="checkbox"
+                        checked={activeSubcatIds.includes(s.id)}
+                        onChange={() => toggleId("subcats", activeSubcatIds, s.id)}
+                        className="w-3.5 h-3.5 accent-[#F02A0B] shrink-0"
+                      />
+                      <span className="text-sm text-[#646057] group-hover:text-[#F02A0B] transition-colors">
+                        {s.name}
+                      </span>
+                    </label>
+                  ))}
                 </div>
+              </Section>
+            )}
+
+            {/* ── 3. Price range ────────────────────────────── */}
+            <Section title="Filter by price" open={openSections.price} onToggle={() => toggle("price")}>
+              <div className="space-y-2">
+                {data.prices.map((range) => (
+                  <label key={range.title} className="flex items-center gap-2.5 cursor-pointer group">
+                    <input
+                      type="radio"
+                      name="price_range"
+                      checked={activePrice === range.title}
+                      onChange={() => pushFilter("price", range.title)}
+                      className="w-3.5 h-3.5 accent-[#F02A0B] shrink-0"
+                    />
+                    <span className="text-sm text-[#646057] group-hover:text-[#F02A0B] transition-colors">
+                      {range.title}
+                    </span>
+                  </label>
+                ))}
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-[#646057]">
-                  Price: ${priceRange[0]} – ${priceRange[1]}
-                </span>
-                <button className="px-4 py-1.5 text-sm font-medium text-[#1D1D1D] bg-transparent hover:bg-gray-50 rounded transition-colors">
-                  FILTER
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
+            </Section>
 
-        {/* Product Brands */}
-        <div className="border-b border-gray-200 pb-4">
-          <button
-            onClick={() => setIsBrandOpen(!isBrandOpen)}
-            className="w-full flex items-center justify-between text-base font-semibold text-[#1D1D1D] mb-4"
-          >
-            <span>Product Brands</span>
-            <svg
-              className={`w-5 h-5 transition-transform duration-200 ${
-                isBrandOpen ? "rotate-180" : ""
-              }`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M19 9l-7 7-7-7"
-              />
-            </svg>
-          </button>
-          {isBrandOpen && (
-            <div className="space-y-2 max-h-64 overflow-y-auto">
-              {brands.map((brand) => (
-                <div
-                  key={brand.name}
-                  className="flex items-center justify-between text-sm text-[#646057] cursor-pointer hover:text-[#F02A0B] transition-colors"
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#646057]"></span>
-                    <span>{brand.name}</span>
-                  </div>
-                  <span className="text-gray-500">({brand.count})</span>
+            {/* ── 4. Brands ─────────────────────────────────── */}
+            {data.brands.length > 0 && (
+              <Section title="Product Brands" open={openSections.brand} onToggle={() => toggle("brand")}>
+                <input
+                  type="text"
+                  placeholder="Search brands…"
+                  value={brandSearch}
+                  onChange={(e) => setBrandSearch(e.target.value)}
+                  className="w-full mb-3 px-3 py-1.5 text-xs border border-[#ECECEC] rounded-md outline-none focus:border-[#F02A0B] text-[#1D1D1D] placeholder-[#1D1D1D40]"
+                />
+                <div className="space-y-2 max-h-52 overflow-y-auto pr-1 scrollbar-thin">
+                  {filteredBrands.map((b) => (
+                    <label key={b.id} className="flex items-center gap-2.5 cursor-pointer group">
+                      <input
+                        type="checkbox"
+                        checked={activeBrandIds.includes(b.id)}
+                        onChange={() => toggleId("brands", activeBrandIds, b.id)}
+                        className="w-3.5 h-3.5 accent-[#F02A0B] shrink-0"
+                      />
+                      <span className="text-sm text-[#646057] group-hover:text-[#F02A0B] transition-colors">
+                        {b.name}
+                      </span>
+                    </label>
+                  ))}
+                  {filteredBrands.length === 0 && (
+                    <p className="text-xs text-[#1D1D1D80] py-2">No brands found.</p>
+                  )}
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
+              </Section>
+            )}
 
-        {/* Product tags */}
-        <div>
-          <button
-            onClick={() => setIsTagsOpen(!isTagsOpen)}
-            className="w-full flex items-center justify-between text-base font-semibold text-[#1D1D1D] mb-4"
-          >
-            <span>Product tags</span>
-            <svg
-              className={`w-5 h-5 transition-transform duration-200 ${
-                isTagsOpen ? "rotate-180" : ""
-              }`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M19 9l-7 7-7-7"
-              />
-            </svg>
-          </button>
-          {isTagsOpen && (
-            <div className="flex flex-wrap gap-2">
-              {tags.map((tag) => {
-                const isSelected = selectedTags.includes(tag);
-                return (
-                  <button
-                    key={tag}
-                    onClick={() => handleTagToggle(tag)}
-                    className={`px-3 py-1.5 text-xs rounded-md transition-colors duration-300 border ${
-                      isSelected
-                        ? "bg-[#989389] text-white border-[#989389]"
-                        : "bg-transparent text-[#989389] border-[#989389] hover:bg-gray-50"
-                    }`}
-                  >
-                    {tag}
-                  </button>
-                );
-              })}
-            </div>
-          )}
+          </div>
         </div>
-        </div>
-      </div>
-    </aside>
+      </aside>
     </>
   );
-};
-
-export default ProductFiltersSidebar;
-
+}

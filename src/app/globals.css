@@ -18,10 +18,22 @@
   font-family: "Graphik Trial", sans-serif;
 }
 
+/* Global cursor pointer for all interactive elements */
+button,
+a,
+[role="button"],
+input[type="submit"],
+input[type="button"],
+input[type="reset"],
+select,
+label[for] {
+  cursor: pointer;
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #ffffff;
+    --foreground: #1D1D1D;
   }
 }
 

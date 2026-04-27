@@ -3,6 +3,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+import ProductCarouselSection from "@/components/shared/ProductCarouselSection";
+import { ProductCardItem } from "@/components/shared/ProductCard";
+import StarRating, { StarIcon } from "@/components/shared/StarRating";
 
 interface ProductDetailProps {
   productId: string;
@@ -32,7 +35,9 @@ const ProductDetail = ({ productId }: ProductDetailProps) => {
   const [selectedSize, setSelectedSize] = useState("1k");
   const [quantity, setQuantity] = useState(1);
   const [addedToCart, setAddedToCart] = useState(false);
-  const [activeTab, setActiveTab] = useState<"prices" | "additional" | "description">("prices");
+  const [activeTab, setActiveTab] = useState<
+    "prices" | "additional" | "description"
+  >("prices");
   const [selectedLocation, setSelectedLocation] = useState("India");
 
   // Shop data for prices section
@@ -75,54 +80,6 @@ const ProductDetail = ({ productId }: ProductDetailProps) => {
     },
   ];
 
-  // Star Rating Component - supports half stars
-  const renderStars = (rating: number) => {
-    const stars = [];
-    const fullStars = Math.floor(rating);
-    const hasHalfStar = rating % 1 !== 0;
-    const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
-
-    // Full stars
-    for (let i = 0; i < fullStars; i++) {
-      stars.push(
-        <svg key={`full-${i}`} className="w-4 h-4 text-[#FFB800]" fill="currentColor" viewBox="0 0 20 20">
-          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-        </svg>
-      );
-    }
-
-    // Half star - using clip-path for reliable half fill
-    if (hasHalfStar) {
-      stars.push(
-        <div key="half" className="relative w-4 h-4">
-          {/* Empty star background */}
-          <svg className="absolute w-4 h-4 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-          </svg>
-          {/* Half filled star overlay */}
-          <svg 
-            className="absolute w-4 h-4 text-[#FFB800]" 
-            fill="currentColor" 
-            viewBox="0 0 20 20"
-            style={{ clipPath: 'inset(0 50% 0 0)' }}
-          >
-            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-          </svg>
-        </div>
-      );
-    }
-
-    // Empty stars
-    for (let i = 0; i < emptyStars; i++) {
-      stars.push(
-        <svg key={`empty-${i}`} className="w-4 h-4 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
-          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-        </svg>
-      );
-    }
-
-    return stars;
-  };
 
   // Mock product data - In a real app, this would be fetched based on productId
   const product: Product = {
@@ -169,20 +126,22 @@ const ProductDetail = ({ productId }: ProductDetailProps) => {
     }, 2000);
   };
 
+  const relatedProducts: ProductCardItem[] = [
+    { id: 1, name: "Corona Extra Beer", price: "₹200.00", rating: 4.2, ratingCount: 1250, image: "/assets/images/bottles/corona.png", isNewArrival: true },
+    { id: 2, name: "Corona Extra Beer", price: "₹200.00", rating: 4.2, ratingCount: 1250, image: "/assets/images/bottles/corona.png" },
+    { id: 3, name: "Corona Extra Beer", price: "₹200.00", rating: 4.2, ratingCount: 1250, image: "/assets/images/bottles/corona.png" },
+    { id: 4, name: "Corona Extra Beer", price: "₹200.00", rating: 4.2, ratingCount: 1250, image: "/assets/images/bottles/corona.png" },
+    { id: 5, name: "Corona Extra Beer", price: "₹200.00", rating: 4.2, ratingCount: 1250, image: "/assets/images/bottles/corona.png" },
+  ];
+
   return (
     <main className="w-full m-0 p-0 bg-white">
       <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 md:px-8 md:py-6 lg:py-12">
         {/* Breadcrumbs */}
-        <nav
-          className="mb-4 sm:mb-6 md:mb-8"
-          aria-label="Breadcrumb"
-        >
+        <nav className="mb-4 sm:mb-6 md:mb-8" aria-label="Breadcrumb">
           <ol className="flex items-center space-x-1.5 sm:space-x-2 text-xs sm:text-sm text-gray-600">
             <li>
-              <Link
-                href="/"
-                className="hover:text-gray-900 text-[#1D1D1D80]"
-              >
+              <Link href="/" className="hover:text-gray-900 text-[#1D1D1D80]">
                 Home
               </Link>
             </li>
@@ -337,22 +296,30 @@ const ProductDetail = ({ productId }: ProductDetailProps) => {
               </h3> */}
               <div className="space-y-1.5 sm:space-y-2">
                 <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-xs sm:text-base leading-[26px]">
-                  <span className="font-semibold text-gray-900">Place of Origin:</span>
+                  <span className="font-semibold text-gray-900">
+                    Place of Origin:
+                  </span>
                   <span className="flex items-center gap-1 text-gray-700">
                     {product.origin.country}
                     <span>{product.origin.flag}</span>
                   </span>
                 </div>
                 <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-xs sm:text-base leading-[26px]">
-                  <span className="font-semibold text-gray-900">Type of Spirit:</span>
+                  <span className="font-semibold text-gray-900">
+                    Type of Spirit:
+                  </span>
                   <span className="text-gray-700">{product.type}</span>
                 </div>
                 <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-xs sm:text-base leading-[26px]">
-                  <span className="font-semibold text-gray-900">Distillery/Producer:</span>
+                  <span className="font-semibold text-gray-900">
+                    Distillery/Producer:
+                  </span>
                   <span className="text-gray-700">{product.distillery}</span>
                 </div>
                 <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-xs sm:text-base leading-[26px]">
-                  <span className="font-semibold text-gray-900">Alcohol ABV :</span>
+                  <span className="font-semibold text-gray-900">
+                    Alcohol ABV :
+                  </span>
                   <span className="text-gray-700">{product.abv}</span>
                 </div>
               </div>
@@ -414,7 +381,9 @@ const ProductDetail = ({ productId }: ProductDetailProps) => {
                     className="object-contain w-[30px] h-[30px]"
                   />
                 </div>
-                <span className="text-[10px] sm:text-xs text-gray-600">Facebook</span>
+                <span className="text-[10px] sm:text-xs text-gray-600">
+                  Facebook
+                </span>
               </a>
               <a
                 href="#"
@@ -430,7 +399,9 @@ const ProductDetail = ({ productId }: ProductDetailProps) => {
                     className="object-contain w-[30px] h-[30px]"
                   />
                 </div>
-                <span className="text-[10px] sm:text-xs text-gray-600">Twitter</span>
+                <span className="text-[10px] sm:text-xs text-gray-600">
+                  Twitter
+                </span>
               </a>
               <a
                 href="#"
@@ -446,7 +417,9 @@ const ProductDetail = ({ productId }: ProductDetailProps) => {
                     className="object-contain w-[30px] h-[30px]"
                   />
                 </div>
-                <span className="text-[10px] sm:text-xs text-gray-600">Instagram</span>
+                <span className="text-[10px] sm:text-xs text-gray-600">
+                  Instagram
+                </span>
               </a>
               <a
                 href="#"
@@ -462,7 +435,9 @@ const ProductDetail = ({ productId }: ProductDetailProps) => {
                     className="object-contain w-[30px] h-[30px]"
                   />
                 </div>
-                <span className="text-[10px] sm:text-xs text-gray-600">Share</span>
+                <span className="text-[10px] sm:text-xs text-gray-600">
+                  Share
+                </span>
               </a>
             </div>
           </div>
@@ -488,7 +463,8 @@ const ProductDetail = ({ productId }: ProductDetailProps) => {
               Delivery Time
             </h3>
             <p className="text-sm sm:text-base text-[#1D1D1D] mb-2">
-              Delivered to <span className="font-semibold">Saturday, 26 April</span>
+              Delivered to{" "}
+              <span className="font-semibold">Saturday, 26 April</span>
             </p>
             <div className="flex items-center gap-2 text-sm sm:text-base text-[#1D1D1D80]">
               <Image
@@ -526,7 +502,10 @@ const ProductDetail = ({ productId }: ProductDetailProps) => {
               Taste Notes:
             </h3>
             <p className="text-sm sm:text-base text-[#1D1D1D80] leading-relaxed">
-              Lorem ipsum dolor sit amet consectetur. Sed egestas tincidunt mauris ultricies semper eget fermentum. Sit porttitor ornare et lorem. Faucibus amet urna adipiscing massa sit eu. Quis velit orci a pellentesque.
+              Lorem ipsum dolor sit amet consectetur. Sed egestas tincidunt
+              mauris ultricies semper eget fermentum. Sit porttitor ornare et
+              lorem. Faucibus amet urna adipiscing massa sit eu. Quis velit orci
+              a pellentesque.
               <br />
               Vulputate justo at massa volutpat.
             </p>
@@ -554,7 +533,6 @@ const ProductDetail = ({ productId }: ProductDetailProps) => {
 
                   {/* ✅ SLIDER TRACK */}
                   <div className="relative h-[6px] bg-[#E5E5E5] rounded-full overflow-visible">
-
                     {/* ✅ CENTER PIPE */}
                     <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
                       <div className="w-[6px] h-6 bg-[#1D1D1D] rounded-full" />
@@ -588,7 +566,6 @@ const ProductDetail = ({ productId }: ProductDetailProps) => {
               );
             })}
           </div>
-
         </div>
       </div>
 
@@ -598,7 +575,8 @@ const ProductDetail = ({ productId }: ProductDetailProps) => {
           Food Pairing:
         </h3>
         <p className="text-sm sm:text-base text-[#1D1D1D80] mb-6">
-          Pairs beautifully with Indian cuisine, thanks to its rich and balanced profile.
+          Pairs beautifully with Indian cuisine, thanks to its rich and balanced
+          profile.
         </p>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -615,12 +593,27 @@ const ProductDetail = ({ productId }: ProductDetailProps) => {
           {/* Right - Food Items Grid */}
           <div className="grid grid-cols-2 gap-4 sm:gap-6 place-items-center">
             {[
-              { name: "Tandoori Chicken, Chicken Tikka", image: "/assets/images/tandoori-chicken.png" },
-              { name: "Chilli Chicken", image: "/assets/images/chilli-chicken.png" },
-              { name: "Paneer Tikka", image: "/assets/images/paneer-tikka.png" },
-              { name: "Spiced Cashews or Masala Peanuts", image: "/assets/images/spiced-cashews.png" },
+              {
+                name: "Tandoori Chicken, Chicken Tikka",
+                image: "/assets/images/tandoori-chicken.png",
+              },
+              {
+                name: "Chilli Chicken",
+                image: "/assets/images/chilli-chicken.png",
+              },
+              {
+                name: "Paneer Tikka",
+                image: "/assets/images/paneer-tikka.png",
+              },
+              {
+                name: "Spiced Cashews or Masala Peanuts",
+                image: "/assets/images/spiced-cashews.png",
+              },
             ].map((item, index) => (
-              <div key={index} className="flex flex-col items-center w-full max-w-[140px] sm:max-w-[160px] md:max-w-[190px]">
+              <div
+                key={index}
+                className="flex flex-col items-center w-full max-w-[140px] sm:max-w-[160px] md:max-w-[190px]"
+              >
                 <p className="text-xs sm:text-sm text-[#1D1D1D] text-center mb-2 min-h-[32px] sm:min-h-[40px] line-clamp-2">
                   {item.name}
                 </p>
@@ -638,42 +631,31 @@ const ProductDetail = ({ productId }: ProductDetailProps) => {
         </div>
       </div>
 
-      {/* Prices / Additional Info / Description Tabs Section */}
-      <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 md:px-8 md:py-10">
-        {/* Tabs */}
-        <div className="flex items-center justify-center border-b border-gray-200 mb-6">
-          <button
-            onClick={() => setActiveTab("prices")}
-            className={`px-4 sm:px-8 py-3 text-sm sm:text-base font-medium transition-colors cursor-pointer ${
-              activeTab === "prices"
-                ? "text-[#FF5C00] border-b-2 border-[#FF5C00]"
-                : "text-[#1D1D1D80] hover:text-[#1D1D1D]"
-            }`}
-          >
-            Prices
-          </button>
-          <button
-            onClick={() => setActiveTab("additional")}
-            className={`px-4 sm:px-8 py-3 text-sm sm:text-base font-medium transition-colors cursor-pointer ${
-              activeTab === "additional"
-                ? "text-[#FF5C00] border-b-2 border-[#FF5C00]"
-                : "text-[#1D1D1D80] hover:text-[#1D1D1D]"
-            }`}
-          >
-            Additional information
-          </button>
-          <button
-            onClick={() => setActiveTab("description")}
-            className={`px-4 sm:px-8 py-3 text-sm sm:text-base font-medium transition-colors cursor-pointer ${
-              activeTab === "description"
-                ? "text-[#FF5C00] border-b-2 border-[#FF5C00]"
-                : "text-[#1D1D1D80] hover:text-[#1D1D1D]"
-            }`}
-          >
-            Description
-          </button>
+      <div className="w-full border-b border-[#1D1D1D33] pt-[30px]">
+        <div className="flex items-center justify-center">
+          {(
+            [
+              { key: "prices", label: "Prices" },
+              { key: "additional", label: "Additional information" },
+              { key: "description", label: "Description" },
+            ] as { key: "prices" | "additional" | "description"; label: string }[]
+          ).map(({ key, label }) => (
+            <button
+              key={key}
+              onClick={() => setActiveTab(key)}
+              className={`flex-1 py-3 text-center text-sm sm:text-base md:text-lg leading-snug tracking-[0px] transition-colors cursor-pointer ${activeTab === key
+                ? "text-[#1D1D1D] font-bold -mb-px"
+                : "text-[#3C3232] font-normal"
+                }`}
+            >
+              {label}
+            </button>
+          ))}
         </div>
+      </div>
 
+      {/* Prices / Additional Info / Description Tabs Section */}
+      <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 md:px-8 md:py-6">
         {/* Tab Content */}
         {activeTab === "prices" && (
           <div>
@@ -705,7 +687,7 @@ const ProductDetail = ({ productId }: ProductDetailProps) => {
                   className="border border-[#E5E5E5] rounded-lg p-4 sm:p-5 flex flex-col lg:flex-row gap-4 lg:gap-5"
                 >
                   {/* Shop Image */}
-                  <div className="relative w-full lg:w-[140px] h-[100px] lg:h-[100px] rounded-lg overflow-hidden flex-shrink-0">
+                  <div className="relative w-[260px] h-[168px] rounded-lg overflow-hidden flex-shrink-0">
                     <Image
                       src={shop.image}
                       alt={shop.name}
@@ -715,84 +697,100 @@ const ProductDetail = ({ productId }: ProductDetailProps) => {
                   </div>
 
                   {/* Shop Details */}
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0 gap-7.5 flex flex-col">
                     {/* Product Name & Volume - Same Row */}
-                    <div className="flex items-start justify-between gap-3 mb-2">
-                      <h4 className="text-base sm:text-lg font-medium text-[#FF5C00] leading-tight">
-                        {product.name}
-                      </h4>
-                      <span className="flex-shrink-0 px-3 py-1 bg-[#FFF0E8] text-[#FF5C00] text-xs font-medium rounded-full">
-                        {shop.volume}
-                      </span>
+                    <div>
+                      <div className="flex items-start justify-between gap-3 mb-2">
+                        <h4 className="text-base sm:text-lg font-medium text-[#1D1D1D] leading-tight">
+                          {product.name}
+                        </h4>
+                        <span className="flex-shrink-0 px-3 py-1 bg-[#FCCCC5] text-[#1D1D1D] text-xs font-medium rounded-full">
+                          {shop.volume}
+                        </span>
+                      </div>
                     </div>
-
                     {/* Shop Name */}
-                    <div className="flex items-center gap-2 mb-2">
-                      <Image
-                        src="/assets/icons/briefcase.svg"
-                        alt="Store"
-                        width={14}
-                        height={14}
-                        className="w-3.5 h-3.5 opacity-70"
-                      />
-                      <span className="text-sm text-[#1D1D1D]">{shop.name}</span>
-                    </div>
-
-                    {/* Rating */}
-                    <div className="flex items-center gap-0.5 mb-3">
-                      {renderStars(shop.rating)}
-                    </div>
-
-                    {/* Location, Hours, Delivery Row */}
-                    <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
-                      {/* Location */}
-                      <div className="flex items-center gap-1.5">
+                    <div className="flex flex-col gap-2.5">
+                      <div className="flex items-center gap-2">
                         <Image
-                          src={shop.flagIcon}
-                          alt={shop.country}
-                          width={18}
-                          height={18}
-                          className="w-[18px] h-[18px]"
+                          src="/assets/icons/briefcase.svg"
+                          alt="Store"
+                          width={14}
+                          height={14}
+                          className="w-3.5 h-3.5 opacity-70"
                         />
-                        <span className="text-[#FF5C00] font-medium">{shop.country}:</span>
-                        <span className="text-[#1D1D1D]">{shop.location}</span>
+                        <span className="text-sm text-[#1D1D1D]">
+                          {shop.name}
+                        </span>
                       </div>
 
-                      {/* Hours */}
-                      <div className="flex items-center gap-1.5 text-[#6B7280]">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <circle cx="12" cy="12" r="9" strokeWidth="2" />
-                          <path strokeLinecap="round" strokeWidth="2" d="M12 7v5l3 3" />
-                        </svg>
-                        <span>{shop.hours}</span>
+                      {/* Rating */}
+                      <div className="flex items-center gap-0.5">
+                        <StarRating score={shop.rating} />
                       </div>
 
-                      {/* Delivery */}
-                      <div className="flex items-center gap-1.5">
-                        <svg width="18" height="18" viewBox="0 0 36 36" fill="none" className="w-[18px] h-[18px]">
-                          <path d="M24 4.5H1.5V24H24V4.5Z" stroke="#FF5C00" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                          <path d="M24 12H30L34.5 16.5V24H24V12Z" stroke="#FF5C00" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                          <path d="M8.25 31.5C10.32 31.5 12 29.82 12 27.75C12 25.68 10.32 24 8.25 24C6.18 24 4.5 25.68 4.5 27.75C4.5 29.82 6.18 31.5 8.25 31.5Z" stroke="#FF5C00" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                          <path d="M27.75 31.5C29.82 31.5 31.5 29.82 31.5 27.75C31.5 25.68 29.82 24 27.75 24C25.68 24 24 25.68 24 27.75C24 29.82 25.68 31.5 27.75 31.5Z" stroke="#FF5C00" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                        <span className="text-[#FF5C00]">{shop.delivery}</span>
+                      {/* Location, Hours, Delivery Row */}
+                      <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm items-start">
+                        {/* Location */}
+                        <div className="flex items-center gap-1.5">
+                          <Image
+                            src={shop.flagIcon}
+                            alt={shop.country}
+                            width={18}
+                            height={18}
+                            className="w-[18px] h-[18px]"
+                          />
+                          <span className="text-[#00A624] font-medium">
+                            {shop.country}:
+                          </span>
+                          <span className="text-[#00A624]">
+                            {shop.location}
+                          </span>
+                        </div>
+
+                        {/* Hours */}
+                        <div className="flex items-center gap-1.5 text-[#6B7280]">
+                          <Image
+                            src="/assets/icons/time.svg"
+                            alt="Clock"
+                            width={18}
+                            height={18}
+                            className="w-[18px] h-[18px]"
+                          />
+                          <span>{shop.hours}</span>
+                        </div>
+
+                        {/* Delivery */}
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center gap-1.5">
+                            <Image
+                              src="/assets/icons/truck_orange.svg"
+                              alt="Delivery"
+                              width={18}
+                              height={18}
+                              className="w-[18px] h-[18px]"
+                            />
+                            <span className="text-[#FF9900]">
+                              {shop.delivery}
+                            </span>
+                          </div>
+                          <div>
+                            <a
+                              href="#"
+                              className="text-sm text-[#1D1D1D] underline hover:text-[#1D1D1D]"
+                            >
+                              More shipping info
+                            </a>
+                          </div>
+                        </div>
                       </div>
                     </div>
 
                     {/* More shipping info - Separate Row */}
-                    <div className="mt-1">
-                      <a
-                        href="#"
-                        className="text-sm text-[#006B4D] underline hover:text-[#005a3f] transition-colors"
-                      >
-                        More shipping info
-                      </a>
-                    </div>
                   </div>
-
                   {/* Go to Shop Button */}
-                  <div className="flex items-start lg:items-center lg:self-center flex-shrink-0">
-                    <button className="w-full lg:w-auto px-6 py-2.5 border border-[#FF5C00] text-[#FF5C00] rounded-lg text-sm font-medium hover:bg-[#FFF0E8] transition-colors cursor-pointer whitespace-nowrap">
+                  <div className="flex flex-col h-full justify-end items-end">
+                    <button className="w-full lg:w-auto px-6 py-2.5 border border-[#FF5C00] text-[#FF5C00] rounded-lg text-sm font-medium hover:bg-[#FFF0E8] transition-colors cursor-pointer whitespace-nowrap mt-auto">
                       Go to Shop
                     </button>
                   </div>
@@ -803,9 +801,7 @@ const ProductDetail = ({ productId }: ProductDetailProps) => {
             {/* View More Shop Button */}
             <div className="flex justify-center mt-6">
               <button className="flex items-center gap-2 text-sm text-[#1D1D1D] hover:text-[#1D1D1D80] transition-colors cursor-pointer">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
+                <img src="/assets/icons/arrow_drop_down.svg" alt="dropdown" className="w-4 h-2" />
                 <span className="font-medium">View More Shop</span>
               </button>
             </div>
@@ -813,24 +809,36 @@ const ProductDetail = ({ productId }: ProductDetailProps) => {
         )}
 
         {activeTab === "additional" && (
-          <div className="py-8">
-            <h3 className="text-lg font-semibold text-[#1D1D1D] mb-4">Additional Information</h3>
-            <div className="space-y-3 text-sm text-[#1D1D1D80]">
-              <div className="flex gap-2">
-                <span className="font-medium text-[#1D1D1D] min-w-[120px]">Weight:</span>
-                <span>1.2 kg</span>
+          <div>
+            <p className="px-8 font-poppins font-normal text-[10px] sm:text-xs md:text-sm leading-relaxed tracking-[0px] text-center text-[#1D1D1D80]">
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent eu malesuada ante, eu maximus erat. Integer eleifend
+              elementum massa, nec cursus lorem consequat in. Curabitur quis arcu magna. Mauris efficitur dui ante, id tempus lacus
+              fringilla quis. Pellentesque posuere sollicitudin tempor. Cras blandit accumsan luctus.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center pt-[30px] gap-12">
+              {/* Left — image */}
+              <div className="w-full sm:w-[280px] md:w-[320px]">
+                <img
+                  src="/assets/images/shops/shop-additional.png"
+                  alt="Additional information"
+                  className="w-full h-auto rounded-xl object-cover"
+                />
               </div>
-              <div className="flex gap-2">
-                <span className="font-medium text-[#1D1D1D] min-w-[120px]">Dimensions:</span>
-                <span>30 × 10 × 10 cm</span>
-              </div>
-              <div className="flex gap-2">
-                <span className="font-medium text-[#1D1D1D] min-w-[120px]">Alcohol Content:</span>
-                <span>{product.abv}</span>
-              </div>
-              <div className="flex gap-2">
-                <span className="font-medium text-[#1D1D1D] min-w-[120px]">Country:</span>
-                <span>{product.origin.country}</span>
+              {/* Right — details */}
+              <div className="space-y-3 text-sm sm:text-base text-[#1D1D1D]">
+                {[
+                  { label: "Producer", value: `${product.brand} (Owned by Diageo)` },
+                  { label: "Type", value: product.type },
+                  { label: "Base Grains", value: "Malt and Grain Whisky from multiple Scottish distilleries" },
+                  { label: "Region", value: product.origin.country },
+                  { label: "Whisky Style", value: `Blended Scotch, Aged 12 Years` },
+                  { label: "Additives/No", value: "Contains caramel colouring (E150a) for consistency" },
+                ].map(({ label, value }) => (
+                  <div key={label} className="flex gap-1">
+                    <span className="font-semibold">{label}:</span>
+                    <span className="text-[#1D1D1D]">{value}</span>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
@@ -838,17 +846,143 @@ const ProductDetail = ({ productId }: ProductDetailProps) => {
 
         {activeTab === "description" && (
           <div className="py-8">
-            <h3 className="text-lg font-semibold text-[#1D1D1D] mb-4">Product Description</h3>
+            <h3 className="text-lg font-semibold text-[#1D1D1D] mb-4">
+              Product Description
+            </h3>
             <p className="text-sm sm:text-base text-[#1D1D1D80] leading-relaxed mb-4">
               {product.description}
             </p>
             <p className="text-sm sm:text-base text-[#1D1D1D80] leading-relaxed">
-              Lorem ipsum dolor sit amet consectetur. Sed egestas tincidunt mauris ultricies semper eget fermentum. 
-              Sit porttitor ornare et lorem. Faucibus amet urna adipiscing massa sit eu. Quis velit orci a pellentesque. 
-              Vulputate justo at massa volutpat. Diam nulla posuere donec sit amet.
+              Lorem ipsum dolor sit amet consectetur. Sed egestas tincidunt
+              mauris ultricies semper eget fermentum. Sit porttitor ornare et
+              lorem. Faucibus amet urna adipiscing massa sit eu. Quis velit orci
+              a pellentesque. Vulputate justo at massa volutpat. Diam nulla
+              posuere donec sit amet.
             </p>
           </div>
         )}
+      </div>
+
+      {/* Customer Reviews Section */}
+      <section className="mt-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
+          {/* Main Label */}
+          <h2 className="mb-6 text-[32px] font-semibold leading-none tracking-normal text-[#1D1D1D]">
+            Customer Reviews
+          </h2>
+
+          {/* Rating Summary Card */}
+          <div className="mb-6 max-w-[817px] mx-auto rounded-[14.52px] px-[38px] py-[28px] bg-white shadow-[-8px_-4px_29px_0px_rgba(0,0,0,0.08)]">
+            <h3 className="text-base font-semibold text-[#1D1D1D] mb-4">
+              Customer Reviews
+            </h3>
+            <div className="flex items-center gap-8 mt-[30px]">
+              {/* Bar chart */}
+              <div className="flex-1 space-y-[30px]">
+                {[
+                  { label: "1", width: "85%" },
+                  { label: "2", width: "72%" },
+                  { label: "3", width: "30%" },
+                  { label: "4", width: "55%" },
+                  { label: "5", width: "48%" },
+                ].map((row) => (
+                  <div key={row.label} className="flex items-center gap-2">
+                    <span className="text-xs text-[#1D1D1D80] w-2">{row.label}</span>
+                    <div className="flex-1 h-2 bg-[#E0E0E0] rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-[#FBBC05]"
+                        style={{ width: row.width }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {/* Score */}
+              <div className="flex flex-col items-center gap-1 min-w-[90px]">
+                <span className="text-6xl font-black text-[#1D1D1D] leading-none">
+                  5.0
+                </span>
+                <StarRating score={5} size="md" />
+                <span className="text-xs text-[#1D1D1D80]">500 reviews</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Individual Review Cards */}
+          <div className="space-y-[30px] max-w-[1000px] mx-auto">
+            {[
+              {
+                name: "Lorem ipsum dolor",
+                rating: 4,
+                date: "01 Jun 2025",
+                text: "Lorem ipsum dolor sit amet consectetur. Nec et semper dignissim mauris tristique quisque. Non morbi consequat euismod odio pharetra consequat amet semper. Tellus id. Lorem ipsum dolor sit amet consectetur. Nec et semper dignissim mauris tristique quisque. Non morbi consequat euismod odio pharetra consequat amet semper. Tellus id.",
+                avatar: "https://randomuser.me/api/portraits/women/44.jpg",
+              },
+              {
+                name: "Lorem ipsum dolor",
+                rating: 4,
+                date: "01 Jun 2025",
+                text: "Lorem ipsum dolor sit amet consectetur. Nec et semper dignissim mauris tristique quisque. Non morbi consequat euismod odio pharetra consequat amet semper. Tellus id. Lorem ipsum dolor sit amet consectetur. Nec et semper dignissim mauris tristique quisque. Non morbi consequat euismod odio pharetra consequat amet semper. Tellus id.",
+                avatar: "https://randomuser.me/api/portraits/men/32.jpg",
+              },
+            ].map((review, idx) => (
+              <div
+                key={idx}
+                className="rounded-[30px] p-[30px] bg-white shadow-[0px_20px_40px_0px_rgba(0,0,0,0.10)]"
+              >
+                {/* Header */}
+                <div className="flex items-center justify-between mb-[10px]">
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={review.avatar}
+                      alt={review.name}
+                      className="w-[40px] h-[40px] rounded-full object-cover"
+                    />
+                    <span className="font-semibold text-sm text-[#1D1D1D]">
+                      {review.name}
+                    </span>
+                  </div>
+                  {/* Stars */}
+                  <div className="flex gap-0.5">
+                    {[1, 2, 3, 4, 5].map((s) => (
+                      <StarIcon key={s} filled={s <= review.rating} size="sm" />
+                    ))}
+                  </div>
+                </div>
+                {/* Body */}
+                <p className="text-sm text-[#1D1D1D] leading-relaxed mb-3">
+                  {review.text}
+                </p>
+                {/* Date */}
+                <span className="text-xs text-[#1D1D1D80]">{review.date}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* View More Review Button */}
+          <div className="flex justify-center mt-6 mb-4">
+            <button className="flex items-center gap-2 text-sm text-[#1D1D1D] hover:text-[#1D1D1D80] transition-colors cursor-pointer font-medium">
+              <img src="/assets/icons/arrow_drop_down.svg" alt="dropdown" className="w-4 h-2" />
+              <span>View More Review</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Related & Similar Products */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-10">
+        <ProductCarouselSection
+          title="Related products"
+          products={relatedProducts}
+          linkProducts={true}
+          centerTitle={true}
+        />
+        <ProductCarouselSection
+          title="Similar products"
+          products={relatedProducts}
+          linkProducts={true}
+          centerTitle={true}
+        />
       </div>
     </main>
   );

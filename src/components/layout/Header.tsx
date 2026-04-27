@@ -4,9 +4,12 @@ import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useLocation } from "../modals/LocationProvider";
+import { useCart } from "../modals/CartProvider";
 
 const Header = () => {
   const { location, showModal } = useLocation();
+  const { items, openDrawer }   = useCart();
+  const cartCount               = items.reduce((s, i) => s + i.quantity, 0);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -199,7 +202,10 @@ const Header = () => {
           </div>
 
           {/* Cart */}
-          <div className="relative cursor-pointer w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 transition-transform duration-300 hover:scale-110 active:scale-95">
+          <div
+            onClick={openDrawer}
+            className="relative cursor-pointer w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 transition-transform duration-300 hover:scale-110 active:scale-95"
+          >
             <Image
               src="/assets/header/icons/cartIcon.svg"
               alt="Cart"
@@ -208,7 +214,7 @@ const Header = () => {
               className="w-full h-full transition-opacity duration-300 hover:opacity-80"
             />
             <span className="absolute -bottom-0.5 -right-0.5 sm:-bottom-1 sm:-right-1 bg-black text-white text-[10px] sm:text-xs rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center leading-none transition-transform duration-300 hover:scale-110">
-              0
+              {cartCount}
             </span>
           </div>
         </div>

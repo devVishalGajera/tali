@@ -1,33 +1,73 @@
 "use client";
 
-import { useState } from "react";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { useTransition } from "react";
+import type { Category } from "@/lib/api/categories";
 
-const CategoryTabs = () => {
-  const [activeTab, setActiveTab] = useState("All Whiskey");
+interface Props {
+  categories: Category[];
+  /** Current active category id from URL — undefined means "All" */
+  activeCategoryId?: number;
+}
 
-  const categories = [
-    "All Whiskey",
-    "Bourbon",
-    "Moonshine",
-    "Scotch",
-    "Irish",
-    "Japanese",
-    "Rye",
-  ];
+const CategoryTabs = ({ categories, activeCategoryId }: Props) => {
+  const router   = useRouter();
+  const pathname = usePathname();
+  const params   = useSearchParams();
+  const [isPending, startTransition] = useTransition();
+
+  const select = (id: number | null) => {
+    const next = new URLSearchParams(params.toString());
+    if (id === null) {
+      next.delete("categories");
+    } else {
+      next.set("categories", String(id));
+    }
+    /* Selecting a top-level category clears subcategory selection */
+    next.delete("subcats");
+
+    startTransition(() => {
+      router.push(`${pathname}?${next.toString()}`, { scroll: false });
+    });
+  };
+
+  if (categories.length === 0) return null;
+
+  const activeId = activeCategoryId ?? null;
 
   return (
-    <div className="flex flex-wrap gap-3 mb-6 md:mb-8 overflow-x-auto pb-2">
-      {categories.map((category) => (
+    <div
+      className={`flex flex-wrap gap-2.5 mb-6 md:mb-8 transition-opacity ${isPending ? "opacity-60 pointer-events-none" : ""}`}
+      role="tablist"
+      aria-label="Product categories"
+    >
+      {/* "All" tab */}
+      <button
+        role="tab"
+        aria-selected={activeId === null}
+        onClick={() => select(null)}
+        className={`px-5 py-2 text-sm font-medium rounded-lg transition-all duration-200 whitespace-nowrap ${
+          activeId === null
+            ? "bg-[#F02A0B] text-white"
+            : "bg-white text-[#646057] border border-gray-200 hover:border-gray-300"
+        }`}
+      >
+        All
+      </button>
+
+      {categories.map((c) => (
         <button
-          key={category}
-          onClick={() => setActiveTab(category)}
-          className={`px-5 py-2.5 text-sm md:text-base font-medium rounded-lg transition-all duration-300 whitespace-nowrap ${
-            activeTab === category
+          key={c.id}
+          role="tab"
+          aria-selected={activeId === c.id}
+          onClick={() => select(c.id)}
+          className={`px-5 py-2 text-sm font-medium rounded-lg transition-all duration-200 whitespace-nowrap ${
+            activeId === c.id
               ? "bg-[#F02A0B] text-white"
               : "bg-white text-[#646057] border border-gray-200 hover:border-gray-300"
           }`}
         >
-          {category}
+          {c.name}
         </button>
       ))}
     </div>
@@ -35,4 +75,3 @@ const CategoryTabs = () => {
 };
 
 export default CategoryTabs;
-

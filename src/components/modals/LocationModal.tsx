@@ -131,8 +131,8 @@ const LocationModal = ({ isOpen, onClose, onApply, currentCity }: LocationModalP
         {/* Main Content */}
         <div className="px-4 sm:px-6 md:px-8 py-6 md:py-8">
           {/* Instructions */}
-          <p className="text-sm sm:text-base text-gray-600 mb-6 text-center">
-            Select a delivery location to see product availability and delivery options.
+          <p className="text-sm sm:text-base text-gray-600 mb-6">
+            Select a delivery location to see product availability and delivery options
           </p>
 
           {/* City Dropdown */}
@@ -168,7 +168,7 @@ const LocationModal = ({ isOpen, onClose, onApply, currentCity }: LocationModalP
                       key={city}
                       type="button"
                       onClick={() => handleCitySelect(city)}
-                      className="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0"
+                      className="w-full px-4 py-3 text-left text-[#1D1D1D] hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0"
                     >
                       {city}
                     </button>
@@ -188,27 +188,23 @@ const LocationModal = ({ isOpen, onClose, onApply, currentCity }: LocationModalP
             </div>
           </div>
 
-          {/* Pincode Input */}
-          <div className="mb-6">
+          {/* Pincode Input + Apply Button — same row */}
+          <div className="flex items-center gap-3">
             <input
               type="text"
               value={pincode}
               onChange={handlePincodeChange}
               placeholder="Enter Pincode"
               maxLength={6}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all duration-300 hover:border-gray-400"
+              className="flex-1 px-4 py-3 border border-gray-300 rounded-lg text-[#1D1D1D] placeholder:text-gray-400 focus:outline-none focus:border-gray-400 transition-all duration-300"
             />
-          </div>
-
-          {/* Apply Button */}
-          <div className="flex justify-end">
             <button
               onClick={handleApply}
               disabled={!canApply}
-              className={`px-6 py-3 rounded-lg font-semibold transition-all duration-300 ${
+              className={`px-6 py-3 rounded-full font-semibold border transition-all duration-300 whitespace-nowrap ${
                 canApply
-                  ? "bg-green-600 hover:bg-green-700 text-white hover:scale-105 active:scale-95"
-                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  ? "border-green-600 text-green-600 hover:bg-green-50 active:scale-95"
+                  : "border-gray-300 text-gray-400 cursor-not-allowed"
               }`}
             >
               Apply

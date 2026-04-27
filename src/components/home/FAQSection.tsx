@@ -50,14 +50,12 @@ const FAQSection = () => {
         </div>
 
         {/* Right Side - FAQ Accordion (1/3 width on desktop) */}
-        <div className="lg:col-span-1 flex flex-col justify-center">
+        <div className="lg:col-span-1 flex flex-col justify-start">
           <div className="w-full">
             {faqItems.map((item, index) => (
               <div
                 key={index}
-                className={`border-b border-gray-200 ${
-                  index === faqItems.length - 1 ? "border-b-0" : ""
-                }`}
+                className="border-b border-[#1D1D1D1A]"
               >
                 <button
                   onClick={() => toggleItem(index)}
