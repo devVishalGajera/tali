@@ -6,11 +6,9 @@ import type { Category } from "@/lib/api/categories";
 
 interface Props {
   categories: Category[];
-  /** Current active category id from URL — undefined means "All" */
-  activeCategoryId?: number;
 }
 
-const CategoryTabs = ({ categories, activeCategoryId }: Props) => {
+const CategoryTabs = ({ categories }: Props) => {
   const router   = useRouter();
   const pathname = usePathname();
   const params   = useSearchParams();
@@ -33,7 +31,9 @@ const CategoryTabs = ({ categories, activeCategoryId }: Props) => {
 
   if (categories.length === 0) return null;
 
-  const activeId = activeCategoryId ?? null;
+  /* Read from live URL params — NOT from the server prop (which is stale during transition) */
+  const rawId  = params.get("categories");
+  const activeId = rawId ? Number(rawId) : null;
 
   return (
     <div
