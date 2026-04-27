@@ -6,38 +6,39 @@
  * Call these from any Server Action or Route Handler after a mutation
  * to instantly clear the relevant cached data.
  *
- * Example — after an admin updates a product:
- *   import { revalidateProduct } from "@/lib/api/actions";
- *   await revalidateProduct(42);
+ * Next.js 16: revalidateTag requires a second `profile` argument.
+ * Passing `{}` (empty CacheLifeConfig) purges the tag immediately.
  */
 
 import { revalidateTag } from "next/cache";
 import { TAGS } from "./cache-tags";
 
+const PURGE = {} as const;
+
 export async function revalidateCategories() {
-  revalidateTag(TAGS.categories);
+  revalidateTag(TAGS.categories, PURGE);
 }
 
 export async function revalidateFilterOptions() {
-  revalidateTag(TAGS.filterOptions);
+  revalidateTag(TAGS.filterOptions, PURGE);
 }
 
 export async function revalidateProducts() {
-  revalidateTag(TAGS.products);
+  revalidateTag(TAGS.products, PURGE);
 }
 
 export async function revalidateProduct(id: number | string) {
-  revalidateTag(TAGS.product(id));
+  revalidateTag(TAGS.product(id), PURGE);
 }
 
 export async function revalidateStores() {
-  revalidateTag(TAGS.stores);
+  revalidateTag(TAGS.stores, PURGE);
 }
 
 export async function revalidateStore(id: number | string) {
-  revalidateTag(TAGS.store(id));
+  revalidateTag(TAGS.store(id), PURGE);
 }
 
 export async function revalidatePopularStores() {
-  revalidateTag(TAGS.popularStores);
+  revalidateTag(TAGS.popularStores, PURGE);
 }

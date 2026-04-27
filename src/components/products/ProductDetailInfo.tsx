@@ -22,7 +22,7 @@ export default function ProductDetailInfo({
   country,
   volumes,
 }: Props) {
-  const { addItem } = useCart();
+  const { addToCart } = useCart();
 
   const defaultVolume = volumes.find((v) => v.price) ?? volumes[0] ?? null;
   const [selectedVolumeId, setSelectedVolumeId] = useState<number | null>(
@@ -36,13 +36,14 @@ export default function ProductDetailInfo({
 
   const handleAddToCart = () => {
     if (!selectedVolume) return;
-    addItem({
+    addToCart({
       id:         productId,
       name,
       price:      price ?? "—",
       priceValue: selectedVolume.price ? parseFloat(selectedVolume.price) : 0,
       image:      "/assets/images/bottles/single-bottle.png",
       size:       selectedVolume.volume || undefined,
+      quantity:   1,
     });
     setAddedToCart(true);
     setTimeout(() => setAddedToCart(false), 2000);
