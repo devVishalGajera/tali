@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { Swiper, SwiperSlide } from "swiper/react";
+import { proxyImageUrl } from "@/lib/utils/image";
 import { FreeMode } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/free-mode";
@@ -38,12 +39,11 @@ const TopBrandsSection = ({ brands }: Props) => {
             <div className="flex flex-col items-center gap-1.5 md:gap-2 cursor-pointer group active:scale-95 md:hover:scale-105 transition-transform duration-300">
               <div className="rounded-full w-[190px] h-[190px] px-2 sm:px-3 md:px-4 lg:px-5 py-1 sm:py-1.5 md:py-2 lg:py-2.5 bg-gray-100 flex items-center justify-center group-active:bg-gray-200 md:group-hover:bg-gray-200 transition-colors duration-300 shadow-md overflow-hidden">
                 <Image
-                  src={brand.image_full_path}
+                  src={proxyImageUrl(brand.image_full_path)}
                   alt={brand.name}
                   width={190}
                   height={190}
                   className="w-full h-full object-contain"
-                  unoptimized={brand.image_full_path.startsWith("http://")}
                 />
               </div>
               <span className="text-xs sm:text-sm md:text-base font-medium text-[#1D1D1D] text-center whitespace-nowrap">

@@ -4,7 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import StarRating from "@/components/shared/StarRating";
-import { useCart } from "@/components/modals/CartProvider";
+import { useCart }        from "@/components/modals/CartProvider";
+import { proxyImageUrl } from "@/lib/utils/image";
 
 export interface ProductCardItem {
   id: number;
@@ -36,7 +37,7 @@ const CardInner = ({
   <div className="bg-white transition-shadow duration-300 overflow-visible w-full max-w-[200px] md:max-w-[227px] rounded-[17.1px] border border-[#F0F0F0] shadow-[0px_8.55px_8.55px_0px_#EAE0DA4D,0px_0px_0px_1.07px_#5757571A] md:hover:shadow-lg">
     <div className="relative p-3 w-full h-[240px] flex items-end justify-between overflow-visible cursor-pointer">
       <div className="h-full -top-12 relative flex-1">
-        <img src={product.image} alt={product.name} className="max-w-[104px] h-full object-contain" />
+        <img src={proxyImageUrl(product.image)} alt={product.name} className="max-w-[104px] h-full object-contain" />
       </div>
       <div className="flex flex-col items-end gap-3 z-10">
         {product.isNewArrival && (

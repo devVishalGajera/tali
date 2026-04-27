@@ -8,6 +8,7 @@ import Link                  from "next/link";
 import StarRating            from "@/components/shared/StarRating";
 import ProductCardActions    from "./ProductCardActions";
 import ProductGridPagination from "./ProductGridPagination";
+import { proxyImageUrl }     from "@/lib/utils/image";
 import type { ProductListItem } from "@/lib/api/products";
 import { toProductCardItem }   from "@/lib/api/products";
 
@@ -61,7 +62,7 @@ export default function ProductGrid({ products, currentPage, totalPages, totalRe
                       {/* Product image */}
                       <div className="h-full -top-12 relative flex-1">
                         <img
-                          src={card.image}
+                          src={proxyImageUrl(card.image)}
                           alt={card.name}
                           className="max-w-[104px] h-full object-contain"
                           loading="lazy"

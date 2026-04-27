@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import Image        from "next/image";
+import { useState }      from "react";
+import Image             from "next/image";
+import { proxyImageUrl } from "@/lib/utils/image";
 
 interface Props {
   images: string[];
@@ -27,7 +28,7 @@ export default function ProductDetailGallery({ images, name, abv }: Props) {
                   : "border-gray-200 hover:border-gray-400"
               }`}
             >
-              <Image src={src} alt={`${name} view ${i + 1}`} fill className="object-contain" />
+              <Image src={proxyImageUrl(src)} alt={`${name} view ${i + 1}`} fill className="object-contain" />
             </button>
           ))}
         </div>
@@ -37,7 +38,7 @@ export default function ProductDetailGallery({ images, name, abv }: Props) {
       <div className="relative w-full mb-4 lg:mb-0 min-h-[300px] lg:min-h-[500px]">
         <div className="relative w-full h-full rounded border border-gray-200 overflow-hidden bg-white">
           <Image
-            src={images[activeIndex] ?? "/assets/images/bottles/single-bottle.png"}
+            src={proxyImageUrl(images[activeIndex])}
             alt={name}
             fill
             className="object-contain p-3 sm:p-4"
