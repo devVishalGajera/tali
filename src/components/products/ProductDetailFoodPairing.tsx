@@ -1,6 +1,5 @@
-import Image                   from "next/image";
-import type { FoodPairingData }  from "@/lib/api/product-detail";
-import { proxyImageUrl }        from "@/lib/utils/image";
+import type { FoodPairingData } from "@/lib/api/product-detail";
+import { proxyImageUrl } from "@/lib/utils/image";
 
 interface Props {
   foodPairing: FoodPairingData;
@@ -22,12 +21,10 @@ export default function ProductDetailFoodPairing({ foodPairing }: Props) {
         {/* Main image */}
         {foodpairing_image && (
           <div className="relative aspect-[4/3] rounded-lg overflow-hidden">
-            <Image
+            <img
               src={proxyImageUrl(foodpairing_image)}
               alt="Food Pairing"
-              fill
-              className="object-cover"
-              sizes="(max-width: 1024px) 100vw, 50vw"
+              className="absolute inset-0 w-full h-full object-cover"
             />
           </div>
         )}
@@ -44,12 +41,10 @@ export default function ProductDetailFoodPairing({ foodPairing }: Props) {
                   {item.product_name}
                 </p>
                 <div className="relative w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 rounded-full overflow-hidden">
-                  <Image
+                  <img
                     src={proxyImageUrl(item.product_image)}
                     alt={item.product_name}
-                    fill
-                    className="object-cover"
-                    sizes="112px"
+                    className="absolute inset-0 w-full h-full object-cover"
                   />
                 </div>
               </div>

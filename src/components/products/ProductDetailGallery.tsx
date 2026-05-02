@@ -1,7 +1,6 @@
 "use client";
 
-import { useState }      from "react";
-import Image             from "next/image";
+import { useState } from "react";
 import { proxyImageUrl } from "@/lib/utils/image";
 
 interface Props {
@@ -12,13 +11,14 @@ interface Props {
 
 export default function ProductDetailGallery({ images, name, abv }: Props) {
   const [activeIndex, setActiveIndex] = useState(0);
+  const src = proxyImageUrl(images[activeIndex]);
 
   return (
     <div className="w-full flex gap-5 lg:flex-row flex-col-reverse">
       {/* Thumbnail strip */}
       {images.length > 1 && (
         <div className="flex flex-row lg:flex-col gap-3 md:gap-4 lg:gap-6">
-          {images.map((src, i) => (
+          {images.map((img, i) => (
             <button
               key={i}
               onClick={() => setActiveIndex(i)}
@@ -28,7 +28,11 @@ export default function ProductDetailGallery({ images, name, abv }: Props) {
                   : "border-gray-200 hover:border-gray-400"
               }`}
             >
-              <Image src={proxyImageUrl(src)} alt={`${name} view ${i + 1}`} fill className="object-contain" />
+              <img
+                src={proxyImageUrl(img)}
+                alt={`${name} view ${i + 1}`}
+                className="w-full h-full object-contain"
+              />
             </button>
           ))}
         </div>
@@ -36,13 +40,11 @@ export default function ProductDetailGallery({ images, name, abv }: Props) {
 
       {/* Main image */}
       <div className="relative w-full mb-4 lg:mb-0 min-h-[300px] lg:min-h-[500px]">
-        <div className="relative w-full h-full rounded border border-gray-200 overflow-hidden bg-white">
-          <Image
-            src={proxyImageUrl(images[activeIndex])}
+        <div className="relative w-full h-full rounded border border-gray-200 overflow-hidden bg-white min-h-[300px] lg:min-h-[500px]">
+          <img
+            src={src}
             alt={name}
-            fill
-            className="object-contain p-3 sm:p-4"
-            priority
+            className="absolute inset-0 w-full h-full object-contain p-3 sm:p-4"
           />
         </div>
         {abv && (
