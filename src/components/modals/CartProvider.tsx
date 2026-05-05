@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
 import { addToCartApi, removeFromCartApi, getCartApi } from "@/lib/api/cart";
 import type { CartApiItem } from "@/lib/api/cart";
+import { useLocation } from "@/components/modals/LocationProvider";
 
 /* ── Types ──────────────────────────────────────────────────── */
 
@@ -32,6 +33,7 @@ interface CartContextType {
   closeModal:     () => void;
   openDrawer:     () => void;
   closeDrawer:    () => void;
+  refreshCart:    () => void;
 }
 
 /* ── Context ─────────────────────────────────────────────────── */
@@ -65,22 +67,21 @@ function fromApiItem(item: CartApiItem): CartItem {
 /* ── Provider ────────────────────────────────────────────────── */
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
+  const { storeId, city } = useLocation();
   const [items,        setItems]        = useState<CartItem[]>([]);
   const [lastAdded,    setLastAdded]    = useState<CartProduct | null>(null);
   const [isModalOpen,  setIsModalOpen]  = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isLoading,    setIsLoading]    = useState(false);
 
-  /* Fetch real cart on mount when user is logged in */
+  /* Fetch cart once we have a storeId — ensures store_id is always in the request */
   useEffect(() => {
+    if (!storeId) return;
     const token = getAuthToken();
     if (!token) return;
 
-    const storeId = localStorage.getItem("talli_store_id") ?? undefined;
-    const city    = localStorage.getItem("talli_city")     ?? undefined;
-
     setIsLoading(true);
-    getCartApi({ token, store_id: storeId ?? undefined, city: city ?? undefined })
+    getCartApi({ token, store_id: String(storeId), city: city ?? undefined })
       .then((res) => {
         if (res.code === 1 && Array.isArray(res.data)) {
           setItems(res.data.map(fromApiItem));
@@ -88,7 +89,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       })
       .catch(() => { /* silent — keep empty cart */ })
       .finally(() => setIsLoading(false));
-  }, []);
+  }, [storeId, city]);
 
   const addToCart = useCallback((product: CartProduct) => {
     /* Optimistically update local state first for instant UI feedback */
@@ -116,8 +117,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       .then((res) => {
         if (res.code !== 1) return;
         /* Re-fetch to get the real cartItemId for future deletes */
-        const storeId = localStorage.getItem("talli_store_id") ?? undefined;
-        const city    = localStorage.getItem("talli_city")     ?? undefined;
         return getCartApi({ token, store_id: storeId ?? undefined, city: city ?? undefined });
       })
       .then((cart) => {
@@ -126,7 +125,20 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         }
       })
       .catch(() => { /* keep optimistic state on error */ });
-  }, []);
+  }, [storeId, city]);
+
+  const refreshCart = useCallback(() => {
+    const token = getAuthToken();
+    if (!token || !storeId) return;
+
+    getCartApi({ token, store_id: storeId, city: city ?? undefined })
+      .then((res) => {
+        if (res.code === 1 && Array.isArray(res.data)) {
+          setItems(res.data.map(fromApiItem));
+        }
+      })
+      .catch(() => {});
+  }, [storeId, city]);
 
   const removeFromCart = useCallback((productId: number) => {
     /* Optimistically remove */
@@ -168,6 +180,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         closeModal,
         openDrawer,
         closeDrawer,
+        refreshCart,
       }}
     >
       {children}

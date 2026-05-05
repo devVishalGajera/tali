@@ -3,7 +3,9 @@
 import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { useWishlist } from "@/components/modals/WishlistProvider";
 import { addToWishlistApi } from "@/lib/api/wishlist";
+import { proxyImageUrl } from "@/lib/utils/image";
 
 interface Props {
   productId: number;
@@ -11,6 +13,11 @@ interface Props {
   initialWishlisted?: boolean;
   size?: "sm" | "md" | "lg";
   className?: string;
+  /* Optional extra info to show in the drawer after adding */
+  productName?: string;
+  productPrice?: string;
+  productImage?: string;
+  productVolume?: string;
 }
 
 const sizes = {
@@ -25,8 +32,13 @@ export default function WishlistButton({
   initialWishlisted = false,
   size = "md",
   className = "",
+  productName,
+  productPrice,
+  productImage,
+  productVolume,
 }: Props) {
   const { isAuthenticated, token } = useAuth();
+  const { addItem, removeItem, refreshWishlist } = useWishlist();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -48,7 +60,7 @@ export default function WishlistButton({
 
     setLoading(true);
     const next = !wishlisted;
-    setWishlisted(next); // optimistic
+    setWishlisted(next);
 
     try {
       const res = await addToWishlistApi({
@@ -56,9 +68,27 @@ export default function WishlistButton({
         store_product_volume_id: storeProductVolumeId,
         token,
       });
-      if (res.code !== 1) setWishlisted(!next); // rollback
+
+      if (res.code !== 1) {
+        setWishlisted(!next);
+      } else if (next) {
+        /* Added — push a lightweight entry so the count badge updates */
+        const priceValue = parseFloat(productPrice?.replace(/[^0-9.]/g, "") ?? "0") || 0;
+        addItem({
+          productId: productId,
+          storeProductVolumeId: storeProductVolumeId,
+          name: productName ?? "",
+          price: productPrice ?? "",
+          priceValue,
+          image: proxyImageUrl(productImage ?? ""),
+          volume: productVolume ?? "",
+        });
+      } else {
+        /* Removed — remove from provider by productId */
+        removeItem(productId);
+      }
     } catch {
-      setWishlisted(!next); // rollback
+      setWishlisted(!next);
     } finally {
       setLoading(false);
     }
@@ -92,3 +122,4 @@ export default function WishlistButton({
     </button>
   );
 }
+

@@ -38,6 +38,10 @@ export default function ProductCardActions({ product, initialWishlist = false }:
         storeProductVolumeId={product.store_product_volume_id}
         initialWishlisted={initialWishlist}
         size="sm"
+        productName={product.name}
+        productPrice={product.price}
+        productImage={product.image}
+        productVolume={product.size}
       />
       <button
         onClick={handleAddToCart}

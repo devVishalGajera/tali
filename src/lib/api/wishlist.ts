@@ -12,19 +12,41 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://3.7.224.122/dev/tall
 /* ── Types ──────────────────────────────────────────────────── */
 
 export interface WishlistApiItem {
-  id:                       number;
   product_id:               number;
-  product_name:             string;
-  store_product_volume_id:  number;
+  name:                     string;
   volume:                   string;
   price:                    string;
+  store_product_volume_id:  string | number;
+  volume_id:                string | number;
+  image_path:               string;
   image_full_path:          string;
+  available_quantity:       number;
+  is_available:             string;
+  enablePurchase:           boolean;
+  cart:                     number;
 }
 
 export interface WishlistApiResponse {
+  code:            number;
+  message:         string;
+  page_no?:        number;
+  total_records?:  number;
+  record_per_page?: string | number;
+  total_pages?:    number;
+  data:            WishlistApiItem[];
+}
+
+export interface AddWishlistApiResponse {
   code:    number;
   message: string;
-  data:    WishlistApiItem[];
+  data?: {
+    id:                       number;
+    user_id:                  number;
+    product_id:               string | number;
+    store_product_volume_id:  string | number;
+    created_at:               string;
+    updated_at:               string;
+  };
 }
 
 /* ── Helpers ─────────────────────────────────────────────────── */
@@ -41,12 +63,10 @@ function authHeaders(token: string): Record<string, string> {
 /** Fetch the current wishlist for the logged-in user. */
 export async function getWishlistApi(params: {
   store_id?: number | string;
-  city?:     string;
   token:     string;
 }): Promise<WishlistApiResponse> {
   const qs = new URLSearchParams();
   if (params.store_id) qs.set("store_id", String(params.store_id));
-  if (params.city)     qs.set("city",     params.city);
 
   const res = await fetch(`${BASE_URL}/product/wishlist-getNew?${qs.toString()}`, {
     headers: authHeaders(params.token),
@@ -62,7 +82,7 @@ export async function addToWishlistApi(params: {
   product_id:               number;
   store_product_volume_id:  number;
   token:                    string;
-}): Promise<{ code: number; message: string }> {
+}): Promise<AddWishlistApiResponse> {
   const body = new URLSearchParams();
   body.append("product_id",              String(params.product_id));
   body.append("store_product_volume_id", String(params.store_product_volume_id));
@@ -78,7 +98,7 @@ export async function addToWishlistApi(params: {
   });
 
   if (!res.ok) throw new Error(`addToWishlist ${res.status}`);
-  return res.json() as Promise<{ code: number; message: string }>;
+  return res.json() as Promise<AddWishlistApiResponse>;
 }
 
 /** Move all wishlist items to cart in a single request. */

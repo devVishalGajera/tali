@@ -183,6 +183,10 @@ export default function ProductDetailInfo({
             productId={productId}
             storeProductVolumeId={selectedVolume?.store_product_volume_id}
             size="lg"
+            productName={name}
+            productPrice={price ?? ""}
+            productImage="/assets/images/bottles/single-bottle.png"
+            productVolume={selectedVolume?.volume}
           />
         </div>
       </div>

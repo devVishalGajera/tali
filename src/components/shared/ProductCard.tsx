@@ -66,6 +66,10 @@ const ProductCard = ({ product, linkTo }: ProductCardProps) => {
             storeProductVolumeId={product.store_product_volume_id}
             initialWishlisted={product.isWishlist}
             size="sm"
+            productName={product.name}
+            productPrice={product.price}
+            productImage={product.image}
+            productVolume={product.size}
           />
           <button
             onClick={handleAddToCart}

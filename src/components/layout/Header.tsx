@@ -5,12 +5,14 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useLocation } from "../modals/LocationProvider";
 import { useCart } from "../modals/CartProvider";
+import { useWishlist } from "../modals/WishlistProvider";
 import { useAuth } from "../auth/AuthProvider";
 import { getDisplayName } from "@/lib/api/auth";
 
 const Header = () => {
-  const { city, showModal }             = useLocation();
-  const { items, openDrawer }           = useCart();
+  const { city, showModal }               = useLocation();
+  const { items, openDrawer }             = useCart();
+  const { count: wishlistCount, openDrawer: openWishlistDrawer } = useWishlist();
   const { isAuthenticated, user, logout } = useAuth();
   const cartCount                       = items.reduce((s, i) => s + i.quantity, 0);
   const [openDropdown,    setOpenDropdown]    = useState<string | null>(null);
@@ -180,7 +182,10 @@ const Header = () => {
         {/* Right Section - User Actions */}
         <div className="flex items-center gap-2 sm:gap-3 md:gap-4 flex-shrink-0 z-10">
           {/* Wishlist */}
-          <div className="relative cursor-pointer w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 transition-transform duration-300 hover:scale-110 active:scale-95">
+          <div
+            onClick={openWishlistDrawer}
+            className="relative cursor-pointer w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 transition-transform duration-300 hover:scale-110 active:scale-95"
+          >
             <Image
               src="/assets/header/icons/wishlistIcon.svg"
               alt="Wishlist"
@@ -189,7 +194,7 @@ const Header = () => {
               className="w-full h-full transition-opacity duration-300 hover:opacity-80"
             />
             <span className="absolute -bottom-0.5 -right-0.5 sm:-bottom-1 sm:-right-1 bg-black text-white text-[10px] sm:text-xs rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center leading-none transition-transform duration-300 hover:scale-110">
-              0
+              {wishlistCount}
             </span>
           </div>
 

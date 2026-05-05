@@ -6,9 +6,11 @@ import Footer from "@/components/layout/Footer";
 import { AgeVerificationProvider } from "@/components/modals/AgeVerificationProvider";
 import { LocationProvider } from "@/components/modals/LocationProvider";
 import { CartProvider } from "@/components/modals/CartProvider";
+import { WishlistProvider } from "@/components/modals/WishlistProvider";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import CartModal from "@/components/modals/CartModal";
 import CartDrawer from "@/components/modals/CartDrawer";
+import WishlistDrawer from "@/components/modals/WishlistDrawer";
 import { getCities } from "@/lib/api/cities";
 import MainShell from "@/components/layout/MainShell";
 
@@ -77,14 +79,17 @@ export default async function RootLayout({
           <AuthProvider>
             <LocationProvider citiesData={citiesData}>
               <CartProvider>
-                <MainShell
-                  header={<Header />}
-                  footer={<Footer />}
-                  cartModal={<CartModal />}
-                  cartDrawer={<CartDrawer />}
-                >
-                  {children}
-                </MainShell>
+                <WishlistProvider>
+                  <MainShell
+                    header={<Header />}
+                    footer={<Footer />}
+                    cartModal={<CartModal />}
+                    cartDrawer={<CartDrawer />}
+                    wishlistDrawer={<WishlistDrawer />}
+                  >
+                    {children}
+                  </MainShell>
+                </WishlistProvider>
               </CartProvider>
             </LocationProvider>
           </AuthProvider>
