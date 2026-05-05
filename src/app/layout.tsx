@@ -12,6 +12,7 @@ import CartModal from "@/components/modals/CartModal";
 import CartDrawer from "@/components/modals/CartDrawer";
 import WishlistDrawer from "@/components/modals/WishlistDrawer";
 import { getCities } from "@/lib/api/cities";
+import { getNavCategories, type NavCategory } from "@/lib/api/categories";
 import MainShell from "@/components/layout/MainShell";
 
 const geistSans = Geist({
@@ -67,7 +68,10 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const citiesData = await getCities().catch(() => null);
+  const [citiesData, navCategories] = await Promise.all([
+    getCities().catch(() => null),
+    getNavCategories().catch(() => [] as NavCategory[]),
+  ]);
 
   return (
     <html lang="en">
@@ -81,7 +85,7 @@ export default async function RootLayout({
               <CartProvider>
                 <WishlistProvider>
                   <MainShell
-                    header={<Header />}
+                    header={<Header navCategories={navCategories} />}
                     footer={<Footer />}
                     cartModal={<CartModal />}
                     cartDrawer={<CartDrawer />}

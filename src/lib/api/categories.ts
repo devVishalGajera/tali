@@ -17,55 +17,55 @@
  */
 
 import { apiFetch } from "./client";
-import { TAGS }     from "./cache-tags";
+import { TAGS } from "./cache-tags";
 
 /* ── Types ──────────────────────────────────────────────────── */
 
 export interface PopularBrand {
-  id:              number;
-  name:            string;
-  image_path:      string;
+  id: number;
+  name: string;
+  image_path: string;
   image_full_path: string;
-  order_count:     string;
+  order_count: string;
 }
 
 export interface Category {
-  id:              number;
-  name:            string;
-  image_path:      string;
-  image_name:      string;
+  id: number;
+  name: string;
+  image_path: string;
+  image_name: string;
   image_full_path: string;
 }
 
 export interface CategoryProduct {
-  id:                      number;
-  name:                    string;
-  sub_category_id:         number;
+  id: number;
+  name: string;
+  sub_category_id: number;
   store_product_volume_id: number;
-  image_path:              string;
-  image_full_path:         string;
-  price:                   string;
-  volume:                  string;
-  volume_id:               number;
-  available_quantity:      string;
-  order_count:             number;
-  average_rating:          number;
-  is_wishlist:             boolean;  // true only when token is provided
-  best_dealer:             string;
+  image_path: string;
+  image_full_path: string;
+  price: string;
+  volume: string;
+  volume_id: number;
+  available_quantity: string;
+  order_count: number;
+  average_rating: number;
+  is_wishlist: boolean;  // true only when token is provided
+  best_dealer: string;
 }
 
 export interface SubCategory {
-  id:            number;
-  name:          string;
-  category_id:   number;
+  id: number;
+  name: string;
+  category_id: number;
   category_name: string;
-  data:          CategoryProduct[];
+  data: CategoryProduct[];
 }
 
 export interface CategoriesData {
   popular_brands: PopularBrand[];
-  Category:       Category[];
-  SubCategory:    SubCategory[];
+  Category: Category[];
+  SubCategory: SubCategory[];
 }
 
 /* ── Fetcher ─────────────────────────────────────────────────── */
@@ -87,7 +87,42 @@ export async function getCategories(
 ): Promise<CategoriesData> {
   return apiFetch<CategoriesData>("/guest/new/categoriesNew", {
     token,
-    tags:       token ? undefined : [TAGS.categories],  // no shared cache for auth'd responses
-    revalidate: token ? 0         : 600,                 // guest: 10 min  |  user: no-store
+    tags: token ? undefined : [TAGS.categories],
+    revalidate: token ? 0 : 600,
   });
+}
+
+/* ── Nav categories (catSubCategory) ────────────────────────── */
+
+export interface NavSubCategory {
+  id: number;
+  name: string;
+  category_id: number;
+  image_path: string;
+  image_full_path: string;
+}
+
+export interface NavCategory {
+  id: number;
+  name: string;
+  image_path: string;
+  image_full_path: string;
+  subcategory: NavSubCategory[];
+}
+
+const NAV_CAT_URL = "https://admin.tallidrinks.com/api/guest/catSubCategory";
+
+/**
+ * Fetch category + subcategory tree for the navigation bar.
+ * Cached for 1 hour — category taxonomy changes rarely.
+ * Called once per request from the root layout (server-side).
+ */
+export async function getNavCategories(): Promise<NavCategory[]> {
+  const res = await fetch(NAV_CAT_URL, {
+    next: { revalidate: 3600, tags: [TAGS.categories] },
+  });
+  if (!res.ok) throw new Error(`catSubCategory API ${res.status}`);
+  const json = await res.json();
+  if (json.code !== 1) throw new Error(json.message ?? "catSubCategory error");
+  return json.data as NavCategory[];
 }
