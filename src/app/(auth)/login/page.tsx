@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -16,13 +16,11 @@ function validate(fields: Fields): FieldErrors {
   } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fields.email)) {
     errors.email = "Enter a valid email address.";
   }
-  if (!fields.password) {
-    errors.password = "Password is required.";
-  }
+  if (!fields.password) errors.password = "Password is required.";
   return errors;
 }
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect") || "/";
@@ -85,49 +83,20 @@ export default function LoginPage() {
       </div>
 
       <form onSubmit={handleSubmit} noValidate className="space-y-4">
-        {/* Email */}
         <div>
           <label className="block text-sm font-medium text-[#1D1D1D] mb-1.5">Email address</label>
-          <input
-            type="email"
-            name="email"
-            value={form.email}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            placeholder="you@example.com"
-            autoComplete="email"
-            className={fieldClass("email")}
-          />
-          {touched.email && fieldErrors.email && (
-            <p className="mt-1 text-xs text-red-500">{fieldErrors.email}</p>
-          )}
+          <input type="email" name="email" value={form.email} onChange={handleChange} onBlur={handleBlur} placeholder="you@example.com" autoComplete="email" className={fieldClass("email")} />
+          {touched.email && fieldErrors.email && <p className="mt-1 text-xs text-red-500">{fieldErrors.email}</p>}
         </div>
 
-        {/* Password */}
         <div>
           <div className="flex items-center justify-between mb-1.5">
             <label className="text-sm font-medium text-[#1D1D1D]">Password</label>
-            <Link href="/forgot-password" className="text-xs text-[#006B4D] hover:underline">
-              Forgot password?
-            </Link>
+            <Link href="/forgot-password" className="text-xs text-[#006B4D] hover:underline">Forgot password?</Link>
           </div>
           <div className="relative">
-            <input
-              type={showPass ? "text" : "password"}
-              name="password"
-              value={form.password}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              placeholder="Enter your password"
-              autoComplete="current-password"
-              className={`${fieldClass("password")} pr-12`}
-            />
-            <button
-              type="button"
-              onClick={() => setShowPass((v) => !v)}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              aria-label={showPass ? "Hide password" : "Show password"}
-            >
+            <input type={showPass ? "text" : "password"} name="password" value={form.password} onChange={handleChange} onBlur={handleBlur} placeholder="Enter your password" autoComplete="current-password" className={`${fieldClass("password")} pr-12`} />
+            <button type="button" onClick={() => setShowPass((v) => !v)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600" aria-label={showPass ? "Hide password" : "Show password"}>
               {showPass ? (
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                   <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19M1 1l22 22" strokeLinecap="round" strokeLinejoin="round"/>
@@ -140,12 +109,9 @@ export default function LoginPage() {
               )}
             </button>
           </div>
-          {touched.password && fieldErrors.password && (
-            <p className="mt-1 text-xs text-red-500">{fieldErrors.password}</p>
-          )}
+          {touched.password && fieldErrors.password && <p className="mt-1 text-xs text-red-500">{fieldErrors.password}</p>}
         </div>
 
-        {/* API error */}
         {apiError && (
           <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2" className="flex-shrink-0">
@@ -155,11 +121,7 @@ export default function LoginPage() {
           </div>
         )}
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full py-3.5 bg-[#006B4D] hover:bg-[#005a3f] active:scale-[0.99] text-white font-semibold text-sm rounded-xl transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-2"
-        >
+        <button type="submit" disabled={loading} className="w-full py-3.5 bg-[#006B4D] hover:bg-[#005a3f] active:scale-[0.99] text-white font-semibold text-sm rounded-xl transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-2">
           {loading && <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
           {loading ? "Signing in…" : "Sign In"}
         </button>
@@ -167,13 +129,18 @@ export default function LoginPage() {
 
       <p className="text-center text-sm text-[#1D1D1D80] mt-8">
         Don&apos;t have an account?{" "}
-        <Link
-          href={`/signup${redirect !== "/" ? `?redirect=${encodeURIComponent(redirect)}` : ""}`}
-          className="text-[#006B4D] font-semibold hover:underline"
-        >
+        <Link href={`/signup${redirect !== "/" ? `?redirect=${encodeURIComponent(redirect)}` : ""}`} className="text-[#006B4D] font-semibold hover:underline">
           Create one
         </Link>
       </p>
     </>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
   );
 }

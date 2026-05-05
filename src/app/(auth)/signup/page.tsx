@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -57,7 +57,7 @@ const EyeIcon = ({ visible }: { visible: boolean }) =>
     </svg>
   );
 
-export default function SignupPage() {
+function SignupForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect") || "/";
@@ -150,55 +150,25 @@ export default function SignupPage() {
       </div>
 
       <form onSubmit={handleSubmit} noValidate className="space-y-4">
-        {/* First name + Last name */}
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="block text-sm font-medium text-[#1D1D1D] mb-1.5">First name</label>
-            <input
-              type="text"
-              name="first_name"
-              value={form.first_name}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              placeholder="First name"
-              autoComplete="given-name"
-              className={fc("first_name")}
-            />
+            <input type="text" name="first_name" value={form.first_name} onChange={handleChange} onBlur={handleBlur} placeholder="First name" autoComplete="given-name" className={fc("first_name")} />
             <FieldErr name="first_name" />
           </div>
           <div>
             <label className="block text-sm font-medium text-[#1D1D1D] mb-1.5">Last name</label>
-            <input
-              type="text"
-              name="last_name"
-              value={form.last_name}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              placeholder="Last name"
-              autoComplete="family-name"
-              className={fc("last_name")}
-            />
+            <input type="text" name="last_name" value={form.last_name} onChange={handleChange} onBlur={handleBlur} placeholder="Last name" autoComplete="family-name" className={fc("last_name")} />
             <FieldErr name="last_name" />
           </div>
         </div>
 
-        {/* Email */}
         <div>
           <label className="block text-sm font-medium text-[#1D1D1D] mb-1.5">Email address</label>
-          <input
-            type="email"
-            name="email"
-            value={form.email}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            placeholder="you@example.com"
-            autoComplete="email"
-            className={fc("email")}
-          />
+          <input type="email" name="email" value={form.email} onChange={handleChange} onBlur={handleBlur} placeholder="you@example.com" autoComplete="email" className={fc("email")} />
           <FieldErr name="email" />
         </div>
 
-        {/* Mobile */}
         <div>
           <label className="block text-sm font-medium text-[#1D1D1D] mb-1.5">Mobile number</label>
           <div className="flex gap-2">
@@ -206,65 +176,33 @@ export default function SignupPage() {
               <span>🇮🇳</span>
               <span className="text-gray-500">+91</span>
             </div>
-            <input
-              type="tel"
-              name="mobile_number"
-              value={form.mobile_number}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              placeholder="98765 43210"
-              autoComplete="tel"
-              className={`flex-1 ${fc("mobile_number")}`}
-            />
+            <input type="tel" name="mobile_number" value={form.mobile_number} onChange={handleChange} onBlur={handleBlur} placeholder="98765 43210" autoComplete="tel" className={`flex-1 ${fc("mobile_number")}`} />
           </div>
           <FieldErr name="mobile_number" />
         </div>
 
-        {/* Password */}
         <div>
           <label className="block text-sm font-medium text-[#1D1D1D] mb-1.5">Password</label>
           <div className="relative">
-            <input
-              type={showPass ? "text" : "password"}
-              name="password"
-              value={form.password}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              placeholder="Min. 8 characters"
-              autoComplete="new-password"
-              className={`${fc("password")} pr-12`}
-            />
-            <button type="button" onClick={() => setShowPass((v) => !v)}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+            <input type={showPass ? "text" : "password"} name="password" value={form.password} onChange={handleChange} onBlur={handleBlur} placeholder="Min. 8 characters" autoComplete="new-password" className={`${fc("password")} pr-12`} />
+            <button type="button" onClick={() => setShowPass((v) => !v)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
               <EyeIcon visible={showPass} />
             </button>
           </div>
           <FieldErr name="password" />
         </div>
 
-        {/* Confirm password */}
         <div>
           <label className="block text-sm font-medium text-[#1D1D1D] mb-1.5">Confirm password</label>
           <div className="relative">
-            <input
-              type={showConfirm ? "text" : "password"}
-              name="confirm"
-              value={form.confirm}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              placeholder="Re-enter your password"
-              autoComplete="new-password"
-              className={`${fc("confirm")} pr-12`}
-            />
-            <button type="button" onClick={() => setShowConfirm((v) => !v)}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+            <input type={showConfirm ? "text" : "password"} name="confirm" value={form.confirm} onChange={handleChange} onBlur={handleBlur} placeholder="Re-enter your password" autoComplete="new-password" className={`${fc("confirm")} pr-12`} />
+            <button type="button" onClick={() => setShowConfirm((v) => !v)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
               <EyeIcon visible={showConfirm} />
             </button>
           </div>
           <FieldErr name="confirm" />
         </div>
 
-        {/* Terms */}
         <div>
           <label className="flex items-start gap-3 cursor-pointer">
             <div className="relative mt-0.5 flex-shrink-0">
@@ -287,7 +225,6 @@ export default function SignupPage() {
           {termsError && <p className="mt-1 text-xs text-red-500">{termsError}</p>}
         </div>
 
-        {/* API error */}
         {apiError && (
           <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2" className="flex-shrink-0">
@@ -297,11 +234,7 @@ export default function SignupPage() {
           </div>
         )}
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full py-3.5 bg-[#006B4D] hover:bg-[#005a3f] active:scale-[0.99] text-white font-semibold text-sm rounded-xl transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-2"
-        >
+        <button type="submit" disabled={loading} className="w-full py-3.5 bg-[#006B4D] hover:bg-[#005a3f] active:scale-[0.99] text-white font-semibold text-sm rounded-xl transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-2">
           {loading && <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
           {loading ? "Creating account…" : "Create Account"}
         </button>
@@ -309,13 +242,18 @@ export default function SignupPage() {
 
       <p className="text-center text-sm text-[#1D1D1D80] mt-8">
         Already have an account?{" "}
-        <Link
-          href={`/login${redirect !== "/" ? `?redirect=${encodeURIComponent(redirect)}` : ""}`}
-          className="text-[#006B4D] font-semibold hover:underline"
-        >
+        <Link href={`/login${redirect !== "/" ? `?redirect=${encodeURIComponent(redirect)}` : ""}`} className="text-[#006B4D] font-semibold hover:underline">
           Sign in
         </Link>
       </p>
     </>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense>
+      <SignupForm />
+    </Suspense>
   );
 }
