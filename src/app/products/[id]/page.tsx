@@ -1,5 +1,6 @@
 import type { Metadata }   from "next";
 import { notFound }        from "next/navigation";
+import { cookies }         from "next/headers";
 import ProductDetail       from "@/components/products/ProductDetail";
 import { getProductDetail } from "@/lib/api/product-detail";
 
@@ -39,7 +40,15 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function ProductDetailPage({ params }: PageProps) {
   const { id } = await params;
 
-  const data = await getProductDetail({ Product_id: id }).catch(() => null);
+  const cookieStore = await cookies();
+  const storeId = cookieStore.get("talli_store_id")?.value || undefined;
+  const city    = cookieStore.get("talli_city")?.value    || undefined;
+
+  const data = await getProductDetail({
+    Product_id: id,
+    store_id:   storeId,
+    city,
+  }).catch(() => null);
 
   if (!data) notFound();
 

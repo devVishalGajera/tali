@@ -5,13 +5,18 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useLocation } from "../modals/LocationProvider";
 import { useCart } from "../modals/CartProvider";
+import { useAuth } from "../auth/AuthProvider";
+import { getDisplayName } from "@/lib/api/auth";
 
 const Header = () => {
-  const { location, showModal } = useLocation();
-  const { items, openDrawer }   = useCart();
-  const cartCount               = items.reduce((s, i) => s + i.quantity, 0);
-  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const { city, showModal }             = useLocation();
+  const { items, openDrawer }           = useCart();
+  const { isAuthenticated, user, logout } = useAuth();
+  const cartCount                       = items.reduce((s, i) => s + i.quantity, 0);
+  const [openDropdown,    setOpenDropdown]    = useState<string | null>(null);
+  const [userMenuOpen,    setUserMenuOpen]    = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
 
   const categories = [
     {
@@ -102,16 +107,14 @@ const Header = () => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setOpenDropdown(null);
       }
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setUserMenuOpen(false);
+      }
     };
 
-    if (openDropdown) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [openDropdown]);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handleCategoryClick = (categoryName: string) => {
     setOpenDropdown(openDropdown === categoryName ? null : categoryName);
@@ -148,7 +151,7 @@ const Header = () => {
               </span>
               <div className="flex items-center gap-0.5 sm:gap-1">
                 <span className="text-sm sm:text-base md:text-[20px] font-medium text-[#1D1D1D] leading-tight">
-                  {location}
+                  {city || "Select Location"}
                 </span>
               </div>
             </div>
@@ -191,15 +194,64 @@ const Header = () => {
           </div>
 
           {/* Account */}
-          <div className="cursor-pointer w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 relative transition-transform duration-300 hover:scale-110 active:scale-95">
-            <Image
-              src="/assets/header/icons/userIcon.svg"
-              alt="Account"
-              width={24}
-              height={24}
-              className="w-full h-full transition-opacity duration-300 hover:opacity-80"
-            />
-          </div>
+          {isAuthenticated ? (
+            <div className="relative" ref={userMenuRef}>
+              <button
+                onClick={() => setUserMenuOpen((v) => !v)}
+                className="w-8 h-8 rounded-full bg-[#006B4D] text-white text-xs font-bold flex items-center justify-center hover:bg-[#005a3f] transition-colors"
+                aria-label="Account menu"
+              >
+                {user?.first_name?.charAt(0).toUpperCase() ?? "U"}
+              </button>
+
+              {userMenuOpen && (
+                <div className="absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-xl border border-gray-100 py-1.5 z-50">
+                  <div className="px-4 py-2.5 border-b border-gray-100">
+                    <p className="text-sm font-semibold text-[#1D1D1D] truncate">
+                      {user ? getDisplayName(user) : ""}
+                    </p>
+                    <p className="text-xs text-[#1D1D1D60] truncate">{user?.email}</p>
+                  </div>
+                  {[
+                    { label: "My Profile",   href: "/profile"  },
+                    { label: "My Orders",    href: "/orders"   },
+                    { label: "My Wishlist",  href: "/wishlist" },
+                  ].map(({ label, href }) => (
+                    <Link
+                      key={label}
+                      href={href}
+                      onClick={() => setUserMenuOpen(false)}
+                      className="block px-4 py-2 text-sm text-[#1D1D1D] hover:bg-gray-50 transition-colors"
+                    >
+                      {label}
+                    </Link>
+                  ))}
+                  <div className="border-t border-gray-100 mt-1 pt-1">
+                    <button
+                      onClick={() => { logout(); setUserMenuOpen(false); }}
+                      className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-50 transition-colors"
+                    >
+                      Sign Out
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <Link
+              href="/login"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#006B4D] text-[#006B4D] text-xs font-semibold hover:bg-[#006B4D] hover:text-white transition-all"
+            >
+              <Image
+                src="/assets/header/icons/userIcon.svg"
+                alt="Account"
+                width={16}
+                height={16}
+                className="w-4 h-4"
+              />
+              <span className="hidden sm:inline">Sign In</span>
+            </Link>
+          )}
 
           {/* Cart */}
           <div

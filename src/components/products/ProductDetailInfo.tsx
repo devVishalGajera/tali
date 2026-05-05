@@ -1,8 +1,9 @@
 "use client";
 
-import { useState }        from "react";
-import Image               from "next/image";
-import { useCart }         from "@/components/modals/CartProvider";
+import { useState } from "react";
+import Image from "next/image";
+import { useCart } from "@/components/modals/CartProvider";
+import WishlistButton from "@/components/shared/WishlistButton";
 import type { ProductVolume } from "@/lib/api/product-detail";
 
 interface Props {
@@ -37,13 +38,14 @@ export default function ProductDetailInfo({
   const handleAddToCart = () => {
     if (!selectedVolume) return;
     addToCart({
-      id:         productId,
+      id:                      productId,
+      store_product_volume_id: selectedVolume.store_product_volume_id ?? undefined,
       name,
       price:      price ?? "—",
       priceValue: selectedVolume.price ? parseFloat(selectedVolume.price) : 0,
       image:      "/assets/images/bottles/single-bottle.png",
       size:       selectedVolume.volume || undefined,
-      quantity:   1,
+      quantity:   quantity,
     });
     setAddedToCart(true);
     setTimeout(() => setAddedToCart(false), 2000);
@@ -143,7 +145,7 @@ export default function ProductDetailInfo({
         </div>
       </div>
 
-      {/* Social share + Add to cart */}
+      {/* Social share + Add to cart + Wishlist */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-[30px]">
         {/* Social */}
         <div className="flex items-center justify-center lg:justify-start gap-3 sm:gap-5">
@@ -167,15 +169,22 @@ export default function ProductDetailInfo({
           ))}
         </div>
 
-        {/* Add to cart */}
-        <button
-          onClick={handleAddToCart}
-          className={`w-full py-2 sm:py-3 px-5 rounded-md font-semibold text-base sm:text-lg transition-all cursor-pointer ${
-            addedToCart ? "bg-[#005a3f] text-white" : "bg-[#006B4D] text-white"
-          }`}
-        >
-          {addedToCart ? "Added to Cart ✓" : "Add To Cart"}
-        </button>
+        {/* Add to cart + Wishlist */}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleAddToCart}
+            className={`flex-1 py-2 sm:py-3 px-5 rounded-md font-semibold text-base sm:text-lg transition-all cursor-pointer ${
+              addedToCart ? "bg-[#005a3f] text-white" : "bg-[#006B4D] text-white"
+            }`}
+          >
+            {addedToCart ? "Added to Cart ✓" : "Add To Cart"}
+          </button>
+          <WishlistButton
+            productId={productId}
+            storeProductVolumeId={selectedVolume?.store_product_volume_id}
+            size="lg"
+          />
+        </div>
       </div>
     </div>
   );

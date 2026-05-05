@@ -1,101 +1,174 @@
 "use client";
 
-import { createContext, useContext, useState, useCallback, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
+import { addToCartApi, removeFromCartApi, getCartApi } from "@/lib/api/cart";
+import type { CartApiItem } from "@/lib/api/cart";
+
+/* ── Types ──────────────────────────────────────────────────── */
 
 export interface CartProduct {
-  id: number;
-  name: string;
-  price: string;
-  priceValue: number;
-  image: string;
-  size?: string;
-  quantity: number;
+  id:                       number;   // product id
+  cartItemId?:              number;   // API cart-row id (used for delete)
+  store_product_volume_id?: number;   // used for add-to-cart API call
+  name:                     string;
+  price:                    string;
+  priceValue:               number;
+  image:                    string;
+  size?:                    string;
+  quantity:                 number;
 }
 
 interface CartItem extends CartProduct {}
 
 interface CartContextType {
-  items: CartItem[];
-  lastAdded: CartProduct | null;
-  isModalOpen: boolean;
-  isDrawerOpen: boolean;
-  addToCart: (product: CartProduct) => void;
+  items:          CartItem[];
+  lastAdded:      CartProduct | null;
+  isModalOpen:    boolean;
+  isDrawerOpen:   boolean;
+  isLoading:      boolean;
+  addToCart:      (product: CartProduct) => void;
   removeFromCart: (id: number) => void;
-  closeModal: () => void;
-  openDrawer: () => void;
-  closeDrawer: () => void;
+  updateQuantity: (id: number, quantity: number) => void;
+  closeModal:     () => void;
+  openDrawer:     () => void;
+  closeDrawer:    () => void;
 }
+
+/* ── Context ─────────────────────────────────────────────────── */
 
 const CartContext = createContext<CartContextType | null>(null);
 
+/* ── Token helper ────────────────────────────────────────────── */
+
+function getAuthToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem("talli_auth_token");
+}
+
+/* ── Map API cart item → CartItem ────────────────────────────── */
+
+function fromApiItem(item: CartApiItem): CartItem {
+  const priceValue = parseFloat(item.price) || 0;
+  return {
+    id:                      item.product_id,
+    cartItemId:              item.id,
+    store_product_volume_id: item.store_product_volume_id,
+    name:                    item.product_name,
+    price:                   `₹${priceValue.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`,
+    priceValue,
+    image:                   item.image_full_path || "/assets/images/bottles/single-bottle.png",
+    size:                    item.volume || undefined,
+    quantity:                item.quantity,
+  };
+}
+
+/* ── Provider ────────────────────────────────────────────────── */
+
 export const CartProvider = ({ children }: { children: ReactNode }) => {
-  const [items, setItems] = useState<CartItem[]>([
-    {
-      id: 101,
-      name: "The Wrangler Zinfandel",
-      price: "₹2,356",
-      priceValue: 2356,
-      image: "/assets/images/bottles/single-bottle.png",
-      size: "750ml",
-      quantity: 2,
-    },
-    {
-      id: 102,
-      name: "Burgundy Red Wine",
-      price: "₹1,899",
-      priceValue: 1899,
-      image: "/assets/images/bottles/single-bottle.png",
-      size: "750ml",
-      quantity: 1,
-    },
-    {
-      id: 103,
-      name: "Glen Scotia 18 Year",
-      price: "₹4,200",
-      priceValue: 4200,
-      image: "/assets/images/bottles/single-bottle.png",
-      size: "1L",
-      quantity: 1,
-    },
-    {
-      id: 104,
-      name: "Bombay Sapphire Gin",
-      price: "₹3,150",
-      priceValue: 3150,
-      image: "/assets/images/bottles/single-bottle.png",
-      size: "700ml",
-      quantity: 2,
-    },
-  ]);
-  const [lastAdded, setLastAdded]     = useState<CartProduct | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [items,        setItems]        = useState<CartItem[]>([]);
+  const [lastAdded,    setLastAdded]    = useState<CartProduct | null>(null);
+  const [isModalOpen,  setIsModalOpen]  = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isLoading,    setIsLoading]    = useState(false);
+
+  /* Fetch real cart on mount when user is logged in */
+  useEffect(() => {
+    const token = getAuthToken();
+    if (!token) return;
+
+    const storeId = localStorage.getItem("talli_store_id") ?? undefined;
+    const city    = localStorage.getItem("talli_city")     ?? undefined;
+
+    setIsLoading(true);
+    getCartApi({ token, store_id: storeId ?? undefined, city: city ?? undefined })
+      .then((res) => {
+        if (res.code === 1 && Array.isArray(res.data)) {
+          setItems(res.data.map(fromApiItem));
+        }
+      })
+      .catch(() => { /* silent — keep empty cart */ })
+      .finally(() => setIsLoading(false));
+  }, []);
 
   const addToCart = useCallback((product: CartProduct) => {
+    /* Optimistically update local state first for instant UI feedback */
     setItems((prev) => {
       const existing = prev.find((i) => i.id === product.id);
       if (existing) {
         return prev.map((i) =>
-          i.id === product.id ? { ...i, quantity: i.quantity + 1 } : i
+          i.id === product.id ? { ...i, quantity: i.quantity + (product.quantity || 1) } : i,
         );
       }
-      return [...prev, { ...product, quantity: 1 }];
+      return [...prev, { ...product }];
     });
     setLastAdded(product);
     setIsModalOpen(true);
+
+    /* Sync with API if logged in */
+    const token = getAuthToken();
+    if (!token || !product.store_product_volume_id) return;
+
+    addToCartApi({
+      store_product_volume_id: product.store_product_volume_id,
+      quantity:                product.quantity || 1,
+      token,
+    })
+      .then((res) => {
+        if (res.code !== 1) return;
+        /* Re-fetch to get the real cartItemId for future deletes */
+        const storeId = localStorage.getItem("talli_store_id") ?? undefined;
+        const city    = localStorage.getItem("talli_city")     ?? undefined;
+        return getCartApi({ token, store_id: storeId ?? undefined, city: city ?? undefined });
+      })
+      .then((cart) => {
+        if (cart?.code === 1 && Array.isArray(cart.data)) {
+          setItems(cart.data.map(fromApiItem));
+        }
+      })
+      .catch(() => { /* keep optimistic state on error */ });
   }, []);
 
-  const removeFromCart = useCallback((id: number) => {
-    setItems((prev) => prev.filter((i) => i.id !== id));
+  const removeFromCart = useCallback((productId: number) => {
+    /* Optimistically remove */
+    const target = items.find((i) => i.id === productId);
+    setItems((prev) => prev.filter((i) => i.id !== productId));
+
+    /* Sync with API if logged in and we have the cart-row id */
+    const token = getAuthToken();
+    if (!token || !target?.cartItemId) return;
+
+    removeFromCartApi({ cartItemId: target.cartItemId, token }).catch(() => {
+      /* Rollback on error */
+      setItems((prev) => [...prev, target]);
+    });
+  }, [items]);
+
+  const updateQuantity = useCallback((productId: number, quantity: number) => {
+    if (quantity < 1) return;
+    setItems((prev) =>
+      prev.map((i) => (i.id === productId ? { ...i, quantity } : i)),
+    );
   }, []);
 
-  const closeModal  = useCallback(() => setIsModalOpen(false), []);
-  const openDrawer  = useCallback(() => setIsDrawerOpen(true), []);
+  const closeModal  = useCallback(() => setIsModalOpen(false),  []);
+  const openDrawer  = useCallback(() => setIsDrawerOpen(true),  []);
   const closeDrawer = useCallback(() => setIsDrawerOpen(false), []);
 
   return (
     <CartContext.Provider
-      value={{ items, lastAdded, isModalOpen, isDrawerOpen, addToCart, removeFromCart, closeModal, openDrawer, closeDrawer }}
+      value={{
+        items,
+        lastAdded,
+        isModalOpen,
+        isDrawerOpen,
+        isLoading,
+        addToCart,
+        removeFromCart,
+        updateQuantity,
+        closeModal,
+        openDrawer,
+        closeDrawer,
+      }}
     >
       {children}
     </CartContext.Provider>
@@ -104,6 +177,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
 export const useCart = () => {
   const ctx = useContext(CartContext);
-  if (!ctx) throw new Error("useCart must be used inside CartProvider");
+  if (!ctx) throw new Error("useCart must be inside CartProvider");
   return ctx;
 };

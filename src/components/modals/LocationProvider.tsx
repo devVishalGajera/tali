@@ -1,202 +1,155 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, startTransition, ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  startTransition,
+  ReactNode,
+} from "react";
 import LocationModal from "./LocationModal";
+import type { CitiesApiData } from "@/lib/api/cities";
 
-interface LocationContextType {
-  location: string;
-  showModal: () => void;
-  hideModal: () => void;
-  isModalOpen: boolean;
-  updateLocation: (city: string, pincode?: string) => void;
+/* ── Types ───────────────────────────────────────────────────── */
+
+export interface LocationState {
+  city:    string;
+  storeId: number | null;
+  lat:     string | null;
+  long:    string | null;
 }
+
+interface LocationContextType extends LocationState {
+  isModalOpen:    boolean;
+  showModal:      () => void;
+  hideModal:      () => void;
+  updateLocation: (state: LocationState) => void;
+}
+
+/* ── Context ─────────────────────────────────────────────────── */
 
 const LocationContext = createContext<LocationContextType | undefined>(undefined);
 
 export const useLocation = () => {
-  const context = useContext(LocationContext);
-  if (!context) {
-    throw new Error("useLocation must be used within LocationProvider");
-  }
-  return context;
+  const ctx = useContext(LocationContext);
+  if (!ctx) throw new Error("useLocation must be used within LocationProvider");
+  return ctx;
 };
 
-interface LocationProviderProps {
-  children: ReactNode;
+/* ── Storage + cookie helpers ────────────────────────────────── */
+
+const STORAGE_KEY   = "talli_location";
+const COOKIE_MAX_AGE = 60 * 60 * 24 * 30; // 30 days
+
+function loadFromStorage(): LocationState | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as LocationState) : null;
+  } catch {
+    return null;
+  }
 }
 
-export const LocationProvider = ({ children }: LocationProviderProps) => {
-  const [location, setLocation] = useState<string>("");
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
-  const [isDetecting, setIsDetecting] = useState(false);
+function syncCookies(state: LocationState) {
+  if (typeof document === "undefined") return;
+  const opts = `; path=/; max-age=${COOKIE_MAX_AGE}; SameSite=Lax`;
+  document.cookie = `talli_store_id=${encodeURIComponent(state.storeId ?? "")}${opts}`;
+  document.cookie = `talli_city=${encodeURIComponent(state.city ?? "")}${opts}`;
+}
 
-  // Reverse geocode coordinates to get city name
-  const reverseGeocode = async (lat: number, lon: number): Promise<string | null> => {
-    try {
-      // Using OpenStreetMap Nominatim API (free, no API key required)
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&addressdetails=1`,
-        {
-          headers: {
-            "User-Agent": "TalliDrinks/1.0", // Required by Nominatim
-          },
-        }
-      );
+function saveToStorage(state: LocationState) {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  syncCookies(state);
+}
 
-      if (!response.ok) {
-        throw new Error("Reverse geocoding failed");
-      }
+/* ── Provider ────────────────────────────────────────────────── */
 
-      const data = await response.json();
-      
-      // Try to get city from address components
-      const address = data.address;
-      if (address) {
-        // For Indian addresses, try different fields
-        return (
-          address.city ||
-          address.town ||
-          address.village ||
-          address.county ||
-          address.state_district ||
-          address.state ||
-          null
-        );
-      }
+export const LocationProvider = ({
+  children,
+  citiesData,
+}: {
+  children:   ReactNode;
+  citiesData: CitiesApiData | null;
+}) => {
+  const [state, setState]           = useState<LocationState>({ city: "", storeId: null, lat: null, long: null });
+  const [isModalOpen, setModalOpen] = useState(false);
+  const [isMounted, setMounted]     = useState(false);
 
-      return null;
-    } catch (error) {
-      console.error("Reverse geocoding error:", error);
-      return null;
-    }
-  };
-
-  // Auto-detect location using browser geolocation
-  const detectLocation = async () => {
-    if (!navigator.geolocation) {
-      console.log("Geolocation is not supported by this browser");
-      return false;
-    }
-
-    setIsDetecting(true);
-
-    return new Promise<boolean>((resolve) => {
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          try {
-            const city = await reverseGeocode(position.coords.latitude, position.coords.longitude);
-            
-            if (city) {
-              setLocation(city);
-              if (typeof window !== "undefined") {
-                localStorage.setItem("userLocation", city);
-                localStorage.setItem("locationMethod", "auto");
-              }
-              setIsDetecting(false);
-              resolve(true);
-            } else {
-              setIsDetecting(false);
-              resolve(false);
-            }
-          } catch (error) {
-            console.error("Location detection error:", error);
-            setIsDetecting(false);
-            resolve(false);
-          }
-        },
-        (error) => {
-          console.log("Geolocation error:", error.message);
-          setIsDetecting(false);
-          resolve(false);
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 0,
-        }
-      );
-    });
-  };
-
-  // Check localStorage and auto-detect on mount
+  /* On mount — restore saved state or prompt user */
   useEffect(() => {
     startTransition(() => {
-      setIsMounted(true);
-
-      if (typeof window !== "undefined") {
-        const savedLocation = localStorage.getItem("userLocation");
-        
-        if (savedLocation) {
-          setLocation(savedLocation);
-          // Don't show modal if location is already saved
-          setIsModalOpen(false);
+      setMounted(true);
+      const saved = loadFromStorage();
+      if (saved?.city || saved?.storeId) {
+        setState(saved);
+        syncCookies(saved); // keep cookies in sync on every mount
+      } else {
+        /* Try geolocation silently — if it fails or is denied, show modal */
+        if (typeof navigator !== "undefined" && navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            async (pos) => {
+              const lat  = String(pos.coords.latitude);
+              const long = String(pos.coords.longitude);
+              try {
+                const res  = await fetch("/api/nearest-store", {
+                  method:  "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body:    JSON.stringify({ lat, long }),
+                });
+                const data = await res.json() as { storeId: number | null };
+                const next: LocationState = { city: "", storeId: data.storeId, lat, long };
+                setState(next);
+                saveToStorage(next);
+              } catch {
+                setModalOpen(true);
+              }
+            },
+            () => setModalOpen(true),
+            { timeout: 8000 },
+          );
         } else {
-          // Try to auto-detect location
-          detectLocation().then((success) => {
-            if (!success) {
-              // If detection fails, show modal
-              setIsModalOpen(true);
-            }
-          });
+          setModalOpen(true);
         }
       }
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Prevent body scroll when modal is open
+  /* Lock body scroll when modal is open */
   useEffect(() => {
-    if (isModalOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "unset";
-    }
-    return () => {
-      document.body.style.overflow = "unset";
-    };
+    document.body.style.overflow = isModalOpen ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
   }, [isModalOpen]);
 
-  const showModal = () => setIsModalOpen(true);
-  const hideModal = () => setIsModalOpen(false);
-
-  const updateLocation = (city: string, pincode?: string) => {
-    const locationValue = city || (pincode ? `Pincode: ${pincode}` : "");
-    setLocation(locationValue);
-    
-    if (typeof window !== "undefined") {
-      localStorage.setItem("userLocation", locationValue);
-      if (city) {
-        localStorage.setItem("locationMethod", "manual_city");
-      } else if (pincode) {
-        localStorage.setItem("locationMethod", "manual_pincode");
-        localStorage.setItem("userPincode", pincode);
-      }
-    }
-    
-    hideModal();
+  const updateLocation = (next: LocationState) => {
+    setState(next);
+    saveToStorage(next);
+    setModalOpen(false);
   };
 
   return (
     <LocationContext.Provider
       value={{
-        location: location || "Select Location",
-        showModal,
-        hideModal,
+        ...state,
         isModalOpen,
+        showModal:  () => setModalOpen(true),
+        hideModal:  () => setModalOpen(false),
         updateLocation,
       }}
     >
       {children}
-      {/* Only render modal after client-side hydration */}
       {isMounted && (
         <LocationModal
           isOpen={isModalOpen}
-          onClose={hideModal}
+          onClose={() => setModalOpen(false)}
           onApply={updateLocation}
-          currentCity={location && !location.startsWith("Pincode:") ? location : undefined}
+          currentCity={state.city}
+          citiesData={citiesData}
         />
       )}
     </LocationContext.Provider>
   );
 };
-

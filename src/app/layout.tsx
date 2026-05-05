@@ -6,8 +6,11 @@ import Footer from "@/components/layout/Footer";
 import { AgeVerificationProvider } from "@/components/modals/AgeVerificationProvider";
 import { LocationProvider } from "@/components/modals/LocationProvider";
 import { CartProvider } from "@/components/modals/CartProvider";
+import { AuthProvider } from "@/components/auth/AuthProvider";
 import CartModal from "@/components/modals/CartModal";
 import CartDrawer from "@/components/modals/CartDrawer";
+import { getCities } from "@/lib/api/cities";
+import MainShell from "@/components/layout/MainShell";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -57,11 +60,13 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const citiesData = await getCities().catch(() => null);
+
   return (
     <html lang="en">
       <body
@@ -69,15 +74,20 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <AgeVerificationProvider>
-          <LocationProvider>
-            <CartProvider>
-              <Header />
-              {children}
-              <Footer />
-              <CartModal />
-              <CartDrawer />
-            </CartProvider>
-          </LocationProvider>
+          <AuthProvider>
+            <LocationProvider citiesData={citiesData}>
+              <CartProvider>
+                <MainShell
+                  header={<Header />}
+                  footer={<Footer />}
+                  cartModal={<CartModal />}
+                  cartDrawer={<CartDrawer />}
+                >
+                  {children}
+                </MainShell>
+              </CartProvider>
+            </LocationProvider>
+          </AuthProvider>
         </AgeVerificationProvider>
       </body>
     </html>

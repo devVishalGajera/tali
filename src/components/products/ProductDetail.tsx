@@ -93,7 +93,7 @@ export default function ProductDetail({ data }: Props) {
       </div>
 
       {/* Food Pairing */}
-      {FoodPairing.foodpairing_product.length > 0 && (
+      {FoodPairing?.foodpairing_product?.length > 0 && (
         <ProductDetailFoodPairing foodPairing={FoodPairing} />
       )}
 
@@ -126,3 +126,4 @@ export default function ProductDetail({ data }: Props) {
     </main>
   );
 }
+  

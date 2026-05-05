@@ -80,8 +80,6 @@ export async function getProducts(params: GetProductsParams = {}): Promise<Produ
     body: form,
     cache: "no-store",
   });
-  console.log("res", res);
-
   if (!res.ok) {
     throw new Error(`Products API ${res.status}: ${await res.text()}`);
   }
@@ -100,16 +98,17 @@ export async function getProducts(params: GetProductsParams = {}): Promise<Produ
 export function toProductCardItem(p: ProductListItem) {
   const priceValue = parseFloat(p.price) || 0;
   return {
-    id: p.id,
-    name: p.name,
-    price: `₹${priceValue.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`,
+    id:                      p.id,
+    name:                    p.name,
+    price:                   `₹${priceValue.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`,
     priceValue,
-    image: p.image_full_path || "/assets/images/bottles/single-bottle.png",
-    size: p.volume || undefined,
-    rating: p.average_rating,
-    ratingCount: typeof p.order_count === "number"
+    image:                   p.image_full_path || "/assets/images/bottles/single-bottle.png",
+    size:                    p.volume || undefined,
+    rating:                  p.average_rating,
+    ratingCount:             typeof p.order_count === "number"
       ? p.order_count
       : parseInt(String(p.order_count)) || 0,
-    isWishlist: p.is_wishlist,
+    isWishlist:              p.is_wishlist,
+    store_product_volume_id: p.store_product_volume_id || undefined,
   };
 }

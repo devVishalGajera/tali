@@ -1,4 +1,5 @@
 import type { Metadata }           from "next";
+import { cookies }                 from "next/headers";
 import ProductListingBanner        from "@/components/products/ProductListingBanner";
 import CategoryTabs                from "@/components/products/CategoryTabs";
 import ProductFiltersSidebar       from "@/components/products/ProductFiltersSidebar";
@@ -67,6 +68,10 @@ export default async function ProductsPage({ searchParams: searchParamsPromise }
   const searchParams = await searchParamsPromise;
   const page = Math.max(1, parseInt(searchParams.page ?? "1") || 1);
 
+  const cookieStore = await cookies();
+  const storeId = cookieStore.get("talli_store_id")?.value || undefined;
+  const city    = cookieStore.get("talli_city")?.value    || undefined;
+
   const [filterOptions, categoriesData] = await Promise.all([
     getFilterOptions().catch(() => null),
     getCategories().catch(() => null),
@@ -84,10 +89,11 @@ export default async function ProductsPage({ searchParams: searchParamsPromise }
     sub_category_id: searchParams.subcats  || undefined,
     brand_id:        searchParams.brands   || undefined,
     term:            searchParams.q        || undefined,
+    store_id:        storeId,
+    city,
     ...resolvePriceRange(searchParams.price, filterOptions?.priceRangeArray ?? []),
   }).catch(() => null);
 
-  console.log("productsData",productsData);
   return (
     <main className="w-full m-0 p-0">
       <ProductListingBanner />
