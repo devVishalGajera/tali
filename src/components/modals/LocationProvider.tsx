@@ -10,20 +10,23 @@ import {
 } from "react";
 import LocationModal from "./LocationModal";
 import type { CitiesApiData } from "@/lib/api/cities";
+import type { NearestStoreResult } from "@/app/api/nearest-store/route";
 
 /* ── Types ───────────────────────────────────────────────────── */
 
 export interface LocationState {
-  city:    string;
+  city: string;
   storeId: number | null;
-  lat:     string | null;
-  long:    string | null;
+  lat: string | null;
+  long: string | null;
+  flag: 1 | 2 | 3 | null;
+  purchaseAllow: boolean;
 }
 
 interface LocationContextType extends LocationState {
-  isModalOpen:    boolean;
-  showModal:      () => void;
-  hideModal:      () => void;
+  isModalOpen: boolean;
+  showModal: () => void;
+  hideModal: () => void;
   updateLocation: (state: LocationState) => void;
 }
 
@@ -39,14 +42,23 @@ export const useLocation = () => {
 
 /* ── Storage + cookie helpers ────────────────────────────────── */
 
-const STORAGE_KEY   = "talli_location";
-const COOKIE_MAX_AGE = 60 * 60 * 24 * 30; // 30 days
+const STORAGE_KEY = "talli_location";
+const COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
 
 function loadFromStorage(): LocationState | null {
   if (typeof window === "undefined") return null;
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as LocationState) : null;
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<LocationState>;
+    return {
+      city: parsed.city ?? "",
+      storeId: parsed.storeId ?? null,
+      lat: parsed.lat ?? null,
+      long: parsed.long ?? null,
+      flag: parsed.flag ?? null,
+      purchaseAllow: parsed.purchaseAllow ?? false,
+    };
   } catch {
     return null;
   }
@@ -65,44 +77,77 @@ function saveToStorage(state: LocationState) {
   syncCookies(state);
 }
 
+function clearStorage() {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(STORAGE_KEY);
+  syncCookies({ city: "", storeId: null, lat: null, long: null, flag: null, purchaseAllow: false });
+}
+
 /* ── Provider ────────────────────────────────────────────────── */
 
 export const LocationProvider = ({
   children,
   citiesData,
 }: {
-  children:   ReactNode;
+  children: ReactNode;
   citiesData: CitiesApiData | null;
 }) => {
-  const [state, setState]           = useState<LocationState>({ city: "", storeId: null, lat: null, long: null });
+  const [state, setState] = useState<LocationState>({
+    city: "", storeId: null, lat: null, long: null, flag: null, purchaseAllow: false,
+  });
   const [isModalOpen, setModalOpen] = useState(false);
-  const [isMounted, setMounted]     = useState(false);
+  const [isMounted, setMounted] = useState(false);
 
-  /* On mount — restore saved state or prompt user */
   useEffect(() => {
     startTransition(() => {
       setMounted(true);
       const saved = loadFromStorage();
       if (saved?.city || saved?.storeId) {
         setState(saved);
-        syncCookies(saved); // keep cookies in sync on every mount
+        syncCookies(saved);
       } else {
-        /* Try geolocation silently — if it fails or is denied, show modal */
         if (typeof navigator !== "undefined" && navigator.geolocation) {
           navigator.geolocation.getCurrentPosition(
             async (pos) => {
-              const lat  = String(pos.coords.latitude);
+              const lat = String(pos.coords.latitude);
               const long = String(pos.coords.longitude);
               try {
-                const res  = await fetch("/api/nearest-store", {
-                  method:  "POST",
+                const res = await fetch("/api/nearest-store", {
+                  method: "POST",
                   headers: { "Content-Type": "application/json" },
-                  body:    JSON.stringify({ lat, long }),
+                  body: JSON.stringify({ lat, long }),
                 });
-                const data = await res.json() as { storeId: number | null };
-                const next: LocationState = { city: "", storeId: data.storeId, lat, long };
-                setState(next);
-                saveToStorage(next);
+                const data = await res.json() as NearestStoreResult;
+
+                let city = data.cityName ?? "";
+                if (data.flag === 1 && !city) {
+                  try {
+                    const geo = await fetch(
+                      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${long}&addressdetails=1`,
+                      { headers: { "User-Agent": "TalliDrinks/1.0" } },
+                    );
+                    const geoData = await geo.json();
+                    const addr = geoData?.address ?? {};
+                    city = addr.city || addr.town || addr.village || addr.county || addr.state_district || "";
+                  } catch { /* ignore */ }
+                }
+
+                const next: LocationState = {
+                  city,
+                  storeId: data.storeId,
+                  lat,
+                  long,
+                  flag: data.flag,
+                  purchaseAllow: data.purchaseAllow,
+                };
+
+                if (data.flag === 3) {
+                  clearStorage();
+                  setState({ ...next, storeId: null, city: "" });
+                } else {
+                  saveToStorage(next);
+                  setState(next);
+                }
               } catch {
                 setModalOpen(true);
               }
@@ -118,15 +163,19 @@ export const LocationProvider = ({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /* Lock body scroll when modal is open */
   useEffect(() => {
     document.body.style.overflow = isModalOpen ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
   }, [isModalOpen]);
 
   const updateLocation = (next: LocationState) => {
-    setState(next);
-    saveToStorage(next);
+    if (next.flag === 3) {
+      clearStorage();
+      setState({ city: "", storeId: null, lat: next.lat, long: next.long, flag: 3, purchaseAllow: false });
+    } else {
+      saveToStorage(next);
+      setState(next);
+    }
     setModalOpen(false);
   };
 
@@ -135,8 +184,8 @@ export const LocationProvider = ({
       value={{
         ...state,
         isModalOpen,
-        showModal:  () => setModalOpen(true),
-        hideModal:  () => setModalOpen(false),
+        showModal: () => setModalOpen(true),
+        hideModal: () => setModalOpen(false),
         updateLocation,
       }}
     >

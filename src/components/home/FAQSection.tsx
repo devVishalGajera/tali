@@ -34,11 +34,11 @@ const FAQSection = () => {
   };
 
   return (
-    <section className="w-full py-12 md:py-16 lg:py-20">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
+    <section className="w-full py-8 md:py-10">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-10">
         {/* Left Side - Image (2/3 width on desktop) */}
         <div className="lg:col-span-2">
-          <div className="relative w-full h-[400px] md:h-[500px] lg:h-[600px] overflow-hidden">
+          <div className="relative w-full h-[280px] md:h-[380px] lg:h-[460px] overflow-hidden">
             <Image
               src="/assets/images/bottles/single-bottle.png"
               alt="Wine bottle with food"
@@ -59,9 +59,9 @@ const FAQSection = () => {
               >
                 <button
                   onClick={() => toggleItem(index)}
-                  className="w-full py-4 md:py-5 flex items-start justify-between gap-4 text-left hover:opacity-80 transition-opacity"
+                  className="w-full py-3 flex items-start justify-between gap-4 text-left hover:opacity-80 transition-opacity"
                 >
-                  <h3 className="text-base md:text-lg font-medium text-[#1D1D1D] flex-1">
+                  <h3 className="text-sm font-medium text-[#1D1D1D] flex-1">
                     {item.question}
                   </h3>
                   <div className="flex-shrink-0 mt-1">
@@ -108,7 +108,7 @@ const FAQSection = () => {
                   }`}
                 >
                   <div className="pb-4 md:pb-5 pr-6">
-                    <p className="text-sm md:text-base text-[#1D1D1D] leading-relaxed">
+                    <p className="text-xs md:text-sm text-[#1D1D1D] leading-relaxed">
                       {item.answer}
                     </p>
                   </div>

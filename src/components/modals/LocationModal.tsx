@@ -3,36 +3,51 @@
 import { useState, useEffect } from "react";
 import type { LocationState } from "./LocationProvider";
 import type { CitiesApiData } from "@/lib/api/cities";
+import type { NearestStoreResult } from "@/app/api/nearest-store/route";
 
 interface Props {
-  isOpen:      boolean;
-  onClose:     () => void;
-  onApply:     (state: LocationState) => void;
+  isOpen: boolean;
+  onClose: () => void;
+  onApply: (state: LocationState) => void;
   currentCity: string;
-  citiesData:  CitiesApiData | null;
+  citiesData: CitiesApiData | null;
 }
 
-async function fetchNearestStore(params: { lat?: string; long?: string; city?: string }): Promise<number | null> {
-  try {
-    const res  = await fetch("/api/nearest-store", {
-      method:  "POST",
-      headers: { "Content-Type": "application/json" },
-      body:    JSON.stringify(params),
-    });
-    const data = await res.json() as { storeId: number | null };
-    return data.storeId;
-  } catch {
-    return null;
-  }
+async function fetchNearestStore(
+  params: { lat?: string; long?: string; city?: string },
+): Promise<NearestStoreResult> {
+  const res = await fetch("/api/nearest-store", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(params),
+  });
+  return res.json() as Promise<NearestStoreResult>;
+}
+
+function buildLocationState(
+  result: NearestStoreResult,
+  displayCity: string,
+  lat: string | null,
+  long: string | null,
+): LocationState {
+  return {
+    city: result.flag === 2 ? (result.cityName ?? displayCity) : displayCity,
+    storeId: result.storeId,
+    lat,
+    long,
+    flag: result.flag,
+    purchaseAllow: result.purchaseAllow,
+  };
 }
 
 const LocationModal = ({ isOpen, onClose, onApply, currentCity, citiesData }: Props) => {
-  const [selectedCity,  setSelectedCity]  = useState(currentCity);
-  const [pincode,       setPincode]       = useState("");
-  const [dropdownOpen,  setDropdownOpen]  = useState(false);
-  const [isLocating,    setLocating]      = useState(false);
-  const [isApplying,    setApplying]      = useState(false);
+  const [selectedCity, setSelectedCity] = useState(currentCity);
+  const [pincode, setPincode] = useState("");
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [isLocating, setLocating] = useState(false);
+  const [isApplying, setApplying] = useState(false);
   const [locationError, setLocationError] = useState("");
+  const [geoPermission, setGeoPermission] = useState<PermissionState | "unsupported">("prompt");
 
   useEffect(() => {
     if (isOpen) {
@@ -43,13 +58,25 @@ const LocationModal = ({ isOpen, onClose, onApply, currentCity, citiesData }: Pr
     }
   }, [isOpen, currentCity]);
 
+  useEffect(() => {
+    if (typeof navigator === "undefined") return;
+    if (!navigator.permissions) {
+      setGeoPermission("unsupported");
+      return;
+    }
+    navigator.permissions.query({ name: "geolocation" as PermissionName })
+      .then((status) => {
+        setGeoPermission(status.state);
+        status.onchange = () => setGeoPermission(status.state);
+      })
+      .catch(() => setGeoPermission("unsupported"));
+  }, []);
 
   if (!isOpen) return null;
 
-  const handleUseMyLocation = () => {
+  const triggerGeolocation = () => {
     if (!navigator.geolocation) {
-      setLocationError("Geolocation not supported by your browser.");
-      setDropdownOpen(false);
+      setLocationError("Geolocation is not supported by your browser.");
       return;
     }
     setLocating(true);
@@ -58,43 +85,65 @@ const LocationModal = ({ isOpen, onClose, onApply, currentCity, citiesData }: Pr
 
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
-        const lat  = String(pos.coords.latitude);
+        const lat = String(pos.coords.latitude);
         const long = String(pos.coords.longitude);
-        const storeId = await fetchNearestStore({ lat, long });
-
-        let city = "";
         try {
-          const geo  = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${long}&addressdetails=1`,
-            { headers: { "User-Agent": "TalliDrinks/1.0" } },
-          );
-          const data = await geo.json();
-          const addr = data?.address ?? {};
-          city = addr.city || addr.town || addr.village || addr.county || addr.state_district || "";
-        } catch { /* ignore */ }
+          const result = await fetchNearestStore({ lat, long });
 
-        setLocating(false);
-        onApply({ city, storeId, lat, long });
+          let city = result.cityName ?? "";
+          if (result.flag === 1 && !city) {
+            try {
+              const geo = await fetch(
+                `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${long}&addressdetails=1`,
+                { headers: { "User-Agent": "TalliDrinks/1.0" } },
+              );
+              const data = await geo.json();
+              const addr = data?.address ?? {};
+              city = addr.city || addr.town || addr.village || addr.county || addr.state_district || "";
+            } catch { /* ignore */ }
+          }
+
+          setLocating(false);
+          onApply(buildLocationState(result, city, lat, long));
+        } catch {
+          setLocating(false);
+          setLocationError("Could not detect your location. Please try again.");
+        }
       },
       (err) => {
         setLocating(false);
-        setLocationError(
-          err.code === 1
-            ? "Location access denied. Please select a city manually."
-            : "Could not detect your location. Please try again.",
-        );
+        if (err.code === 1) {
+          setGeoPermission("denied");
+          setLocationError("Location access denied. Please allow it in your browser settings.");
+        } else {
+          setLocationError("Could not detect your location. Please try again.");
+        }
       },
       { timeout: 10000 },
     );
+  };
+
+  const handleUseMyLocation = () => {
+    if (geoPermission === "denied") {
+      setLocationError("Location access is blocked. Please enable it in your browser settings and reload.");
+      return;
+    }
+    triggerGeolocation();
   };
 
   const handleApply = async () => {
     const city = selectedCity || pincode;
     if (!city) return;
     setApplying(true);
-    const storeId = await fetchNearestStore({ city: selectedCity || undefined });
-    setApplying(false);
-    onApply({ city: selectedCity, storeId, lat: null, long: null });
+    setLocationError("");
+    try {
+      const result = await fetchNearestStore({ city: selectedCity || undefined });
+      onApply(buildLocationState(result, selectedCity, null, null));
+    } catch {
+      setLocationError("Could not verify location. Please try again.");
+    } finally {
+      setApplying(false);
+    }
   };
 
   const selectCity = (city: string) => {
@@ -108,19 +157,12 @@ const LocationModal = ({ isOpen, onClose, onApply, currentCity, citiesData }: Pr
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      {/* Backdrop */}
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
 
-      {/* Modal card */}
-      <div
-        className="relative w-full max-w-[540px] bg-white rounded-2xl shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* ── Header ── */}
+      <div className="relative w-full max-w-[540px] bg-white rounded-2xl shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        {/* Header */}
         <div className="flex items-center justify-between px-7 pt-7 pb-5 border-b border-gray-200">
-          <h2 className="text-[22px] font-bold text-black leading-tight">
-            Choose your location
-          </h2>
+          <h2 className="text-[22px] font-bold text-black leading-tight">Choose your location</h2>
           <button
             onClick={onClose}
             aria-label="Close"
@@ -132,11 +174,32 @@ const LocationModal = ({ isOpen, onClose, onApply, currentCity, citiesData }: Pr
           </button>
         </div>
 
-        {/* ── Body ── */}
+        {/* Body */}
         <div className="px-7 pt-6 pb-7 max-h-[80vh] overflow-y-auto">
           <p className="text-sm text-gray-500 mb-5 leading-relaxed">
             Select a delivery location to see product availability and delivery options
           </p>
+
+          {/* Use Current Location — standalone button */}
+          <button
+            type="button"
+            onClick={handleUseMyLocation}
+            disabled={isLocating}
+            className={`w-full flex items-center gap-3 px-4 py-3 mb-4 rounded-xl border text-sm font-medium transition-colors ${
+              geoPermission === "denied"
+                ? "border-gray-200 text-gray-400 cursor-not-allowed bg-gray-50"
+                : "border-[#006B4D] text-[#006B4D] hover:bg-green-50 active:scale-[0.99]"
+            }`}
+          >
+            {isLocating ? (
+              <span className="w-4 h-4 border-2 border-[#006B4D] border-t-transparent rounded-full animate-spin flex-shrink-0" />
+            ) : (
+              <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 2C8.134 2 5 5.134 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.866-3.134-7-7-7zm0 9.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z"/>
+              </svg>
+            )}
+            {isLocating ? "Detecting your location…" : "Use Current Location"}
+          </button>
 
           {/* City selector trigger */}
           <button
@@ -144,16 +207,9 @@ const LocationModal = ({ isOpen, onClose, onApply, currentCity, citiesData }: Pr
             onClick={() => { setDropdownOpen((o) => !o); setLocationError(""); }}
             className="w-full flex items-center justify-between px-4 py-3.5 border border-gray-300 rounded-xl text-left hover:border-gray-400 transition-colors focus:outline-none"
           >
-            {isLocating ? (
-              <span className="flex items-center gap-2 text-gray-500 text-sm">
-                <span className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
-                Detecting your location…
-              </span>
-            ) : (
-              <span className={`text-[15px] ${selectedCity ? "text-black" : "text-gray-400"}`}>
-                {selectedCity || "Select City"}
-              </span>
-            )}
+            <span className={`text-[15px] ${selectedCity ? "text-black" : "text-gray-400"}`}>
+              {selectedCity || "Select City"}
+            </span>
             <svg
               width="16" height="16" viewBox="0 0 16 16" fill="none"
               className={`text-gray-500 transition-transform duration-200 flex-shrink-0 ${dropdownOpen ? "rotate-180" : ""}`}
@@ -162,22 +218,9 @@ const LocationModal = ({ isOpen, onClose, onApply, currentCity, citiesData }: Pr
             </svg>
           </button>
 
-          {/* Inline city list — scrolls internally so pincode is always visible */}
+          {/* Inline city list */}
           {dropdownOpen && (
             <div className="mt-1 border border-gray-200 rounded-xl overflow-y-auto max-h-52">
-              {/* Use my location */}
-              <button
-                type="button"
-                onClick={handleUseMyLocation}
-                className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-[#006B4D] hover:bg-green-50 transition-colors border-b border-gray-100"
-              >
-                <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 2C8.134 2 5 5.134 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.866-3.134-7-7-7zm0 9.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z"/>
-                </svg>
-                Use my current location
-              </button>
-
-              {/* Popular cities */}
               {(citiesData?.popularCities ?? []).length > 0 && (
                 <>
                   <div className="px-4 pt-3 pb-1 text-[11px] font-semibold text-gray-400 uppercase tracking-widest bg-gray-50">
@@ -198,7 +241,6 @@ const LocationModal = ({ isOpen, onClose, onApply, currentCity, citiesData }: Pr
                 </>
               )}
 
-              {/* Cities by state */}
               {(citiesData?.states ?? []).map((state) => (
                 <div key={state.title}>
                   <div className="px-4 pt-3 pb-1 text-[11px] font-semibold text-gray-400 uppercase tracking-widest bg-gray-50">
@@ -225,7 +267,7 @@ const LocationModal = ({ isOpen, onClose, onApply, currentCity, citiesData }: Pr
             </div>
           )}
 
-          {/* Location error */}
+          {/* Error */}
           {locationError && (
             <p className="mt-2 text-xs text-red-500">{locationError}</p>
           )}

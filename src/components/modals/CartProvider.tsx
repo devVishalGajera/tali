@@ -67,29 +67,33 @@ function fromApiItem(item: CartApiItem): CartItem {
 /* ── Provider ────────────────────────────────────────────────── */
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
-  const { storeId, city } = useLocation();
+  const { storeId, city, flag } = useLocation();
   const [items,        setItems]        = useState<CartItem[]>([]);
   const [lastAdded,    setLastAdded]    = useState<CartProduct | null>(null);
   const [isModalOpen,  setIsModalOpen]  = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isLoading,    setIsLoading]    = useState(false);
 
-  /* Fetch cart once we have a storeId — ensures store_id is always in the request */
+  /* Fetch cart once we have a valid location */
   useEffect(() => {
-    if (!storeId) return;
+    if (flag === null || flag === 3) return;
+    if (flag === 1 && !storeId) return;
+    if (flag === 2 && !city) return;
     const token = getAuthToken();
     if (!token) return;
 
+    const params = flag === 2
+      ? { token, city: city ?? undefined }
+      : { token, store_id: String(storeId), city: city ?? undefined };
+
     setIsLoading(true);
-    getCartApi({ token, store_id: String(storeId), city: city ?? undefined })
+    getCartApi(params)
       .then((res) => {
-        if (res.code === 1 && Array.isArray(res.data)) {
-          setItems(res.data.map(fromApiItem));
-        }
+        if (res.code === 1 && Array.isArray(res.data)) setItems(res.data.map(fromApiItem));
       })
-      .catch(() => { /* silent — keep empty cart */ })
+      .catch(() => { /* silent */ })
       .finally(() => setIsLoading(false));
-  }, [storeId, city]);
+  }, [storeId, city, flag]);
 
   const addToCart = useCallback((product: CartProduct) => {
     /* Optimistically update local state first for instant UI feedback */
@@ -116,8 +120,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     })
       .then((res) => {
         if (res.code !== 1) return;
-        /* Re-fetch to get the real cartItemId for future deletes */
-        return getCartApi({ token, store_id: storeId ?? undefined, city: city ?? undefined });
+        const cartParams = flag === 2
+          ? { token, city: city ?? undefined }
+          : { token, store_id: storeId ?? undefined, city: city ?? undefined };
+        return getCartApi(cartParams);
       })
       .then((cart) => {
         if (cart?.code === 1 && Array.isArray(cart.data)) {
@@ -129,16 +135,20 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   const refreshCart = useCallback(() => {
     const token = getAuthToken();
-    if (!token || !storeId) return;
+    if (!token || flag === null || flag === 3) return;
+    if (flag === 1 && !storeId) return;
+    if (flag === 2 && !city) return;
 
-    getCartApi({ token, store_id: storeId, city: city ?? undefined })
+    const params = flag === 2
+      ? { token, city: city ?? undefined }
+      : { token, store_id: storeId ?? undefined, city: city ?? undefined };
+
+    getCartApi(params)
       .then((res) => {
-        if (res.code === 1 && Array.isArray(res.data)) {
-          setItems(res.data.map(fromApiItem));
-        }
+        if (res.code === 1 && Array.isArray(res.data)) setItems(res.data.map(fromApiItem));
       })
       .catch(() => {});
-  }, [storeId, city]);
+  }, [storeId, city, flag]);
 
   const removeFromCart = useCallback((productId: number) => {
     /* Optimistically remove */

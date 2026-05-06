@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { useCart } from "@/components/modals/CartProvider";
+import { useLocation } from "@/components/modals/LocationProvider";
 import WishlistButton from "@/components/shared/WishlistButton";
 import type { ProductVolume } from "@/lib/api/product-detail";
 
@@ -24,6 +25,7 @@ export default function ProductDetailInfo({
   volumes,
 }: Props) {
   const { addToCart } = useCart();
+  const { purchaseAllow } = useLocation();
 
   const defaultVolume = volumes.find((v) => v.price) ?? volumes[0] ?? null;
   const [selectedVolumeId, setSelectedVolumeId] = useState<number | null>(
@@ -54,41 +56,41 @@ export default function ProductDetailInfo({
   return (
     <div className="flex flex-col w-full min-w-0">
       {/* Title */}
-      <h1 className="text-xl sm:text-2xl md:text-[26px] font-bold text-gray-900 mb-2 sm:mb-3">
+      <h1 className="text-lg sm:text-xl font-bold text-gray-900 mb-1.5">
         {name}
       </h1>
 
       {/* ABV / country */}
-      <p className="text-xs sm:text-sm md:text-base text-gray-600 mb-3 sm:mb-4">
+      <p className="text-xs text-gray-600 mb-2">
         {abv ? `[${abv}% Alcohol ABV${country ? ` — ${country}` : ""}]` : country || ""}
       </p>
 
       {/* Price */}
-      <div className="mb-3 sm:mb-4">
-        <span className="text-3xl sm:text-4xl md:text-[30px] font-bold text-gray-900">
+      <div className="mb-3">
+        <span className="text-2xl font-bold text-gray-900">
           {price ?? "—"}
         </span>
       </div>
 
       {/* Description */}
       {description && (
-        <p className="text-xs sm:text-sm md:text-base text-[#1D1D1D80] leading-relaxed mb-4 sm:mb-6">
+        <p className="text-xs text-[#1D1D1D80] leading-relaxed mb-3">
           {description}
         </p>
       )}
 
       {/* Volume sizes */}
       {volumes.length > 0 && (
-        <div className="mb-4 sm:mb-10">
-          <label className="block text-xs sm:text-[26px] font-semibold text-[#1D1D1D] mb-2">
+        <div className="mb-3">
+          <label className="block text-xs font-semibold text-[#1D1D1D] mb-1.5">
             Sizes:
           </label>
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-4 gap-1.5">
             {volumes.map((v) => (
               <button
                 key={v.volume_id}
                 onClick={() => setSelectedVolumeId(v.volume_id)}
-                className={`px-1 py-1 sm:px-4 sm:py-3 rounded-md border-2 text-[10px] sm:text-[17px] font-medium transition-all cursor-pointer whitespace-nowrap ${
+                className={`px-1.5 py-1 rounded border text-[11px] font-medium transition-all cursor-pointer whitespace-nowrap ${
                   selectedVolumeId === v.volume_id
                     ? "bg-[#006B4D] text-white border-[#006B4D]"
                     : "bg-white text-[#1D1D1D] border-[#1D1D1D] hover:border-gray-400"
@@ -102,16 +104,16 @@ export default function ProductDetailInfo({
       )}
 
       {/* Product info */}
-      <div className="mb-4 sm:mb-20">
-        <div className="space-y-1.5 sm:space-y-2">
+      <div className="mb-3">
+        <div className="space-y-1">
           {country && (
-            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-xs sm:text-base leading-[26px]">
+            <div className="flex flex-wrap items-center gap-1.5 text-xs">
               <span className="font-semibold text-gray-900">Place of Origin:</span>
               <span className="text-gray-700">{country}</span>
             </div>
           )}
           {abv && (
-            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-xs sm:text-base leading-[26px]">
+            <div className="flex flex-wrap items-center gap-1.5 text-xs">
               <span className="font-semibold text-gray-900">Alcohol ABV:</span>
               <span className="text-gray-700">{abv}%</span>
             </div>
@@ -120,19 +122,19 @@ export default function ProductDetailInfo({
       </div>
 
       {/* Quantity */}
-      <div>
-        <label className="block text-xs sm:text-[26px] font-semibold text-[#1D1D1D] mb-2">
+      <div className="mb-4">
+        <label className="block text-xs font-semibold text-[#1D1D1D] mb-1.5">
           Bottles:
         </label>
-        <div className="flex items-center justify-between gap-3 sm:gap-4 border border-[#DFDEDE] rounded-md py-2 px-5">
+        <div className="inline-flex items-center gap-4 border border-[#DFDEDE] rounded-md py-1.5 px-4">
           <button
             onClick={() => setQuantity((q) => Math.max(1, q - 1))}
             className="flex items-center justify-center transition-colors cursor-pointer"
             aria-label="Decrease quantity"
           >
-            <Image src="/assets/icons/arrow.svg" alt="−" className="rotate-180" width={25} height={25} />
+            <Image src="/assets/icons/arrow.svg" alt="−" className="rotate-180" width={16} height={16} />
           </button>
-          <span className="text-lg sm:text-[26px] font-semibold text-gray-900 min-w-[2.5rem] sm:min-w-[3rem] text-center">
+          <span className="text-sm font-semibold text-gray-900 min-w-[1.5rem] text-center">
             {quantity}
           </span>
           <button
@@ -140,15 +142,37 @@ export default function ProductDetailInfo({
             className="flex items-center justify-center transition-colors cursor-pointer"
             aria-label="Increase quantity"
           >
-            <Image src="/assets/icons/arrow.svg" alt="+" width={25} height={25} />
+            <Image src="/assets/icons/arrow.svg" alt="+" width={16} height={16} />
           </button>
         </div>
       </div>
 
-      {/* Social share + Add to cart + Wishlist */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-[30px]">
+      {/* Add to cart + Wishlist + Social */}
+      <div className="flex flex-col gap-2.5">
+        <div className="flex items-center gap-2">
+          {purchaseAllow && (
+            <button
+              onClick={handleAddToCart}
+              className={`flex-1 py-2 px-4 rounded-md font-semibold text-sm transition-all cursor-pointer ${
+                addedToCart ? "bg-[#005a3f] text-white" : "bg-[#006B4D] text-white"
+              }`}
+            >
+              {addedToCart ? "Added to Cart ✓" : "Add To Cart"}
+            </button>
+          )}
+          <WishlistButton
+            productId={productId}
+            storeProductVolumeId={selectedVolume?.store_product_volume_id}
+            size="sm"
+            productName={name}
+            productPrice={price ?? ""}
+            productImage="/assets/images/bottles/single-bottle.png"
+            productVolume={selectedVolume?.volume}
+          />
+        </div>
+
         {/* Social */}
-        <div className="flex items-center justify-center lg:justify-start gap-3 sm:gap-5">
+        <div className="flex items-center gap-3">
           {[
             { href: "#", src: "/assets/social/facebook.svg",  label: "Facebook"  },
             { href: "#", src: "/assets/social/twitter.svg",   label: "Twitter"   },
@@ -158,36 +182,13 @@ export default function ProductDetailInfo({
             <a
               key={label}
               href={href}
-              className="flex flex-col items-center gap-3.5 w-[70px] active:opacity-80 transition-opacity"
+              className="flex items-center gap-1 active:opacity-80 transition-opacity"
               aria-label={`Share on ${label}`}
             >
-              <div className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center">
-                <Image src={src} alt={label} width={30} height={30} className="object-contain w-[30px] h-[30px]" />
-              </div>
-              <span className="text-[10px] sm:text-xs text-gray-600">{label}</span>
+              <Image src={src} alt={label} width={15} height={15} className="object-contain" />
+              <span className="text-[11px] text-gray-600">{label}</span>
             </a>
           ))}
-        </div>
-
-        {/* Add to cart + Wishlist */}
-        <div className="flex items-center gap-3">
-          <button
-            onClick={handleAddToCart}
-            className={`flex-1 py-2 sm:py-3 px-5 rounded-md font-semibold text-base sm:text-lg transition-all cursor-pointer ${
-              addedToCart ? "bg-[#005a3f] text-white" : "bg-[#006B4D] text-white"
-            }`}
-          >
-            {addedToCart ? "Added to Cart ✓" : "Add To Cart"}
-          </button>
-          <WishlistButton
-            productId={productId}
-            storeProductVolumeId={selectedVolume?.store_product_volume_id}
-            size="lg"
-            productName={name}
-            productPrice={price ?? ""}
-            productImage="/assets/images/bottles/single-bottle.png"
-            productVolume={selectedVolume?.volume}
-          />
         </div>
       </div>
     </div>

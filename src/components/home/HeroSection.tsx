@@ -117,7 +117,7 @@ const HeroSection = () => {
           <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-[#1D1D1D] mb-4">
             Find the best price for wines, beers and spirits.
           </h1>
-          <p className="text-base sm:text-lg md:text-xl text-[#1D1D1D]">
+          <p className="text-sm sm:text-base md:text-lg text-[#1D1D1D]">
             Search thousands of online stores
           </p>
         </div>

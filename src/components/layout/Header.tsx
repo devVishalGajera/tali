@@ -23,7 +23,7 @@ function chunkArray<T>(arr: T[], size: number): T[][] {
 }
 
 const Header = ({ navCategories }: Props) => {
-  const { city, showModal }               = useLocation();
+  const { city, showModal, purchaseAllow } = useLocation();
   const { items, openDrawer }             = useCart();
   const { count: wishlistCount, openDrawer: openWishlistDrawer } = useWishlist();
   const { isAuthenticated, user, logout } = useAuth();
@@ -178,21 +178,23 @@ const Header = ({ navCategories }: Props) => {
           )}
 
           {/* Cart */}
-          <div
-            onClick={openDrawer}
-            className="relative cursor-pointer w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 transition-transform duration-300 hover:scale-110 active:scale-95"
-          >
-            <Image
-              src="/assets/header/icons/cartIcon.svg"
-              alt="Cart"
-              width={24}
-              height={24}
-              className="w-full h-full transition-opacity duration-300 hover:opacity-80"
-            />
-            <span className="absolute -bottom-0.5 -right-0.5 sm:-bottom-1 sm:-right-1 bg-black text-white text-[10px] sm:text-xs rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center leading-none">
-              {cartCount}
-            </span>
-          </div>
+          {purchaseAllow && (
+            <div
+              onClick={openDrawer}
+              className="relative cursor-pointer w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 transition-transform duration-300 hover:scale-110 active:scale-95"
+            >
+              <Image
+                src="/assets/header/icons/cartIcon.svg"
+                alt="Cart"
+                width={24}
+                height={24}
+                className="w-full h-full transition-opacity duration-300 hover:opacity-80"
+              />
+              <span className="absolute -bottom-0.5 -right-0.5 sm:-bottom-1 sm:-right-1 bg-black text-white text-[10px] sm:text-xs rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center leading-none">
+                {cartCount}
+              </span>
+            </div>
+          )}
         </div>
       </div>
 

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import StarRating from "@/components/shared/StarRating";
 import { useCart } from "@/components/modals/CartProvider";
+import { useLocation } from "@/components/modals/LocationProvider";
 import { proxyImageUrl } from "@/lib/utils/image";
 import WishlistButton from "@/components/shared/WishlistButton";
 
@@ -30,6 +31,7 @@ interface ProductCardProps {
 const ProductCard = ({ product, linkTo }: ProductCardProps) => {
   const [addedToCart, setAddedToCart] = useState(false);
   const { addToCart } = useCart();
+  const { purchaseAllow } = useLocation();
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -71,23 +73,25 @@ const ProductCard = ({ product, linkTo }: ProductCardProps) => {
             productImage={product.image}
             productVolume={product.size}
           />
-          <button
-            onClick={handleAddToCart}
-            aria-label="Add to cart"
-            className={`w-7 h-7 flex items-center justify-center rounded-full transition-colors border border-gray-200 ${
-              addedToCart
-                ? "bg-[#00845F] border-[#00845F]"
-                : "bg-white hover:bg-gray-50"
-            }`}
-          >
-            {addedToCart ? (
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20 6L9 17l-5-5" />
-              </svg>
-            ) : (
-              <Image src="/assets/icons/shopping_cart.svg" alt="Cart" width={13} height={13} className="w-[13px] h-[13px]" />
-            )}
-          </button>
+          {purchaseAllow && (
+            <button
+              onClick={handleAddToCart}
+              aria-label="Add to cart"
+              className={`w-7 h-7 flex items-center justify-center rounded-full transition-colors border border-gray-200 ${
+                addedToCart
+                  ? "bg-[#00845F] border-[#00845F]"
+                  : "bg-white hover:bg-gray-50"
+              }`}
+            >
+              {addedToCart ? (
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20 6L9 17l-5-5" />
+                </svg>
+              ) : (
+                <Image src="/assets/icons/shopping_cart.svg" alt="Cart" width={13} height={13} className="w-[13px] h-[13px]" />
+              )}
+            </button>
+          )}
         </div>
 
         <div className="h-full -top-12 relative flex-1">
@@ -107,13 +111,13 @@ const ProductCard = ({ product, linkTo }: ProductCardProps) => {
               </div>
             </div>
           )}
-          <div className="flex flex-col items-center gap-[15px]">
-            <span className="font-graphik font-medium text-[26px] leading-[39.49px] text-[#1E1E1E] mb-1">{product.rating}</span>
+          <div className="flex flex-col items-center gap-[10px]">
+            <span className="font-graphik font-medium text-base leading-tight text-[#1E1E1E] mb-1">{product.rating}</span>
             <div className="flex items-center gap-0.5 mb-1"><StarRating score={product.rating} /></div>
-            <span className="font-graphik font-normal text-[13px] leading-[16.45px] text-center text-[#1E1E1E] whitespace-nowrap mb-2">
+            <span className="font-graphik font-normal text-[11px] leading-[14px] text-center text-[#1E1E1E] whitespace-nowrap mb-1">
               {product.ratingCount} Rating
             </span>
-            <button className="bg-[#00845F] active:bg-green-700 text-white font-graphik font-semibold py-2 px-4 transition-colors duration-300 whitespace-nowrap rounded-full text-center text-base leading-[22.42px]">
+            <button className="bg-[#00845F] active:bg-green-700 text-white font-graphik font-semibold py-1 px-3 transition-colors duration-300 whitespace-nowrap rounded-full text-center text-sm leading-[18px]">
               {product.price}
             </button>
           </div>

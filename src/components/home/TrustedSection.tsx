@@ -27,31 +27,31 @@ const TrustedSection = () => {
   ];
 
   return (
-    <section className="w-full bg-gray-50 py-10 md:py-12 lg:py-18">
+    <section className="w-full bg-gray-50 py-8 md:py-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
-        <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-[#1D1D1D] mb-8 md:mb-12 text-left">
+        <h2 className="text-base md:text-xl font-bold text-[#1D1D1D] mb-5 md:mb-8 text-left">
           Trusted by millions to discover and buy the right wine every time.
         </h2>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
           {features.map((feature, index) => (
             <div
               key={index}
               className="flex flex-col items-center text-center justify-center"
             >
-              <div className="text-[#1D1D1D] mb-4 flex items-center justify-center md:justify-start">
+              <div className="text-[#1D1D1D] mb-2 flex items-center justify-center">
                 <Image
                   src={feature.icon}
                   alt={feature.title}
-                  width={36}
-                  height={36}
-                  className="w-8 h-8 md:w-10 md:h-10"
+                  width={28}
+                  height={28}
+                  className="w-6 h-6 md:w-7 md:h-7"
                 />
               </div>
-              <h3 className="text-base md:text-lg lg:text-xl font-bold text-[#1D1D1D] mb-2">
+              <h3 className="text-sm md:text-base font-bold text-[#1D1D1D] mb-1">
                 {feature.title}
               </h3>
-              <p className="text-sm md:text-base text-[#1D1D1D] leading-relaxed">
+              <p className="text-xs md:text-sm text-[#1D1D1D] leading-relaxed">
                 {feature.description}
               </p>
             </div>

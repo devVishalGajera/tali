@@ -2,6 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://3.7.224.122/dev/talli/api";
 
+export interface NearestStoreResult {
+  flag: 1 | 2 | 3;
+  storeId: number | null;
+  purchaseAllow: boolean;
+  cityName: string | null;
+  cityId: number | null;
+}
+
+const FLAG3: NearestStoreResult = { flag: 3, storeId: null, purchaseAllow: false, cityName: null, cityId: null };
+
 export async function POST(request: NextRequest) {
   const body = await request.json() as { lat?: string; long?: string; city?: string };
 
@@ -12,18 +22,42 @@ export async function POST(request: NextRequest) {
 
   try {
     const res = await fetch(`${BASE_URL}/get-nearest-storeNew`, {
-      method:  "POST",
+      method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body:    form.toString(),
-      cache:   "no-store",
+      body: form.toString(),
+      cache: "no-store",
     });
 
-    if (!res.ok) return NextResponse.json({ storeId: null });
+    if (!res.ok) return NextResponse.json(FLAG3);
 
     const json = await res.json();
-    const storeId = json.code === 1 ? (json.data?.store_id ?? null) : null;
-    return NextResponse.json({ storeId });
+    if (json.code !== 1) return NextResponse.json(FLAG3);
+
+    const data = json.data ?? {};
+    const flag = data.flag as 1 | 2 | 3;
+
+    if (flag === 1) {
+      return NextResponse.json<NearestStoreResult>({
+        flag: 1,
+        storeId: data.store_id ?? null,
+        purchaseAllow: data.purchase_allow === "yes",
+        cityName: null,
+        cityId: null,
+      });
+    }
+
+    if (flag === 2) {
+      return NextResponse.json<NearestStoreResult>({
+        flag: 2,
+        storeId: null,
+        purchaseAllow: false,
+        cityName: data.city_name ?? null,
+        cityId: data.city_id ?? null,
+      });
+    }
+
+    return NextResponse.json(FLAG3);
   } catch {
-    return NextResponse.json({ storeId: null });
+    return NextResponse.json(FLAG3);
   }
 }

@@ -74,15 +74,15 @@ export default function ProductGrid({ products, currentPage, totalPages, totalRe
                         <div className="flex gap-1.5">
                           <ProductCardActions product={card} initialWishlist={product.is_wishlist} />
                         </div>
-                        <div className="flex flex-col items-center gap-[15px]">
-                          <span className="font-graphik font-medium text-[26px] leading-[39.49px] text-[#1E1E1E]">
+                        <div className="flex flex-col items-center gap-[10px]">
+                          <span className="font-graphik font-medium text-base leading-tight text-[#1E1E1E]">
                             {card.rating > 0 ? card.rating.toFixed(1) : "—"}
                           </span>
                           <StarRating score={card.rating} />
-                          <span className="font-graphik font-normal text-[13px] text-center text-[#1E1E1E] whitespace-nowrap">
+                          <span className="font-graphik font-normal text-[11px] text-center text-[#1E1E1E] whitespace-nowrap">
                             {card.ratingCount > 0 ? `${card.ratingCount} orders` : "New"}
                           </span>
-                          <span className="bg-[#00845F] text-white font-graphik font-semibold py-2 px-4 rounded-full text-base whitespace-nowrap">
+                          <span className="bg-[#00845F] text-white font-graphik font-semibold py-1 px-3 rounded-full text-sm whitespace-nowrap">
                             {card.price}
                           </span>
                         </div>

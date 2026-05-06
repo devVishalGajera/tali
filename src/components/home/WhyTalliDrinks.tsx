@@ -31,9 +31,9 @@ const WhyTalliDrinks = () => {
   ];
 
   return (
-    <section className="w-full py-12 md:py-16 lg:py-20">
+    <section className="w-full py-8 md:py-10">
       <div>
-        <h2 className="text-xl md:text-3xl lg:text-4xl font-bold text-[#1D1D1D] mb-8 md:mb-12 text-left">
+        <h2 className="text-base md:text-xl font-bold text-[#1D1D1D] mb-5 md:mb-8 text-left">
           Why Talli Drinks?
         </h2>
 
@@ -41,32 +41,28 @@ const WhyTalliDrinks = () => {
           {features.map((feature, index) => {
             let borderClass = "";
             if (index === 0) {
-              // Top-left: bottom and right borders
               borderClass = "gradient-border-bottom-right";
             } else if (index === 1) {
-              // Top-right: bottom border only
               borderClass = "gradient-border-bottom";
             } else if (index === 2) {
-              // Bottom-left: right border only
               borderClass = "gradient-border-right";
             }
-            // Bottom-right: no borders
 
             return (
               <div
                 key={index}
-                className={`flex items-center gap-4 md:gap-6 pt-4 pb-4 pr-4 md:pt-6 md:pb-6 md:pr-6 lg:pt-8 lg:pb-8 lg:pr-8 pl-0 ${
-                  index === 0 || index === 2 ? "md:!pl-0" : "md:pl-6"
+                className={`flex items-center gap-3 md:gap-5 py-4 pr-4 md:py-5 md:pr-6 pl-0 ${
+                  index === 0 || index === 2 ? "md:!pl-0" : "md:pl-5"
                 } ${borderClass}`}
               >
                 {/* Circular Image */}
                 <div className="flex-shrink-0">
-                  <div className="w-20 h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
+                  <div className="w-14 h-14 md:w-16 md:h-16 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
                     <Image
                       src={feature.image}
                       alt={feature.title}
-                      width={112}
-                      height={112}
+                      width={64}
+                      height={64}
                       className="w-full h-full object-cover"
                     />
                   </div>
@@ -74,10 +70,10 @@ const WhyTalliDrinks = () => {
 
                 {/* Text Content */}
                 <div className="flex-1">
-                  <h3 className="text-lg md:text-xl lg:text-2xl font-bold text-[#1D1D1D] mb-2 md:mb-3">
+                  <h3 className="text-sm md:text-base font-bold text-[#1D1D1D] mb-1">
                     {feature.title}
                   </h3>
-                  <p className="text-sm md:text-base text-[#1D1D1D] leading-relaxed">
+                  <p className="text-xs md:text-sm text-[#1D1D1D] leading-relaxed">
                     {feature.description}
                   </p>
                 </div>

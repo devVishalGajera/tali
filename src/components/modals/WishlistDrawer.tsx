@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useWishlist } from "./WishlistProvider";
 import { useCart } from "./CartProvider";
+import { useLocation } from "./LocationProvider";
 import { addToWishlistApi, addCartWishlistAllApi } from "@/lib/api/wishlist";
 
 const TrashIcon = () => (
@@ -31,6 +32,7 @@ function getAuthToken(): string | null {
 const WishlistDrawer = () => {
   const { isDrawerOpen, closeDrawer, items, removeItem, refreshWishlist } = useWishlist();
   const { refreshCart, openDrawer: openCartDrawer } = useCart();
+  const { purchaseAllow } = useLocation();
   const [movingId, setMovingId] = useState<number | null>(null);
   const [removingId, setRemovingId] = useState<number | null>(null);
   const [movingAll, setMovingAll] = useState(false);
@@ -213,7 +215,7 @@ const WishlistDrawer = () => {
                       {item.price && <p className="text-base font-bold text-[#1D1D1D] mt-1">{item.price}</p>}
                     </div>
 
-                    {hasVolume && (
+                    {hasVolume && purchaseAllow && (
                       <button
                         onClick={() => handleMoveToCart(item)}
                         disabled={isMoving}
@@ -233,8 +235,8 @@ const WishlistDrawer = () => {
         {/* Footer */}
         {items.length > 0 && (
           <div className="border-t border-[#F0F0F0] px-5 py-4 flex flex-col gap-3">
-            {/* Move all — only shown when at least one item has a volume */}
-            {moveableItems.length > 1 && (
+            {/* Move all — only shown when at least one item has a volume and purchase is allowed */}
+            {purchaseAllow && moveableItems.length > 1 && (
               <button
                 onClick={handleMoveAllToCart}
                 disabled={movingAll}

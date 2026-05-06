@@ -63,10 +63,12 @@ function authHeaders(token: string): Record<string, string> {
 /** Fetch the current wishlist for the logged-in user. */
 export async function getWishlistApi(params: {
   store_id?: number | string;
-  token:     string;
+  city?: string;
+  token: string;
 }): Promise<WishlistApiResponse> {
   const qs = new URLSearchParams();
   if (params.store_id) qs.set("store_id", String(params.store_id));
+  if (params.city)     qs.set("city",     params.city);
 
   const res = await fetch(`${BASE_URL}/product/wishlist-getNew?${qs.toString()}`, {
     headers: authHeaders(params.token),

@@ -66,16 +66,21 @@ function fromApiItem(item: WishlistApiItem): WishlistItem {
 /* ── Provider ────────────────────────────────────────────────── */
 
 export const WishlistProvider = ({ children }: { children: ReactNode }) => {
-  const { storeId } = useLocation();
+  const { storeId, city, flag } = useLocation();
   const [items, setItems] = useState<WishlistItem[]>([]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const fetchWishlist = useCallback((sid?: string | number | null) => {
+  const fetchWishlist = useCallback((sid?: string | number | null, cityName?: string | null, currentFlag?: number | null) => {
     const token = getAuthToken();
     if (!token) return;
+    if (currentFlag === 3 || currentFlag === null) return;
 
-    getWishlistApi({ token, store_id: sid ?? undefined })
+    const params = currentFlag === 2
+      ? { token, city: cityName ?? undefined }
+      : { token, store_id: sid ?? undefined };
+
+    getWishlistApi(params)
       .then((res) => {
         if (res.code === 1 && Array.isArray(res.data)) {
           setItems(res.data.map(fromApiItem));
@@ -85,20 +90,26 @@ export const WishlistProvider = ({ children }: { children: ReactNode }) => {
       .catch(() => { setIsLoading(false); });
   }, []);
 
-  /* Only fetch once we have a storeId — avoids a request with no store_id param */
   useEffect(() => {
-    if (!storeId) return;
+    if (flag === null || flag === 3) return;
+    if (flag === 1 && !storeId) return;
+    if (flag === 2 && !city) return;
+
     const token = getAuthToken();
     if (!token) return;
 
-    getWishlistApi({ token, store_id: storeId })
+    const params = flag === 2
+      ? { token, city: city ?? undefined }
+      : { token, store_id: storeId ?? undefined };
+
+    getWishlistApi(params)
       .then((res) => {
         if (res.code === 1 && Array.isArray(res.data)) {
           setItems(res.data.map(fromApiItem));
         }
       })
       .catch(() => {});
-  }, [storeId]);
+  }, [storeId, city, flag]);
 
   const addItem = useCallback((item: WishlistItem) => {
     setItems((prev) => {
@@ -119,7 +130,7 @@ export const WishlistProvider = ({ children }: { children: ReactNode }) => {
 
   const openDrawer = useCallback(() => setIsDrawerOpen(true), []);
   const closeDrawer = useCallback(() => setIsDrawerOpen(false), []);
-  const refreshWishlist = useCallback(() => fetchWishlist(storeId), [fetchWishlist, storeId]);
+  const refreshWishlist = useCallback(() => fetchWishlist(storeId, city, flag), [fetchWishlist, storeId, city, flag]);
   return (
     <WishlistContext.Provider
       value={{
