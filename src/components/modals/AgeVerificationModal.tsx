@@ -13,12 +13,32 @@ const AgeVerificationModal = ({ isOpen, onAgree, onDecline }: AgeVerificationMod
   const [isMainAccordionExpanded, setIsMainAccordionExpanded] = useState(false);
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const [birthYear, setBirthYear] = useState("");
+  const [yearError, setYearError] = useState("");
 
   if (!isOpen) return null;
 
   const handleYearChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/\D/g, "").slice(0, 4);
     setBirthYear(value);
+    setYearError("");
+  };
+
+  const handleAgree = () => {
+    const currentYear = new Date().getFullYear();
+    const year = parseInt(birthYear, 10);
+    if (!birthYear || birthYear.length < 4) {
+      setYearError("Please enter your birth year.");
+      return;
+    }
+    if (isNaN(year) || year < 1900 || year > currentYear) {
+      setYearError("Please enter a valid birth year.");
+      return;
+    }
+    if (currentYear - year < 18) {
+      setYearError("You must be 18 years or older to continue.");
+      return;
+    }
+    onAgree();
   };
 
   const toggleSection = (section: string) => {
@@ -66,54 +86,58 @@ const AgeVerificationModal = ({ isOpen, onAgree, onDecline }: AgeVerificationMod
       {/* Modal Container */}
       <div className="relative w-full max-w-[500px] md:max-w-[600px] bg-white rounded-lg md:rounded-xl shadow-2xl max-h-[90vh] overflow-y-auto modal-scrollbar-hide animate-slideIn">
         {/* Logo */}
-        <div className="flex justify-center pt-6 md:pt-8 pb-4 animate-fadeInUp">
+        <div className="flex justify-center pt-4 pb-3 animate-fadeInUp">
           <Image
             src="/assets/logo/talli-logo.jpeg"
             alt="Talli Logo"
-            width={64}
-            height={64}
-            className="rounded-full"
-            className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 transition-transform duration-300 hover:scale-110"
+            width={52}
+            height={52}
+            className="w-10 h-10 sm:w-12 sm:h-12 rounded-full transition-transform duration-300 hover:scale-110"
             priority
           />
         </div>
 
         {/* Main Content */}
-        <div className="px-4 sm:px-6 md:px-8 pb-6 md:pb-8">
+        <div className="px-4 sm:px-5 pb-4 sm:pb-5">
           {/* Question */}
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-black uppercase text-center mb-3 md:mb-4 animate-fadeInUp" style={{ animationDelay: "0.1s", animationFillMode: "both" }}>
+          <h2 className="text-base sm:text-lg font-bold text-black uppercase text-center mb-2 animate-fadeInUp" style={{ animationDelay: "0.1s", animationFillMode: "both" }}>
             ARE YOU OVER 18 YEARS OLD?
           </h2>
 
           {/* Instructional Text */}
-          <p className="text-xs sm:text-sm md:text-base text-black text-center mb-6 md:mb-8 leading-relaxed animate-fadeInUp" style={{ animationDelay: "0.2s", animationFillMode: "both" }}>
+          <p className="text-[11px] sm:text-xs text-black text-center mb-4 leading-relaxed animate-fadeInUp" style={{ animationDelay: "0.2s", animationFillMode: "both" }}>
             You must be of legal drinking age to buy our products. Age will be verified upon
             delivery through ID.
           </p>
 
           {/* Year Input Field - Always visible */}
-          <div className="mb-6 md:mb-8 animate-fadeInUp" style={{ animationDelay: "0.3s", animationFillMode: "both" }}>
+          <div className="mb-4 animate-fadeInUp" style={{ animationDelay: "0.3s", animationFillMode: "both" }}>
             <input
               type="text"
               value={birthYear}
               onChange={handleYearChange}
               placeholder="YYYY"
               maxLength={4}
-              className="w-full px-4 py-3 md:py-4 border border-gray-300 rounded-lg text-center text-lg sm:text-xl md:text-2xl font-semibold focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all duration-300 hover:border-gray-400 focus:scale-[1.02]"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-center text-base sm:text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all duration-300 hover:border-gray-400"
             />
-            <p className="text-xs sm:text-sm text-gray-500 text-center mt-2">
+            <p className="text-[11px] text-gray-500 text-center mt-1">
               Enter Your Born year
             </p>
+            {yearError && (
+              <p className="text-[11px] text-red-500 text-center mt-1 font-medium">
+                {yearError}
+              </p>
+            )}
           </div>
 
           {/* Main Accordion Section - "Before shopping for alcohol..." */}
-          <div className="mb-6 md:mb-8 border border-gray-300 rounded-lg overflow-hidden">
+          <div className="mb-5 border border-gray-300 rounded-lg overflow-hidden">
             {/* Accordion Title with Toggle Button */}
             <button
               onClick={() => setIsMainAccordionExpanded(!isMainAccordionExpanded)}
-              className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-all duration-300 active:scale-[0.98]"
+              className="w-full flex items-center justify-between p-3 hover:bg-gray-50 transition-all duration-300 active:scale-[0.98]"
             >
-              <h3 className="text-sm sm:text-base md:text-lg font-medium text-black flex-1 pr-2 text-left">
+              <h3 className="text-xs sm:text-sm font-medium text-black flex-1 pr-2 text-left">
                 Before shopping for alcohol, we want to make sure..
               </h3>
               <div className="flex-shrink-0">
@@ -131,81 +155,70 @@ const AgeVerificationModal = ({ isOpen, onAgree, onDecline }: AgeVerificationMod
 
             {/* Collapsible Content */}
             {isMainAccordionExpanded && (
-              <div className="px-4 pb-4 space-y-6 md:space-y-8 border-t border-gray-200 animate-fadeIn" style={{ animationDuration: "0.3s" }}>
-                {/* Nested Accordion Items */}
-                <div className="space-y-0">
-                  {accordionSections.map((section, index) => {
-                    const isExpanded = expandedSection === section.id;
-                    return (
-                      <div key={section.id}>
-                        {/* Accordion Item */}
-                        <button
-                          onClick={() => toggleSection(section.id)}
-                          className="w-full flex items-start gap-3 md:gap-4 p-4 hover:bg-gray-50 transition-all duration-300 text-left active:scale-[0.98]"
-                        >
-                          {/* Icon */}
-                          <div className="flex-shrink-0 w-6 h-6 md:w-8 md:h-8 rounded-full border-2 border-gray-400 flex items-center justify-center mt-0.5">
-                            <Image
-                              src="/assets/header/icons/infoIcon.svg"
-                              alt="Info"
-                              width={16}
-                              height={16}
-                              className="w-3 h-3 md:w-4 md:h-4"
-                            />
-                          </div>
-
-                          {/* Content */}
-                          <div className="flex-1 min-w-0">
-                            <h4 className="text-sm sm:text-base md:text-lg font-bold text-black mb-0">
-                              {section.title}
-                            </h4>
-                            {isExpanded && (
-                              <p className="text-xs sm:text-sm md:text-base text-black leading-relaxed mt-2 pr-2 animate-fadeIn" style={{ animationDuration: "0.3s" }}>
-                                {section.content}
-                              </p>
-                            )}
-                          </div>
-
-                          {/* Expand/Collapse Icon */}
-                          <div className="flex-shrink-0">
-                            <Image
-                              src="/assets/header/icons/arrowDownIcon.svg"
-                              alt="Expand"
-                              width={20}
-                              height={20}
-                              className={`w-4 h-4 md:w-5 md:h-5 transition-transform duration-300 ${
-                                isExpanded ? "rotate-180" : ""
-                              }`}
-                            />
-                          </div>
-                        </button>
-
-                        {/* Separator Line */}
-                        {index < accordionSections.length - 1 && (
-                          <div className="h-px bg-gray-200 mx-4" />
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Action Buttons - Inside collapsible content */}
-                <div className="flex flex-col sm:flex-row gap-3 md:gap-4 pt-4 border-t border-gray-200">
-                  <button
-                    onClick={onAgree}
-                    className="flex-1 bg-black text-white uppercase font-semibold py-3 md:py-4 px-6 rounded-lg hover:bg-gray-800 transition-all duration-300 text-sm sm:text-base md:text-lg hover:scale-105 active:scale-95 transform"
-                  >
-                    I AGREE
-                  </button>
-                  <button
-                    onClick={onDecline}
-                    className="flex-1 bg-white text-black border-2 border-black uppercase font-semibold py-3 md:py-4 px-6 rounded-lg hover:bg-gray-50 transition-all duration-300 text-sm sm:text-base md:text-lg hover:scale-105 active:scale-95 transform"
-                  >
-                    I DECLINE
-                  </button>
-                </div>
+              <div className="px-3 pb-3 space-y-0 border-t border-gray-200 animate-fadeIn" style={{ animationDuration: "0.3s" }}>
+                {accordionSections.map((section, index) => {
+                  const isExpanded = expandedSection === section.id;
+                  return (
+                    <div key={section.id}>
+                      <button
+                        onClick={() => toggleSection(section.id)}
+                        className="w-full flex items-start gap-3 p-3 hover:bg-gray-50 transition-all duration-300 text-left active:scale-[0.98]"
+                      >
+                        <div className="flex-shrink-0 w-5 h-5 rounded-full border-2 border-gray-400 flex items-center justify-center mt-0.5">
+                          <Image
+                            src="/assets/header/icons/infoIcon.svg"
+                            alt="Info"
+                            width={12}
+                            height={12}
+                            className="w-3 h-3"
+                          />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-xs sm:text-sm font-bold text-black">
+                            {section.title}
+                          </h4>
+                          {isExpanded && (
+                            <p className="text-[11px] sm:text-xs text-gray-600 leading-relaxed mt-1.5 pr-2 animate-fadeIn" style={{ animationDuration: "0.3s" }}>
+                              {section.content}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex-shrink-0">
+                          <Image
+                            src="/assets/header/icons/arrowDownIcon.svg"
+                            alt="Expand"
+                            width={16}
+                            height={16}
+                            className={`w-3.5 h-3.5 transition-transform duration-300 ${
+                              isExpanded ? "rotate-180" : ""
+                            }`}
+                          />
+                        </div>
+                      </button>
+                      {index < accordionSections.length - 1 && (
+                        <div className="h-px bg-gray-200 mx-3" />
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
+          </div>
+
+          {/* Action Buttons — always visible, outside accordion */}
+          <div className="flex flex-col sm:flex-row gap-2 pt-2">
+            <button
+              onClick={handleAgree}
+              className="flex-1 bg-black text-white uppercase font-semibold py-2 px-4 rounded-lg hover:bg-gray-800 transition-all duration-300 text-xs sm:text-sm hover:scale-105 active:scale-95 transform"
+            >
+              I AGREE
+            </button>
+            <button
+              onClick={onDecline}
+              className="flex-1 bg-white text-black border-2 border-black uppercase font-semibold py-2 px-4 rounded-lg hover:bg-gray-50 transition-all duration-300 text-xs sm:text-sm hover:scale-105 active:scale-95 transform"
+            >
+              I DECLINE
+            </button>
           </div>
         </div>
       </div>
