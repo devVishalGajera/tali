@@ -5,8 +5,31 @@ interface Props {
   reviewData: CustomerReviewData;
 }
 
+const MOCK_DATA: CustomerReviewData = {
+  summary: {
+    average_rating:   5.0,
+    total_reviews:    230,
+    rating_breakdown: { "5": 180, "4": 30, "3": 12, "2": 5, "1": 3 },
+  },
+  reviews: [
+    {
+      user_name:  "Lorem ipsum dolor",
+      rating:     4,
+      comment:    "Lorem ipsum dolor sit amet consectetur. Nec et semper dignissim mauris tristique quisque. Non morbi consequat euismod odio pharetra consequat amet semper. Tellus id.",
+      created_at: "20 Jun 2025",
+    },
+    {
+      user_name:  "Lorem ipsum dolor",
+      rating:     4,
+      comment:    "Lorem ipsum dolor sit amet consectetur. Nec et semper dignissim mauris tristique quisque. Non morbi consequat euismod odio pharetra consequat amet semper. Tellus id.",
+      created_at: "20 Jun 2025",
+    },
+  ],
+};
+
 export default function ProductDetailReviews({ reviewData }: Props) {
-  const { summary, reviews } = reviewData;
+  const hasRealData = reviewData?.reviews?.length > 0;
+  const { summary, reviews } = hasRealData ? reviewData : MOCK_DATA;
 
   return (
     <section className="mt-10">
@@ -56,8 +79,7 @@ export default function ProductDetailReviews({ reviewData }: Props) {
         </div>
 
         {/* Individual review cards */}
-        {reviews.length > 0 ? (
-          <div className="space-y-[30px] max-w-[1000px] mx-auto">
+        <div className="space-y-[30px] max-w-[1000px] mx-auto">
             {reviews.map((review, i) => (
               <div
                 key={i}
@@ -100,11 +122,6 @@ export default function ProductDetailReviews({ reviewData }: Props) {
               </button>
             </div>
           </div>
-        ) : (
-          <p className="text-center text-sm text-[#1D1D1D80] py-8">
-            No reviews yet. Be the first to review this product!
-          </p>
-        )}
       </div>
     </section>
   );

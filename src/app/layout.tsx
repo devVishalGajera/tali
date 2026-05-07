@@ -45,7 +45,7 @@ export const metadata: Metadata = {
     siteName:    "Talli",
     title:       "Talli — Wine, Spirits & Beer Delivered Fast",
     description: "Order wine, whisky, beer, vodka, rum, gin and more online. Fast delivery across India.",
-    images: [{ url: "/assets/logo/logo-64x64.svg", width: 64, height: 64, alt: "Talli logo" }],
+    images: [{ url: "/assets/logo/talli-logo.jpeg", width: 200, height: 200, alt: "Talli logo" }],
   },
   twitter: {
     card:        "summary_large_image",

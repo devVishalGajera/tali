@@ -41,11 +41,11 @@ const Footer = () => {
             <div className="col-span-1">
               <div className="mb-6">
                 <Image
-                  src="/assets/logo/Logo.png"
+                  src="/assets/logo/talli-logo.jpeg"
                   alt="Talli Logo"
                   width={80}
                   height={80}
-                  className="w-16 h-16 md:w-20 md:h-20"
+                  className="w-16 h-16 md:w-20 md:h-20 rounded-full"
                 />
               </div>
               <h3 className="text-lg font-bold mb-4">Need Help?</h3>
@@ -174,11 +174,11 @@ const Footer = () => {
           <div className="mb-8">
             <div className="mb-6">
               <Image
-                src="/assets/logo/Logo.png"
+                src="/assets/logo/talli-logo.jpeg"
                 alt="Talli Logo"
                 width={80}
                 height={80}
-                className="w-16 h-16"
+                className="w-16 h-16 rounded-full"
               />
             </div>
             <h3 className="text-lg font-bold mb-4">Need Help?</h3>

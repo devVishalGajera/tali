@@ -57,12 +57,12 @@ const ProductCard = ({ product, linkTo }: ProductCardProps) => {
   };
 
   const inner = (
-    <div className="bg-white transition-shadow duration-300 overflow-visible w-full max-w-[200px] md:max-w-[227px] rounded-[17.1px] border border-[#F0F0F0] shadow-[0px_8.55px_8.55px_0px_#EAE0DA4D,0px_0px_0px_1.07px_#5757571A] md:hover:shadow-lg">
+    <div className="bg-white transition-all duration-300 overflow-visible w-full max-w-[200px] md:max-w-[227px] rounded-[17.1px] border border-[#F0F0F0] shadow-[0px_8.55px_8.55px_0px_#EAE0DA4D,0px_0px_0px_1.07px_#5757571A] md:hover:shadow-lg md:hover:scale-105 active:scale-95">
       {/* Image area */}
       <div className="relative p-3 w-full h-[240px] flex items-end justify-between overflow-visible cursor-pointer">
 
-        {/* Cart + Wishlist — top-right corner */}
-        <div className="z-20 flex flex-col gap-1.5">
+        {/* Cart + Wishlist — absolutely positioned top-right */}
+        <div className="absolute top-2 right-2 z-20 flex flex-col gap-1.5">
           <WishlistButton
             productId={product.id}
             storeProductVolumeId={product.store_product_volume_id}

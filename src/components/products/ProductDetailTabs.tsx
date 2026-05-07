@@ -48,15 +48,15 @@ export default function ProductDetailTabs({
     <>
       {/* Tab bar */}
       <div className="w-full border-b border-[#1D1D1D33] pt-[30px]">
-        <div className="flex items-center justify-center">
+        <div className="flex items-center justify-center -mb-px">
           {TABS.map(({ key, label }) => (
             <button
               key={key}
               onClick={() => setActiveTab(key)}
-              className={`flex-1 py-3 text-center text-sm sm:text-base md:text-lg leading-snug transition-colors cursor-pointer ${
+              className={`flex-1 py-3 text-center text-sm sm:text-base md:text-lg leading-snug transition-colors cursor-pointer border-b-2 ${
                 activeTab === key
-                  ? "text-[#1D1D1D] font-bold -mb-px"
-                  : "text-[#3C3232] font-normal"
+                  ? "text-[#1D1D1D] font-bold border-[#1D1D1D]"
+                  : "text-[#3C3232] font-normal border-transparent"
               }`}
             >
               {label}

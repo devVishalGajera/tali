@@ -70,15 +70,15 @@ const Header = ({ navCategories }: Props) => {
           <Image
             src="/assets/header/icons/locationIcon.svg"
             alt="Location"
-            width={20}
-            height={20}
-            className="sm:w-[24px] sm:h-[24px] md:w-[30px] md:h-[30px] transition-transform duration-300 group-hover:scale-110"
+            width={16}
+            height={16}
+            className="sm:w-[18px] sm:h-[18px] transition-transform duration-300 group-hover:scale-110"
           />
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5">
             <div className="flex flex-col">
-              <span className="text-[10px] sm:text-xs text-[#1D1D1D80] leading-tight">Location</span>
-              <div className="flex items-center gap-0.5 sm:gap-1">
-                <span className="text-sm sm:text-base md:text-[20px] font-medium text-[#1D1D1D] leading-tight">
+              <span className="text-[9px] sm:text-[10px] text-[#1D1D1D80] leading-tight">Location</span>
+              <div className="flex items-center gap-0.5">
+                <span className="text-xs sm:text-sm font-medium text-[#1D1D1D] leading-tight">
                   {city || "Select Location"}
                 </span>
               </div>
@@ -86,23 +86,25 @@ const Header = ({ navCategories }: Props) => {
             <Image
               src="/assets/header/icons/arrowDownIcon.svg"
               alt="Arrow Down"
-              width={12}
-              height={12}
-              className="sm:w-[16px] sm:h-[16px] md:w-[20px] md:h-[20px] transition-transform duration-300 group-hover:rotate-180"
+              width={10}
+              height={10}
+              className="sm:w-[12px] sm:h-[12px] transition-transform duration-300 group-hover:rotate-180"
             />
           </div>
         </div>
 
         {/* Center — Logo */}
-        <div className="hidden md:flex items-center justify-center absolute left-1/2 top-0 bottom-0 transform -translate-x-1/2 z-0">
-          <Image
-            src="/assets/logo/logo-64x64.svg"
-            alt="Talli Logo"
-            width={64}
-            height={64}
-            className="md:w-20 md:h-20 transition-transform duration-300 hover:scale-110"
-            priority
-          />
+        <div className="hidden md:flex items-center justify-center absolute left-1/2 top-0 bottom-0 transform -translate-x-1/2 z-0 py-1">
+          <Link href="/">
+            <Image
+              src="/assets/logo/talli-logo.jpeg"
+              alt="Talli Logo"
+              width={72}
+              height={72}
+              className="w-16 h-16 md:w-[72px] md:h-[72px] rounded-full object-cover transition-transform duration-300 hover:scale-110"
+              priority
+            />
+          </Link>
         </div>
 
         {/* Right — Actions */}
@@ -205,21 +207,21 @@ const Header = ({ navCategories }: Props) => {
             <div
               key={category.id}
               onClick={() => handleCategoryClick(category.id)}
-              className="flex flex-col items-center gap-1 sm:gap-1.5 cursor-pointer group hover:text-gray-600 transition-all duration-300 whitespace-nowrap flex-shrink-0 min-w-[60px] sm:min-w-[70px] lg:min-w-[80px] hover:scale-110 active:scale-95"
+              className="flex flex-col items-center gap-2 cursor-pointer group transition-all duration-300 whitespace-nowrap flex-shrink-0 min-w-[70px] lg:min-w-[90px] hover:scale-105 active:scale-95"
               style={{ animationDelay: `${index * 0.05}s` }}
             >
-              <div className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 rounded-full overflow-hidden flex items-center justify-center bg-gray-50 flex-shrink-0">
+              <div className="w-12 h-12 md:w-14 md:h-14 rounded-full overflow-hidden flex items-center justify-center bg-gray-50 flex-shrink-0">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={proxyImageUrl(category.image_full_path)}
                   alt={category.name}
-                  width={32}
-                  height={32}
-                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                  width={56}
+                  height={56}
+                  className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-110"
                 />
               </div>
-              <div className="flex items-center gap-0.5 sm:gap-1">
-                <span className="text-[10px] sm:text-xs font-medium text-[#666666] group-hover:text-gray-600 transition-colors duration-300">
+              <div className="flex items-center justify-center gap-0.5">
+                <span className="text-xs md:text-[13px] font-medium text-[#666666] group-hover:text-[#006B4D] transition-colors duration-300 text-center">
                   {category.name}
                 </span>
                 <Image

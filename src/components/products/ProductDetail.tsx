@@ -1,14 +1,15 @@
-import Link                       from "next/link";
-import Image                      from "next/image";
-import ProductCarouselSection     from "@/components/shared/ProductCarouselSection";
-import ProductDetailGallery       from "./ProductDetailGallery";
-import ProductDetailInfo          from "./ProductDetailInfo";
-import ProductDetailTasteChart    from "./ProductDetailTasteChart";
-import ProductDetailFoodPairing   from "./ProductDetailFoodPairing";
-import ProductDetailReviews       from "./ProductDetailReviews";
-import ProductDetailTabs          from "./ProductDetailTabs";
-import type { ProductDetailData } from "@/lib/api/product-detail";
-import { deduplicateVolumes }     from "@/lib/api/product-detail";
+import Link                         from "next/link";
+import Image                        from "next/image";
+import ProductCarouselSection       from "@/components/shared/ProductCarouselSection";
+import ProductDetailGallery         from "./ProductDetailGallery";
+import ProductDetailInfo            from "./ProductDetailInfo";
+import ProductDetailTasteChart      from "./ProductDetailTasteChart";
+import ProductDetailFoodPairing     from "./ProductDetailFoodPairing";
+import ProductDetailReviews         from "./ProductDetailReviews";
+import ProductDetailTabs            from "./ProductDetailTabs";
+import ProductDetailDisclaimer      from "./ProductDetailDisclaimer";
+import type { ProductDetailData }   from "@/lib/api/product-detail";
+import { deduplicateVolumes }       from "@/lib/api/product-detail";
 
 interface Props {
   data: ProductDetailData;
@@ -27,9 +28,12 @@ export default function ProductDetail({ data }: Props) {
 
   return (
     <main className="w-full m-0 p-0 bg-white">
-      <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 md:px-8 md:py-6 lg:py-12">
-        {/* Breadcrumbs */}
-        <nav className="mb-4 sm:mb-6 md:mb-8" aria-label="Breadcrumb">
+      {/* Disclaimer banner — full width, directly below navbar */}
+      <ProductDetailDisclaimer />
+
+      {/* Breadcrumbs */}
+      <div className="max-w-7xl mx-auto px-4 py-3 sm:px-6 md:px-8">
+        <nav aria-label="Breadcrumb">
           <ol className="flex items-center space-x-1.5 sm:space-x-2 text-xs sm:text-sm text-gray-600">
             <li>
               <Link href="/" className="hover:text-gray-900 text-[#1D1D1D80]">Home</Link>
@@ -46,10 +50,19 @@ export default function ProductDetail({ data }: Props) {
             <li className="text-gray-900 font-medium line-clamp-1">{pd.name}</li>
           </ol>
         </nav>
+      </div>
 
-        {/* Hero — gallery + info */}
+      {/* Hero — gallery + info */}
+      <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 md:px-8 md:py-8 lg:py-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-          <ProductDetailGallery images={images} name={pd.name} abv={pd.alcohol_percentage} />
+          <ProductDetailGallery
+            images={images}
+            name={pd.name}
+            abv={pd.alcohol_percentage}
+            productId={pd.id}
+            storeProductVolumeId={volumes[0]?.store_product_volume_id ?? undefined}
+            productPrice={volumes[0]?.price ? `₹${parseFloat(volumes[0].price).toLocaleString("en-IN", { minimumFractionDigits: 2 })}` : undefined}
+          />
           <ProductDetailInfo
             productId={pd.id}
             name={pd.name}
@@ -57,6 +70,7 @@ export default function ProductDetail({ data }: Props) {
             abv={pd.alcohol_percentage}
             country={pd.country_type}
             volumes={volumes}
+            rating={CustomerReview?.summary?.average_rating ?? 0}
           />
         </div>
       </div>

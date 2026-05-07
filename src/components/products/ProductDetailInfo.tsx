@@ -4,7 +4,6 @@ import { useState } from "react";
 import Image from "next/image";
 import { useCart } from "@/components/modals/CartProvider";
 import { useLocation } from "@/components/modals/LocationProvider";
-import WishlistButton from "@/components/shared/WishlistButton";
 import type { ProductVolume } from "@/lib/api/product-detail";
 
 interface Props {
@@ -14,6 +13,7 @@ interface Props {
   abv:         string;
   country:     string;
   volumes:     ProductVolume[];
+  rating:      number;
 }
 
 export default function ProductDetailInfo({
@@ -23,6 +23,7 @@ export default function ProductDetailInfo({
   abv,
   country,
   volumes,
+  rating,
 }: Props) {
   const { addToCart } = useCart();
   const { purchaseAllow } = useLocation();
@@ -66,10 +67,41 @@ export default function ProductDetailInfo({
       </p>
 
       {/* Price */}
-      <div className="mb-3">
+      <div className="mb-2">
         <span className="text-2xl font-bold text-gray-900">
           {price ?? "—"}
         </span>
+      </div>
+
+      {/* Star rating */}
+      <div className="flex items-center gap-1.5 mb-3">
+        {[1, 2, 3, 4, 5].map((star) => {
+          const filled = rating >= star;
+          const half   = !filled && rating >= star - 0.5;
+          return (
+            <svg key={star} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+              className="w-4 h-4 flex-shrink-0"
+              fill={filled ? "#F59E0B" : half ? "url(#half)" : "none"}
+              stroke={filled || half ? "#F59E0B" : "#D1D5DB"}
+              strokeWidth={1.5}
+            >
+              {half && (
+                <defs>
+                  <linearGradient id="half">
+                    <stop offset="50%" stopColor="#F59E0B" />
+                    <stop offset="50%" stopColor="transparent" />
+                  </linearGradient>
+                </defs>
+              )}
+              <path strokeLinecap="round" strokeLinejoin="round"
+                d="M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0 .475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 0 0-.182.557l1.285 5.385a.562.562 0 0 1-.84.61l-4.725-2.885a.562.562 0 0 0-.586 0L6.982 20.54a.562.562 0 0 1-.84-.61l1.285-5.386a.562.562 0 0 0-.182-.557l-4.204-3.602a.562.562 0 0 1 .321-.988l5.518-.442a.563.563 0 0 0 .475-.345L11.48 3.5Z"
+              />
+            </svg>
+          );
+        })}
+        {rating > 0 && (
+          <span className="text-xs text-gray-500 ml-0.5">{rating.toFixed(1)}</span>
+        )}
       </div>
 
       {/* Description */}
@@ -85,15 +117,15 @@ export default function ProductDetailInfo({
           <label className="block text-xs font-semibold text-[#1D1D1D] mb-1.5">
             Sizes:
           </label>
-          <div className="grid grid-cols-4 gap-1.5">
+          <div className="grid grid-cols-4 gap-2">
             {volumes.map((v) => (
               <button
                 key={v.volume_id}
                 onClick={() => setSelectedVolumeId(v.volume_id)}
-                className={`px-1.5 py-1 rounded border text-[11px] font-medium transition-all cursor-pointer whitespace-nowrap ${
+                className={`px-2 py-2.5 rounded-md border text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
                   selectedVolumeId === v.volume_id
                     ? "bg-[#006B4D] text-white border-[#006B4D]"
-                    : "bg-white text-[#1D1D1D] border-[#1D1D1D] hover:border-gray-400"
+                    : "bg-white text-[#1D1D1D] border-[#1D1D1D] hover:border-[#006B4D] hover:text-[#006B4D]"
                 }`}
               >
                 {v.volume}
@@ -126,15 +158,15 @@ export default function ProductDetailInfo({
         <label className="block text-xs font-semibold text-[#1D1D1D] mb-1.5">
           Bottles:
         </label>
-        <div className="inline-flex items-center gap-4 border border-[#DFDEDE] rounded-md py-1.5 px-4">
+        <div className="flex items-center justify-between border border-[#DFDEDE] rounded-md py-2.5 px-5 w-full">
           <button
             onClick={() => setQuantity((q) => Math.max(1, q - 1))}
             className="flex items-center justify-center transition-colors cursor-pointer"
             aria-label="Decrease quantity"
           >
-            <Image src="/assets/icons/arrow.svg" alt="−" className="rotate-180" width={16} height={16} />
+            <Image src="/assets/icons/arrow.svg" alt="−" className="rotate-180" width={18} height={18} />
           </button>
-          <span className="text-sm font-semibold text-gray-900 min-w-[1.5rem] text-center">
+          <span className="text-base font-semibold text-gray-900 min-w-[1.5rem] text-center">
             {quantity}
           </span>
           <button
@@ -142,54 +174,26 @@ export default function ProductDetailInfo({
             className="flex items-center justify-center transition-colors cursor-pointer"
             aria-label="Increase quantity"
           >
-            <Image src="/assets/icons/arrow.svg" alt="+" width={16} height={16} />
+            <Image src="/assets/icons/arrow.svg" alt="+" width={18} height={18} />
           </button>
         </div>
       </div>
 
-      {/* Add to cart + Wishlist + Social */}
+      {/* Add to cart + Social */}
       <div className="flex flex-col gap-2.5">
         <div className="flex items-center gap-2">
           {purchaseAllow && (
             <button
               onClick={handleAddToCart}
-              className={`flex-1 py-2 px-4 rounded-md font-semibold text-sm transition-all cursor-pointer ${
+              className={`w-full py-3 px-4 rounded-md font-semibold text-sm transition-all cursor-pointer ${
                 addedToCart ? "bg-[#005a3f] text-white" : "bg-[#006B4D] text-white"
               }`}
             >
               {addedToCart ? "Added to Cart ✓" : "Add To Cart"}
             </button>
           )}
-          <WishlistButton
-            productId={productId}
-            storeProductVolumeId={selectedVolume?.store_product_volume_id}
-            size="sm"
-            productName={name}
-            productPrice={price ?? ""}
-            productImage="/assets/images/bottles/single-bottle.png"
-            productVolume={selectedVolume?.volume}
-          />
         </div>
 
-        {/* Social */}
-        <div className="flex items-center gap-3">
-          {[
-            { href: "#", src: "/assets/social/facebook.svg",  label: "Facebook"  },
-            { href: "#", src: "/assets/social/twitter.svg",   label: "Twitter"   },
-            { href: "#", src: "/assets/social/instagram.svg", label: "Instagram" },
-            { href: "#", src: "/assets/social/share.svg",     label: "Share"     },
-          ].map(({ href, src, label }) => (
-            <a
-              key={label}
-              href={href}
-              className="flex items-center gap-1 active:opacity-80 transition-opacity"
-              aria-label={`Share on ${label}`}
-            >
-              <Image src={src} alt={label} width={15} height={15} className="object-contain" />
-              <span className="text-[11px] text-gray-600">{label}</span>
-            </a>
-          ))}
-        </div>
       </div>
     </div>
   );

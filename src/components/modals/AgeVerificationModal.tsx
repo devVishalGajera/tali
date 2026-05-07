@@ -68,10 +68,11 @@ const AgeVerificationModal = ({ isOpen, onAgree, onDecline }: AgeVerificationMod
         {/* Logo */}
         <div className="flex justify-center pt-6 md:pt-8 pb-4 animate-fadeInUp">
           <Image
-            src="/assets/logo/logo-64x64.svg"
+            src="/assets/logo/talli-logo.jpeg"
             alt="Talli Logo"
             width={64}
             height={64}
+            className="rounded-full"
             className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 transition-transform duration-300 hover:scale-110"
             priority
           />

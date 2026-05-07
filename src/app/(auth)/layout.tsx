@@ -18,11 +18,11 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
         <div className="relative z-10 p-10">
           <Link href="/">
             <Image
-              src="/assets/logo/logo-64x64.svg"
+              src="/assets/logo/talli-logo.jpeg"
               alt="Talli"
               width={56}
               height={56}
-              className="brightness-0 invert"
+              className="rounded-full"
             />
           </Link>
         </div>
@@ -55,10 +55,11 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
         <div className="lg:hidden flex items-center justify-between px-6 pt-6 pb-4">
           <Link href="/">
             <Image
-              src="/assets/logo/logo-64x64.svg"
+              src="/assets/logo/talli-logo.jpeg"
               alt="Talli"
               width={44}
               height={44}
+              className="rounded-full"
             />
           </Link>
         </div>

@@ -18,11 +18,11 @@ const ProductListingBanner = () => {
         {/* Text Content */}
         <div className="text-center flex flex-col items-center justify-center w-full max-w-2xl md:max-w-md lg:max-w-lg">
           <Image
-            src="/assets/logo/logo-100x100.svg"
+            src="/assets/logo/talli-logo.jpeg"
             alt="Talli Logo"
             width={80}
             height={80}
-            className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 mb-4 sm:mb-6 md:mb-8"
+            className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 mb-4 sm:mb-6 md:mb-8 rounded-full"
           />
           <p className="text-xs sm:text-sm md:text-base lg:text-lg text-white mb-2 sm:mb-3 md:mb-4">
             Easy, Fast & Convenient!

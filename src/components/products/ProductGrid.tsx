@@ -55,8 +55,13 @@ export default function ProductGrid({ products, currentPage, totalPages, totalRe
               return (
                 <div
                   key={product.id}
-                  className="relative bg-white overflow-visible rounded-[17.1px] border border-[#F0F0F0] shadow-[0px_8.55px_8.55px_0px_#EAE0DA4D,0px_0px_0px_1.07px_#5757571A] hover:shadow-lg transition-shadow"
+                  className="relative bg-white overflow-visible rounded-[17.1px] border border-[#F0F0F0] shadow-[0px_8.55px_8.55px_0px_#EAE0DA4D,0px_0px_0px_1.07px_#5757571A] md:hover:shadow-lg md:hover:scale-105 active:scale-95 transition-all duration-300"
                 >
+                  {/* Cart + Wishlist — absolutely positioned top-right, outside Link */}
+                  <div className="absolute top-2 right-2 z-20 flex flex-col gap-1.5">
+                    <ProductCardActions product={card} initialWishlist={product.is_wishlist} />
+                  </div>
+
                   <Link href={`/products/${product.id}`} className="block">
                     <div className="relative p-3 w-full h-[240px] flex items-end justify-between overflow-visible cursor-pointer">
                       {/* Product image */}
@@ -71,9 +76,6 @@ export default function ProductGrid({ products, currentPage, totalPages, totalRe
 
                       {/* Right column: rating + price */}
                       <div className="flex flex-col items-end gap-3 z-10">
-                        <div className="flex gap-1.5">
-                          <ProductCardActions product={card} initialWishlist={product.is_wishlist} />
-                        </div>
                         <div className="flex flex-col items-center gap-[10px]">
                           <span className="font-graphik font-medium text-base leading-tight text-[#1E1E1E]">
                             {card.rating > 0 ? card.rating.toFixed(1) : "—"}
@@ -96,8 +98,6 @@ export default function ProductGrid({ products, currentPage, totalPages, totalRe
                       </h3>
                     </div>
                   </Link>
-
-
                 </div>
               );
             })}
