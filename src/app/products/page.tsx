@@ -103,7 +103,7 @@ export default async function ProductsPage({ searchParams: searchParamsPromise }
 
           <CategoryTabs categories={categoriesData?.Category ?? []} />
 
-          <div className="flex flex-col md:flex-row gap-6 md:gap-8">
+          <div className="flex flex-col md:flex-row gap-6 md:gap-8 mb-6 md:mb-8">
             <ProductFiltersSidebar
               filterOptions={filterOptions}
               searchParams={searchParams}

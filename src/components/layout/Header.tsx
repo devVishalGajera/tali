@@ -285,7 +285,7 @@ const Header = ({ navCategories }: Props) => {
                           {col.map((sub) => (
                             <Link
                               key={sub.id}
-                              href={`/products?category_id=${openCategory.id}&sub_category_id=${sub.id}`}
+                              href={`/products?categories=${openCategory.id}&subcats=${sub.id}`}
                               className="block text-sm text-[#1D1D1D] hover:text-[#006B4D] transition-colors"
                               onClick={() => setOpenDropdown(null)}
                             >
@@ -298,7 +298,7 @@ const Header = ({ navCategories }: Props) => {
                   </div>
                 ) : (
                   <Link
-                    href={`/products?category_id=${openCategory.id}`}
+                    href={`/products?categories=${openCategory.id}`}
                     className="inline-flex items-center gap-2 text-sm text-[#006B4D] font-medium hover:underline"
                     onClick={() => setOpenDropdown(null)}
                   >
@@ -312,7 +312,7 @@ const Header = ({ navCategories }: Props) => {
                 {/* "View all" link at the bottom */}
                 <div className="mt-6 pt-4 border-t border-gray-100">
                   <Link
-                    href={`/products?category_id=${openCategory.id}`}
+                    href={`/products?categories=${openCategory.id}`}
                     className="text-xs text-[#006B4D] font-semibold hover:underline"
                     onClick={() => setOpenDropdown(null)}
                   >
