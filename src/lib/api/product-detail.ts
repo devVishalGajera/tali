@@ -49,10 +49,25 @@ export interface ReviewSummary {
 
 export interface CustomerReview {
   user_name:  string;
-  avatar?:    string;
+  user_image: string;
   rating:     number;
   comment:    string;
-  created_at: string;
+  date:       string;
+}
+
+export interface UniversalProduct {
+  id:                      number;
+  name:                    string;
+  store_product_id:        number;
+  image_path:              string;
+  store_product_volume_id: number;
+  image_full_path:         string;
+  price:                   string;
+  volume:                  string;
+  volume_id:               number;
+  available_quantity:      string;
+  order_count:             number;
+  best_dealer:             string;
 }
 
 export interface CustomerReviewData {
@@ -76,20 +91,30 @@ export interface ProductDetailRecord {
   taste_values:             string;
   image_path:               string;
   image_full_path:          string;
+  additional_image_path?:   string;
+  additional_img?:          string;
   price:                    string;
   quantity:                 string;
   volume:                   string;
   store_product_volume_id:  number;
+  /* Extra fields from API */
+  producer?:                string;
+  type?:                    string;
+  base_grains?:             string;
+  region?:                  string;
+  whiskey_style?:           string;
+  additives_info?:          string;
+  alcohol?:                 string;
 }
 
 export interface ProductDetailData {
-  ProductDetail:       ProductDetailRecord;
-  ProductVolumes:      ProductVolume[];
-  FoodPairing:         FoodPairingData;
+  ProductDetail:        ProductDetailRecord;
+  ProductVolumes:       ProductVolume[];
+  FoodPairing:          FoodPairingData;
   TasteCharacteristics: TasteCharacteristic[];
-  CustomerReview:      CustomerReviewData;
-  EnablePurchase:      boolean;
-  Universal:           unknown[];
+  CustomerReview:       CustomerReviewData;
+  EnablePurchase:       boolean;
+  Universal:            UniversalProduct[];
 }
 
 export interface ProductDetailApiResponse {
@@ -166,10 +191,13 @@ export function deduplicateVolumes(volumes: ProductVolume[]): ProductVolume[] {
 }
 
 /**
- * Convert TasteCharacteristic right_value (0–2 scale, 1 = centre) to a
- * 0–100 percentage used by the slider track.
+ * Convert TasteCharacteristic values (0–10 scale each) to a slider position.
+ * Position = right_value / (left_value + right_value) * 100
+ * Falls back to 50 (centre) when both values are 0.
  * 0 = far left, 50 = centre, 100 = far right
  */
-export function tasteValueToPercent(rightValue: number): number {
-  return Math.min(100, Math.max(0, (rightValue / 2) * 100));
+export function tasteValueToPercent(rightValue: number, leftValue: number = 0): number {
+  const total = leftValue + rightValue;
+  if (total === 0) return 50;
+  return Math.min(100, Math.max(0, (rightValue / total) * 100));
 }

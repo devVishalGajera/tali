@@ -11,6 +11,13 @@ interface Props {
   description:    string;
   country:        string;
   alcoholPercent: string;
+  producer?:      string;
+  type?:          string;
+  baseGrains?:    string;
+  region?:        string;
+  whiskeyStyle?:  string;
+  additivesInfo?: string;
+  alcohol?:       string;
 }
 
 const TABS: { key: TabKey; label: string }[] = [
@@ -40,6 +47,13 @@ export default function ProductDetailTabs({
   description,
   country,
   alcoholPercent,
+  producer,
+  type,
+  baseGrains,
+  region,
+  whiskeyStyle,
+  additivesInfo,
+  alcohol,
 }: Props) {
   const [activeTab,        setActiveTab]        = useState<TabKey>("prices");
   const [selectedLocation, setSelectedLocation] = useState("India");
@@ -162,26 +176,32 @@ export default function ProductDetailTabs({
 
         {/* ── Additional ── */}
         {activeTab === "additional" && (
-          <div>
-            <p className="px-8 text-xs sm:text-sm leading-relaxed text-center text-[#1D1D1D80]">
-              Additional product information will be displayed here.
-            </p>
-            <div className="flex flex-col sm:flex-row items-center pt-[30px] gap-12">
-              <div className="space-y-3 text-sm sm:text-base text-[#1D1D1D]">
-                {country && (
-                  <div className="flex gap-1">
-                    <span className="font-semibold">Region:</span>
-                    <span>{country}</span>
-                  </div>
-                )}
-                {alcoholPercent && (
-                  <div className="flex gap-1">
-                    <span className="font-semibold">Alcohol ABV:</span>
-                    <span>{alcoholPercent}%</span>
-                  </div>
-                )}
-              </div>
-            </div>
+          <div className="py-4">
+            {(() => {
+              const rows: { label: string; value: string }[] = [];
+              if (country)        rows.push({ label: "Place of Origin", value: country });
+              if (region)         rows.push({ label: "Region",          value: region });
+              if (alcoholPercent) rows.push({ label: "Alcohol ABV",     value: `${alcoholPercent}%` });
+              if (alcohol)        rows.push({ label: "Alcohol",         value: alcohol });
+              if (producer)       rows.push({ label: "Producer",        value: producer });
+              if (type)           rows.push({ label: "Type",            value: type });
+              if (baseGrains)     rows.push({ label: "Base / Grains",   value: baseGrains });
+              if (whiskeyStyle)   rows.push({ label: "Style",           value: whiskeyStyle });
+              if (additivesInfo)  rows.push({ label: "Additives",       value: additivesInfo });
+              if (rows.length === 0) return (
+                <p className="text-sm text-[#1D1D1D80]">No additional information available.</p>
+              );
+              return (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-3">
+                  {rows.map(({ label, value }) => (
+                    <div key={label} className="flex gap-2 text-sm text-[#1D1D1D] border-b border-gray-100 pb-2">
+                      <span className="font-semibold min-w-[130px]">{label}:</span>
+                      <span className="text-[#1D1D1D80]">{value}</span>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
           </div>
         )}
 

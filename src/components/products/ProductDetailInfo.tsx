@@ -7,13 +7,14 @@ import { useLocation } from "@/components/modals/LocationProvider";
 import type { ProductVolume } from "@/lib/api/product-detail";
 
 interface Props {
-  productId:   number;
-  name:        string;
-  description: string;
-  abv:         string;
-  country:     string;
-  volumes:     ProductVolume[];
-  rating:      number;
+  productId:      number;
+  name:           string;
+  description:    string;
+  abv:            string;
+  country:        string;
+  volumes:        ProductVolume[];
+  rating:         number;
+  enablePurchase: boolean;
 }
 
 export default function ProductDetailInfo({
@@ -24,9 +25,13 @@ export default function ProductDetailInfo({
   country,
   volumes,
   rating,
+  enablePurchase,
 }: Props) {
   const { addToCart } = useCart();
   const { purchaseAllow } = useLocation();
+
+  /* Can purchase only if both the location allows it AND the API says so */
+  const canBuy = purchaseAllow && enablePurchase;
 
   const defaultVolume = volumes.find((v) => v.price) ?? volumes[0] ?? null;
   const [selectedVolumeId, setSelectedVolumeId] = useState<number | null>(
@@ -182,7 +187,7 @@ export default function ProductDetailInfo({
       {/* Add to cart + Social */}
       <div className="flex flex-col gap-2.5">
         <div className="flex items-center gap-2">
-          {purchaseAllow && (
+          {canBuy ? (
             <button
               onClick={handleAddToCart}
               className={`w-full py-3 px-4 rounded-md font-semibold text-sm transition-all cursor-pointer ${
@@ -190,6 +195,13 @@ export default function ProductDetailInfo({
               }`}
             >
               {addedToCart ? "Added to Cart ✓" : "Add To Cart"}
+            </button>
+          ) : (
+            <button
+              disabled
+              className="w-full py-3 px-4 rounded-md font-semibold text-sm bg-gray-200 text-gray-500 cursor-not-allowed"
+            >
+              Not Available
             </button>
           )}
         </div>

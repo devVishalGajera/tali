@@ -16,15 +16,29 @@ interface Props {
 }
 
 export default function ProductDetail({ data }: Props) {
-  const { ProductDetail: pd, ProductVolumes, FoodPairing, TasteCharacteristics, CustomerReview } = data;
+  const { ProductDetail: pd, ProductVolumes, FoodPairing, TasteCharacteristics, CustomerReview, Universal, EnablePurchase } = data;
 
-  const images  = pd.image_full_path
-    ? [pd.image_full_path]
-    : ["/assets/images/bottles/single-bottle.png"];
+  const images: string[] = [];
+  if (pd.image_full_path)        images.push(pd.image_full_path);
+  if (pd.additional_image_path)  images.push(pd.additional_image_path);
+  if (images.length === 0)       images.push("/assets/images/bottles/single-bottle.png");
 
   const volumes = deduplicateVolumes(ProductVolumes);
 
   const description = pd.short_description || pd.description || "";
+
+  /* Convert Universal products to ProductCardItem for the carousel */
+  const relatedProducts = (Universal ?? []).map((u) => ({
+    id:          u.id,
+    name:        u.name,
+    price:       u.price ? `₹${parseFloat(u.price).toLocaleString("en-IN", { minimumFractionDigits: 2 })}` : "—",
+    priceValue:  u.price ? parseFloat(u.price) : 0,
+    size:        u.volume,
+    rating:      0,
+    ratingCount: u.order_count ?? 0,
+    image:       u.image_full_path,
+    store_product_volume_id: u.store_product_volume_id,
+  }));
 
   return (
     <main className="w-full m-0 p-0 bg-white">
@@ -71,6 +85,7 @@ export default function ProductDetail({ data }: Props) {
             country={pd.country_type}
             volumes={volumes}
             rating={CustomerReview?.summary?.average_rating ?? 0}
+            enablePurchase={EnablePurchase}
           />
         </div>
       </div>
@@ -83,14 +98,14 @@ export default function ProductDetail({ data }: Props) {
             <h3 className="text-lg sm:text-xl font-semibold text-[#1D1D1D] mb-3">Delivery Time</h3>
             <div className="flex items-center gap-2 text-sm sm:text-base text-[#1D1D1D80]">
               <Image src="/assets/icons/location-pin.svg" alt="Location" width={16} height={16} className="w-4 h-4" />
-              <span>Delivering to your location</span>
+              <span>Delivering today in next 60 minutes</span>
             </div>
           </div>
           <div>
             <h3 className="text-lg sm:text-xl font-semibold text-[#1D1D1D] mb-3">Sold By</h3>
             <div className="flex items-center gap-2 text-sm sm:text-base text-[#1D1D1D]">
               <Image src="/assets/icons/briefcase.svg" alt="Store" width={18} height={18} className="w-[18px] h-[18px]" />
-              <span>Available at multiple stores</span>
+              <span>Thane, Maharashtra</span>
             </div>
           </div>
         </div>
@@ -117,26 +132,35 @@ export default function ProductDetail({ data }: Props) {
         description={pd.description || description}
         country={pd.country_type}
         alcoholPercent={pd.alcohol_percentage}
+        producer={pd.producer}
+        type={pd.type}
+        baseGrains={pd.base_grains}
+        region={pd.region}
+        whiskeyStyle={pd.whiskey_style}
+        additivesInfo={pd.additives_info}
+        alcohol={pd.alcohol}
       />
 
       {/* Reviews */}
       <ProductDetailReviews reviewData={CustomerReview} />
 
-      {/* Related / Similar Products */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-10">
-        <ProductCarouselSection
-          title="Related products"
-          products={[]}
-          linkProducts
-          centerTitle
-        />
-        <ProductCarouselSection
-          title="Similar products"
-          products={[]}
-          linkProducts
-          centerTitle
-        />
-      </div>
+      {/* Related Products (Universal) */}
+      {relatedProducts.length > 0 && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-10">
+          <ProductCarouselSection
+            title="Related products"
+            products={relatedProducts}
+            linkProducts
+            centerTitle
+          />
+          {/* <ProductCarouselSection
+            title="Similar products"
+            products={[]}
+            linkProducts
+            centerTitle
+          /> */}
+        </div>
+      )}
     </main>
   );
 }

@@ -5,31 +5,17 @@ interface Props {
   reviewData: CustomerReviewData;
 }
 
-const MOCK_DATA: CustomerReviewData = {
+const EMPTY_DATA: CustomerReviewData = {
   summary: {
-    average_rating:   5.0,
-    total_reviews:    230,
-    rating_breakdown: { "5": 180, "4": 30, "3": 12, "2": 5, "1": 3 },
+    average_rating:   0,
+    total_reviews:    0,
+    rating_breakdown: { "5": 0, "4": 0, "3": 0, "2": 0, "1": 0 },
   },
-  reviews: [
-    {
-      user_name:  "Lorem ipsum dolor",
-      rating:     4,
-      comment:    "Lorem ipsum dolor sit amet consectetur. Nec et semper dignissim mauris tristique quisque. Non morbi consequat euismod odio pharetra consequat amet semper. Tellus id.",
-      created_at: "20 Jun 2025",
-    },
-    {
-      user_name:  "Lorem ipsum dolor",
-      rating:     4,
-      comment:    "Lorem ipsum dolor sit amet consectetur. Nec et semper dignissim mauris tristique quisque. Non morbi consequat euismod odio pharetra consequat amet semper. Tellus id.",
-      created_at: "20 Jun 2025",
-    },
-  ],
+  reviews: [],
 };
 
 export default function ProductDetailReviews({ reviewData }: Props) {
-  const hasRealData = reviewData?.reviews?.length > 0;
-  const { summary, reviews } = hasRealData ? reviewData : MOCK_DATA;
+  const { summary, reviews } = reviewData ?? EMPTY_DATA;
 
   return (
     <section className="mt-10">
@@ -80,6 +66,11 @@ export default function ProductDetailReviews({ reviewData }: Props) {
 
         {/* Individual review cards */}
         <div className="space-y-[30px] max-w-[1000px] mx-auto">
+            {reviews.length === 0 && (
+              <p className="text-sm text-[#1D1D1D80] text-center py-4">
+                No reviews yet. Be the first to review this product!
+              </p>
+            )}
             {reviews.map((review, i) => (
               <div
                 key={i}
@@ -87,9 +78,9 @@ export default function ProductDetailReviews({ reviewData }: Props) {
               >
                 <div className="flex items-center justify-between mb-[10px]">
                   <div className="flex items-center gap-3">
-                    {review.avatar ? (
+                    {review.user_image ? (
                       <img
-                        src={review.avatar}
+                        src={review.user_image}
                         alt={review.user_name}
                         className="w-[40px] h-[40px] rounded-full object-cover"
                       />
@@ -111,7 +102,7 @@ export default function ProductDetailReviews({ reviewData }: Props) {
                 <p className="text-sm text-[#1D1D1D] leading-relaxed mb-3">
                   {review.comment}
                 </p>
-                <span className="text-xs text-[#1D1D1D80]">{review.created_at}</span>
+                <span className="text-xs text-[#1D1D1D80]">{review.date}</span>
               </div>
             ))}
 

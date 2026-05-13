@@ -55,14 +55,14 @@ export default function ProductGrid({ products, currentPage, totalPages, totalRe
               return (
                 <div
                   key={product.id}
-                  className="relative bg-white overflow-visible rounded-[17.1px] border border-[#F0F0F0] shadow-[0px_8.55px_8.55px_0px_#EAE0DA4D,0px_0px_0px_1.07px_#5757571A] md:hover:shadow-lg md:hover:scale-105 active:scale-95 transition-all duration-300"
+                  className="relative bg-white overflow-visible rounded-[17.1px] border border-[#F0F0F0] shadow-[0px_8.55px_8.55px_0px_#EAE0DA4D,0px_0px_0px_1.07px_#5757571A] md:hover:shadow-lg md:hover:scale-105 active:scale-95 transition-all duration-300 flex flex-col"
                 >
                   {/* Cart + Wishlist — absolutely positioned top-right, outside Link */}
                   <div className="absolute top-2 right-2 z-20 flex flex-col gap-1.5">
                     <ProductCardActions product={card} initialWishlist={product.is_wishlist} />
                   </div>
 
-                  <Link href={`/products/${product.id}`} className="block">
+                  <Link href={`/products/${product.id}`} className="flex flex-col flex-1 h-full">
                     <div className="relative p-3 w-full h-[240px] flex items-end justify-between overflow-visible cursor-pointer">
                       {/* Product image */}
                       <div className="h-full -top-12 relative flex-1">
@@ -91,9 +91,9 @@ export default function ProductGrid({ products, currentPage, totalPages, totalRe
                       </div>
                     </div>
 
-                    {/* Name */}
-                    <div className="px-4 pt-2 pb-4 mt-4">
-                      <h3 className="font-graphik font-normal text-[14px] text-[#1D1D1D] w-full text-left">
+                    {/* Name — flex-1 keeps cards the same total height */}
+                    <div className="px-4 pt-2 pb-4 mt-4 flex-1 flex items-start">
+                      <h3 className="font-graphik font-normal text-[14px] text-[#1D1D1D] w-full text-left line-clamp-2 leading-[1.4]">
                         {card.name}
                       </h3>
                     </div>

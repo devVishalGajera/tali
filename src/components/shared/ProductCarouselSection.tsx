@@ -41,9 +41,10 @@ const ProductCarouselSection = ({
             1024: { spaceBetween: 32 },
           }}
           className="!overflow-visible"
+          style={{ alignItems: "stretch" }}
         >
           {products.map((product) => (
-            <SwiperSlide key={product.id} className="!w-[200px] md:!w-[227px]">
+            <SwiperSlide key={product.id} className="!w-[200px] md:!w-[227px] !h-auto">
               <ProductCard
                 product={product}
                 linkTo={linkProducts ? `/products/${product.id}` : undefined}

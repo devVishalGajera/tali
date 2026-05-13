@@ -53,7 +53,7 @@ export default function ProductFiltersSidebar({ filterOptions }: Props) {
 
   /* Derive active filters exclusively from live URL params */
   const activeSubcat = params.get("subcats") ?? "";   // single id string e.g. "14"
-  const activeBrand  = params.get("brands")  ?? "";   // single id string e.g. "46"
+  const activeBrand  = params.get("brand_id") ?? "";   // single id string e.g. "46"
   const activePrice  = params.get("price")   ?? "All";
 
   const [openSections, setOpenSections] = useState({ subcat: true, price: true, brand: true });
@@ -71,8 +71,8 @@ export default function ProductFiltersSidebar({ filterOptions }: Props) {
       next.set(key, value);
     }
     /* Changing subcategory also clears brand and vice-versa to avoid conflicts */
-    if (key === "subcats") next.delete("brands");
-    if (key === "brands")  next.delete("subcats");
+    if (key === "subcats")  next.delete("brand_id");
+    if (key === "brand_id") next.delete("subcats");
     startTransition(() => {
       router.push(`${pathname}?${next.toString()}`, { scroll: false });
     });
@@ -125,7 +125,7 @@ export default function ProductFiltersSidebar({ filterOptions }: Props) {
         <select
           value={activeBrand}
           className="w-full px-4 py-2.5 border border-[#ECECEC] rounded-lg bg-white text-sm text-[#646057] focus:outline-none focus:ring-2 focus:ring-[#F02A0B]"
-          onChange={(e) => pushFilter("brands", e.target.value)}
+          onChange={(e) => pushFilter("brand_id", e.target.value)}
         >
           <option value="">All Brands</option>
           {data.brands.map((b) => (
@@ -222,7 +222,7 @@ export default function ProductFiltersSidebar({ filterOptions }: Props) {
                         type="radio"
                         name="brand"
                         checked={activeBrand === String(b.id)}
-                        onChange={() => selectOrClear("brands", String(b.id))}
+                        onChange={() => selectOrClear("brand_id", String(b.id))}
                         className="w-3.5 h-3.5 accent-[#F02A0B] shrink-0"
                       />
                       <span className={`text-sm transition-colors ${

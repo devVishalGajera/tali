@@ -30,7 +30,7 @@ export const metadata: Metadata = {
 export interface ProductsSearchParams {
   categories?: string;   // category id e.g. "23"
   subcats?:    string;   // subcategory id e.g. "17"
-  brands?:     string;   // brand id e.g. "46"
+  brand_id?:   string;   // brand id e.g. "46"
   price?:      string;   // price range label e.g. "₹500 - ₹1000"
   q?:          string;   // free-text search term
   page?:       string;   // page number
@@ -87,7 +87,7 @@ export default async function ProductsPage({ searchParams: searchParamsPromise }
     page_no:         page,
     category_id,
     sub_category_id: searchParams.subcats  || undefined,
-    brand_id:        searchParams.brands   || undefined,
+    brand_id:        searchParams.brand_id  || undefined,
     term:            searchParams.q        || undefined,
     store_id:        storeId,
     city,

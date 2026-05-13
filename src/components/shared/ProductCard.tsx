@@ -57,7 +57,7 @@ const ProductCard = ({ product, linkTo }: ProductCardProps) => {
   };
 
   const inner = (
-    <div className="bg-white transition-all duration-300 overflow-visible w-full max-w-[200px] md:max-w-[227px] rounded-[17.1px] border border-[#F0F0F0] shadow-[0px_8.55px_8.55px_0px_#EAE0DA4D,0px_0px_0px_1.07px_#5757571A] md:hover:shadow-lg md:hover:scale-105 active:scale-95">
+    <div className="bg-white transition-all duration-300 overflow-visible w-full max-w-[200px] md:max-w-[227px] rounded-[17.1px] border border-[#F0F0F0] shadow-[0px_8.55px_8.55px_0px_#EAE0DA4D,0px_0px_0px_1.07px_#5757571A] md:hover:shadow-lg md:hover:scale-105 active:scale-95 flex flex-col h-full">
       {/* Image area */}
       <div className="relative p-3 w-full h-[240px] flex items-end justify-between overflow-visible cursor-pointer">
 
@@ -124,9 +124,9 @@ const ProductCard = ({ product, linkTo }: ProductCardProps) => {
         </div>
       </div>
 
-      {/* Name */}
-      <div className="px-4 pb-4 pt-2 mt-4">
-        <h3 className="font-graphik font-normal text-[14px] text-[#1D1D1D] w-full text-left">
+      {/* Name — fixed height so all cards stay the same total height */}
+      <div className="px-4 pb-4 pt-2 mt-4 flex-1 flex items-start">
+        <h3 className="font-graphik font-normal text-[14px] text-[#1D1D1D] w-full text-left line-clamp-2 leading-[1.4]">
           {product.name}
         </h3>
       </div>
@@ -135,7 +135,7 @@ const ProductCard = ({ product, linkTo }: ProductCardProps) => {
 
   if (linkTo) {
     return (
-      <Link href={linkTo} className="block">
+      <Link href={linkTo} className="block h-full">
         {inner}
       </Link>
     );

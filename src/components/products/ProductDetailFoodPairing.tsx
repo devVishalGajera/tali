@@ -31,11 +31,11 @@ export default function ProductDetailFoodPairing({ foodPairing }: Props) {
 
         {/* Food items grid */}
         {foodpairing_product.length > 0 && (
-          <div className="grid grid-cols-2 gap-4 sm:gap-6 place-items-center">
+          <div className="grid grid-cols-3 gap-4 sm:gap-6">
             {foodpairing_product.map((item) => (
               <div
                 key={item.id}
-                className="flex flex-col items-center w-full max-w-[140px] sm:max-w-[160px] md:max-w-[190px]"
+                className="flex flex-col items-center w-full"
               >
                 <p className="text-xs sm:text-sm text-[#1D1D1D] text-center mb-2 min-h-[32px] sm:min-h-[40px] line-clamp-2">
                   {item.product_name}
