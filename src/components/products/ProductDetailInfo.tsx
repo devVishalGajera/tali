@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useCart } from "@/components/modals/CartProvider";
 import { useLocation } from "@/components/modals/LocationProvider";
+import { useAuth } from "@/components/auth/AuthProvider";
 import type { ProductVolume } from "@/lib/api/product-detail";
 
 interface Props {
@@ -29,6 +30,8 @@ export default function ProductDetailInfo({
 }: Props) {
   const { addToCart } = useCart();
   const { purchaseAllow } = useLocation();
+  const { isAuthenticated } = useAuth();
+  const router = useRouter();
 
   /* Can purchase only if both the location allows it AND the API says so */
   const canBuy = purchaseAllow && enablePurchase;
@@ -44,6 +47,10 @@ export default function ProductDetailInfo({
   const price          = selectedVolume?.price ? `₹${parseFloat(selectedVolume.price).toLocaleString("en-IN", { minimumFractionDigits: 2 })}` : null;
 
   const handleAddToCart = () => {
+    if (!isAuthenticated) {
+      router.push(`/login?redirect=/products/${productId}`);
+      return;
+    }
     if (!selectedVolume) return;
     addToCart({
       id:                      productId,
@@ -127,10 +134,10 @@ export default function ProductDetailInfo({
               <button
                 key={v.volume_id}
                 onClick={() => setSelectedVolumeId(v.volume_id)}
-                className={`px-2 py-2.5 rounded-md border text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
+                className={`px-2 py-2.5 rounded-md border-2 text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
                   selectedVolumeId === v.volume_id
-                    ? "bg-[#006B4D] text-white border-[#006B4D]"
-                    : "bg-white text-[#1D1D1D] border-[#1D1D1D] hover:border-[#006B4D] hover:text-[#006B4D]"
+                    ? "border-[#006B4D] text-[#006B4D] bg-[#006B4D0D]"
+                    : "border-gray-200 text-[#1D1D1D] bg-white hover:border-[#006B4D] hover:text-[#006B4D]"
                 }`}
               >
                 {v.volume}
@@ -163,23 +170,23 @@ export default function ProductDetailInfo({
         <label className="block text-xs font-semibold text-[#1D1D1D] mb-1.5">
           Bottles:
         </label>
-        <div className="flex items-center justify-between border border-[#DFDEDE] rounded-md py-2.5 px-5 w-full">
+        <div className="inline-flex items-center border border-gray-200 rounded-lg overflow-hidden">
           <button
             onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-            className="flex items-center justify-center transition-colors cursor-pointer"
+            className="w-10 h-10 flex items-center justify-center text-xl font-light text-gray-600 hover:bg-gray-50 hover:text-[#006B4D] active:bg-gray-100 transition-colors cursor-pointer"
             aria-label="Decrease quantity"
           >
-            <Image src="/assets/icons/arrow.svg" alt="−" className="rotate-180" width={18} height={18} />
+            −
           </button>
-          <span className="text-base font-semibold text-gray-900 min-w-[1.5rem] text-center">
+          <span className="w-10 h-10 flex items-center justify-center text-sm font-semibold text-gray-900 border-x border-gray-200">
             {quantity}
           </span>
           <button
             onClick={() => setQuantity((q) => q + 1)}
-            className="flex items-center justify-center transition-colors cursor-pointer"
+            className="w-10 h-10 flex items-center justify-center text-xl font-light text-gray-600 hover:bg-gray-50 hover:text-[#006B4D] active:bg-gray-100 transition-colors cursor-pointer"
             aria-label="Increase quantity"
           >
-            <Image src="/assets/icons/arrow.svg" alt="+" width={18} height={18} />
+            +
           </button>
         </div>
       </div>

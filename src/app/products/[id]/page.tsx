@@ -52,5 +52,5 @@ export default async function ProductDetailPage({ params }: PageProps) {
 
   if (!data) notFound();
 
-  return <ProductDetail data={data} />;
+  return <ProductDetail data={data} city={city} />;
 }

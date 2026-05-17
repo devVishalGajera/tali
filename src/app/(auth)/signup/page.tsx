@@ -134,7 +134,7 @@ function SignupForm() {
     `w-full px-4 py-3 rounded-xl border text-sm text-[#1D1D1D] placeholder:text-gray-400 focus:outline-none focus:ring-2 transition ${
       touched[name] && fieldErrors[name]
         ? "border-red-400 focus:border-red-400 focus:ring-red-100"
-        : "border-gray-300 focus:border-[#006B4D] focus:ring-[#006B4D]/10"
+        : "border-gray-200 focus:border-[#006B4D] focus:ring-[#006B4D]/10"
     }`;
 
   const FieldErr = ({ name }: { name: keyof TextFields }) =>
@@ -234,8 +234,14 @@ function SignupForm() {
           </div>
         )}
 
-        <button type="submit" disabled={loading} className="w-full py-3.5 bg-[#006B4D] hover:bg-[#005a3f] active:scale-[0.99] text-white font-semibold text-sm rounded-xl transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-2">
-          {loading && <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
+        <button type="submit" disabled={loading} className="w-full py-3.5 bg-[#006B4D] hover:bg-[#005a3f] active:scale-[0.99] text-white font-semibold text-sm rounded-xl transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-2 shadow-sm">
+          {loading ? (
+            <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          ) : (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/>
+            </svg>
+          )}
           {loading ? "Creating account…" : "Create Account"}
         </button>
       </form>

@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { useLocation } from "@/components/modals/LocationProvider";
@@ -58,12 +59,8 @@ function ComingSoonScreen({ onSetLocation }: { onSetLocation: () => void }) {
 
 export default function MainShell({ header, footer, cartModal, cartDrawer, wishlistDrawer, children }: Props) {
   const pathname = usePathname();
-  const { flag, showModal } = useLocation();
+  const { flag, showModal, isModalOpen } = useLocation();
   const isAuthPage = AUTH_PATHS.some((p) => pathname.startsWith(p));
-
-  if (!isAuthPage && flag === 3) {
-    return <ComingSoonScreen onSetLocation={showModal} />;
-  }
 
   if (isAuthPage) {
     return <>{children}</>;
@@ -71,12 +68,17 @@ export default function MainShell({ header, footer, cartModal, cartDrawer, wishl
 
   return (
     <>
-      {header}
-      {children}
-      {footer}
-      {cartModal}
-      {cartDrawer}
-      {wishlistDrawer}
+      <React.Fragment key="header">{header}</React.Fragment>
+      <React.Fragment key="content">{children}</React.Fragment>
+      <React.Fragment key="footer">{footer}</React.Fragment>
+      <React.Fragment key="cartModal">{cartModal}</React.Fragment>
+      <React.Fragment key="cartDrawer">{cartDrawer}</React.Fragment>
+      <React.Fragment key="wishlistDrawer">{wishlistDrawer}</React.Fragment>
+      {flag === 3 && !isModalOpen && (
+        <React.Fragment key="comingSoon">
+          <ComingSoonScreen onSetLocation={showModal} />
+        </React.Fragment>
+      )}
     </>
   );
 }

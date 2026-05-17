@@ -32,12 +32,12 @@ const StoreDetailReviews = ({ reviews }: { reviews: StoreReview[] }) => (
       ))}
     </div>
 
-    <div className="flex justify-center mt-6">
+    {/* <div className="flex justify-center mt-6">
       <button className="flex items-center gap-2 text-sm text-[#1D1D1D] font-medium">
         <img src="/assets/icons/arrow_drop_down.svg" alt="more" className="w-4 h-2" />
         View More Shop
       </button>
-    </div>
+    </div> */}
   </section>
 );
 

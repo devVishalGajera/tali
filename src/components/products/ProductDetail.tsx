@@ -1,27 +1,28 @@
-import Link                         from "next/link";
-import Image                        from "next/image";
-import ProductCarouselSection       from "@/components/shared/ProductCarouselSection";
-import ProductDetailGallery         from "./ProductDetailGallery";
-import ProductDetailInfo            from "./ProductDetailInfo";
-import ProductDetailTasteChart      from "./ProductDetailTasteChart";
-import ProductDetailFoodPairing     from "./ProductDetailFoodPairing";
-import ProductDetailReviews         from "./ProductDetailReviews";
-import ProductDetailTabs            from "./ProductDetailTabs";
-import ProductDetailDisclaimer      from "./ProductDetailDisclaimer";
-import type { ProductDetailData }   from "@/lib/api/product-detail";
-import { deduplicateVolumes }       from "@/lib/api/product-detail";
+import Link from "next/link";
+import Image from "next/image";
+import ProductCarouselSection from "@/components/shared/ProductCarouselSection";
+import ProductDetailGallery from "./ProductDetailGallery";
+import ProductDetailInfo from "./ProductDetailInfo";
+import ProductDetailTasteChart from "./ProductDetailTasteChart";
+import ProductDetailFoodPairing from "./ProductDetailFoodPairing";
+import ProductDetailReviews from "./ProductDetailReviews";
+import ProductDetailTabs from "./ProductDetailTabs";
+import ProductDetailDisclaimer from "./ProductDetailDisclaimer";
+import type { ProductDetailData } from "@/lib/api/product-detail";
+import { deduplicateVolumes } from "@/lib/api/product-detail";
 
 interface Props {
   data: ProductDetailData;
+  city?: string;
 }
 
-export default function ProductDetail({ data }: Props) {
+export default function ProductDetail({ data, city }: Props) {
   const { ProductDetail: pd, ProductVolumes, FoodPairing, TasteCharacteristics, CustomerReview, Universal, EnablePurchase } = data;
 
   const images: string[] = [];
-  if (pd.image_full_path)        images.push(pd.image_full_path);
-  if (pd.additional_image_path)  images.push(pd.additional_image_path);
-  if (images.length === 0)       images.push("/assets/images/bottles/single-bottle.png");
+  if (pd.image_full_path) images.push(pd.image_full_path);
+  if (pd.additional_image_path) images.push(pd.additional_image_path);
+  if (images.length === 0) images.push("/assets/images/bottles/single-bottle.png");
 
   const volumes = deduplicateVolumes(ProductVolumes);
 
@@ -29,14 +30,14 @@ export default function ProductDetail({ data }: Props) {
 
   /* Convert Universal products to ProductCardItem for the carousel */
   const relatedProducts = (Universal ?? []).map((u) => ({
-    id:          u.id,
-    name:        u.name,
-    price:       u.price ? `₹${parseFloat(u.price).toLocaleString("en-IN", { minimumFractionDigits: 2 })}` : "—",
-    priceValue:  u.price ? parseFloat(u.price) : 0,
-    size:        u.volume,
-    rating:      0,
+    id: u.id,
+    name: u.name,
+    price: u.price ? `₹${parseFloat(u.price).toLocaleString("en-IN", { minimumFractionDigits: 2 })}` : "—",
+    priceValue: u.price ? parseFloat(u.price) : 0,
+    size: u.volume,
+    rating: 0,
     ratingCount: u.order_count ?? 0,
-    image:       u.image_full_path,
+    image: u.image_full_path,
     store_product_volume_id: u.store_product_volume_id,
   }));
 
@@ -96,16 +97,33 @@ export default function ProductDetail({ data }: Props) {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <div>
             <h3 className="text-lg sm:text-xl font-semibold text-[#1D1D1D] mb-3">Delivery Time</h3>
-            <div className="flex items-center gap-2 text-sm sm:text-base text-[#1D1D1D80]">
-              <Image src="/assets/icons/location-pin.svg" alt="Location" width={16} height={16} className="w-4 h-4" />
-              <span>Delivering today in next 60 minutes</span>
-            </div>
+            {(() => {
+              const today = new Date();
+              const todayLabel = today.toLocaleDateString("en-IN", {
+                weekday: "long", day: "numeric", month: "long",
+              });
+              const deliveryCity = city
+                ? city.charAt(0).toUpperCase() + city.slice(1)
+                : "your location";
+              return (
+                <div className="flex flex-col gap-2">
+                  <p className="text-sm sm:text-base text-[#1D1D1D80]">
+                    Delivered to{" "}
+                    <span className="font-semibold text-[#1D1D1D]">{todayLabel}</span>
+                  </p>
+                  <div className="flex items-center gap-1.5 text-sm sm:text-base text-[#1D1D1D80]">
+                    <Image src="/assets/icons/location-pin.svg" alt="Location" width={16} height={16} className="w-4 h-4 opacity-60" />
+                    <span>Delivering to {deliveryCity}</span>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
           <div>
             <h3 className="text-lg sm:text-xl font-semibold text-[#1D1D1D] mb-3">Sold By</h3>
-            <div className="flex items-center gap-2 text-sm sm:text-base text-[#1D1D1D]">
+            <div className="flex items-center gap-2 text-xs sm:text-base text-[#1D1D1D]">
               <Image src="/assets/icons/briefcase.svg" alt="Store" width={18} height={18} className="w-[18px] h-[18px]" />
-              <span>Thane, Maharashtra</span>
+              <span>Tali Drinks (Thane, Maharashtra)</span>
             </div>
           </div>
         </div>
@@ -164,4 +182,3 @@ export default function ProductDetail({ data }: Props) {
     </main>
   );
 }
-  

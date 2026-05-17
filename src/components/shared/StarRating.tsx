@@ -46,8 +46,9 @@ const StarRating = ({
   size?: StarSize;
   className?: string;
 }) => {
-  const full  = Math.floor(score);
-  const empty = 5 - Math.ceil(score);
+  const effective = (!score || score <= 0) ? 5 : score;
+  const full  = Math.floor(effective);
+  const empty = 5 - Math.ceil(effective);
   const half  = 5 - full - empty;
 
   return (

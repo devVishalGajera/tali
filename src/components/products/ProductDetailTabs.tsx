@@ -56,7 +56,7 @@ export default function ProductDetailTabs({
   alcohol,
 }: Props) {
   const [activeTab,        setActiveTab]        = useState<TabKey>("prices");
-  const [selectedLocation, setSelectedLocation] = useState("India");
+  const [selectedLocation, setSelectedLocation] = useState("Maharashtra");
 
   return (
     <>
@@ -95,10 +95,16 @@ export default function ProductDetailTabs({
                   onChange={(e) => setSelectedLocation(e.target.value)}
                   className="border border-gray-300 rounded-md px-3 py-1.5 text-sm text-[#1D1D1D] bg-white cursor-pointer focus:outline-none"
                 >
-                  <option>India</option>
-                  <option>USA</option>
-                  <option>UK</option>
-                  <option>UAE</option>
+                  <option value="Maharashtra">Maharashtra</option>
+                  <option value="Delhi" disabled className="text-gray-400">Delhi</option>
+                  <option value="Karnataka" disabled className="text-gray-400">Karnataka</option>
+                  <option value="Tamil Nadu" disabled className="text-gray-400">Tamil Nadu</option>
+                  <option value="Gujarat" disabled className="text-gray-400">Gujarat</option>
+                  <option value="Rajasthan" disabled className="text-gray-400">Rajasthan</option>
+                  <option value="West Bengal" disabled className="text-gray-400">West Bengal</option>
+                  <option value="Uttar Pradesh" disabled className="text-gray-400">Uttar Pradesh</option>
+                  <option value="Punjab" disabled className="text-gray-400">Punjab</option>
+                  <option value="Telangana" disabled className="text-gray-400">Telangana</option>
                 </select>
               </div>
             </div>
@@ -165,12 +171,6 @@ export default function ProductDetailTabs({
               ))}
             </div>
 
-            <div className="flex justify-center mt-6">
-              <button className="flex items-center gap-2 text-sm text-[#1D1D1D] cursor-pointer">
-                <img src="/assets/icons/arrow_drop_down.svg" alt="dropdown" className="w-4 h-2" />
-                <span className="font-medium">View More Shop</span>
-              </button>
-            </div>
           </div>
         )}
 
@@ -208,7 +208,6 @@ export default function ProductDetailTabs({
         {/* ── Description ── */}
         {activeTab === "description" && (
           <div className="py-8">
-            <h3 className="text-lg font-semibold text-[#1D1D1D] mb-4">Product Description</h3>
             <p className="text-sm sm:text-base text-[#1D1D1D80] leading-relaxed">
               {description || "No description available."}
             </p>

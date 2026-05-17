@@ -1,11 +1,12 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import StarRating from "@/components/shared/StarRating";
 import { useCart } from "@/components/modals/CartProvider";
 import { useLocation } from "@/components/modals/LocationProvider";
+import { useAuth } from "@/components/auth/AuthProvider";
 import { proxyImageUrl } from "@/lib/utils/image";
 import WishlistButton from "@/components/shared/WishlistButton";
 
@@ -32,10 +33,16 @@ const ProductCard = ({ product, linkTo }: ProductCardProps) => {
   const [addedToCart, setAddedToCart] = useState(false);
   const { addToCart } = useCart();
   const { purchaseAllow } = useLocation();
+  const { isAuthenticated } = useAuth();
+  const router = useRouter();
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    if (!isAuthenticated) {
+      router.push(`/login?redirect=/products/${product.id}`);
+      return;
+    }
     if (addedToCart) return;
     setAddedToCart(true);
     setTimeout(() => setAddedToCart(false), 2000);
@@ -61,8 +68,8 @@ const ProductCard = ({ product, linkTo }: ProductCardProps) => {
       {/* Image area */}
       <div className="relative p-3 w-full h-[240px] flex items-end justify-between overflow-visible cursor-pointer">
 
-        {/* Cart + Wishlist — absolutely positioned top-right */}
-        <div className="absolute top-2 right-2 z-20 flex flex-col gap-1.5">
+        {/* Wishlist — top-right */}
+        <div className="absolute top-1 right-2 z-20">
           <WishlistButton
             productId={product.id}
             storeProductVolumeId={product.store_product_volume_id}
@@ -73,26 +80,8 @@ const ProductCard = ({ product, linkTo }: ProductCardProps) => {
             productImage={product.image}
             productVolume={product.size}
           />
-          {purchaseAllow && (
-            <button
-              onClick={handleAddToCart}
-              aria-label="Add to cart"
-              className={`w-7 h-7 flex items-center justify-center rounded-full transition-colors border border-gray-200 ${
-                addedToCart
-                  ? "bg-[#00845F] border-[#00845F]"
-                  : "bg-white hover:bg-gray-50"
-              }`}
-            >
-              {addedToCart ? (
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M20 6L9 17l-5-5" />
-                </svg>
-              ) : (
-                <Image src="/assets/icons/shopping_cart.svg" alt="Cart" width={13} height={13} className="w-[13px] h-[13px]" />
-              )}
-            </button>
-          )}
         </div>
+
 
         <div className="h-full -top-12 relative flex-1">
           <img
@@ -112,10 +101,12 @@ const ProductCard = ({ product, linkTo }: ProductCardProps) => {
             </div>
           )}
           <div className="flex flex-col items-center gap-[10px]">
-            <span className="font-graphik font-medium text-base leading-tight text-[#1E1E1E] mb-1">{product.rating}</span>
+            <span className="font-graphik font-medium text-base leading-tight text-[#1E1E1E] mb-1">
+              {product.rating > 0 ? product.rating : "5.0"}
+            </span>
             <div className="flex items-center gap-0.5 mb-1"><StarRating score={product.rating} /></div>
             <span className="font-graphik font-normal text-[11px] leading-[14px] text-center text-[#1E1E1E] whitespace-nowrap mb-1">
-              {product.ratingCount} Rating
+              {product.ratingCount > 0 ? `${product.ratingCount} Rating` : ""}
             </span>
             <button className="bg-[#00845F] active:bg-green-700 text-white font-graphik font-semibold py-1 px-3 transition-colors duration-300 whitespace-nowrap rounded-full text-center text-sm leading-[18px]">
               {product.price}
@@ -124,11 +115,33 @@ const ProductCard = ({ product, linkTo }: ProductCardProps) => {
         </div>
       </div>
 
-      {/* Name — fixed height so all cards stay the same total height */}
-      <div className="px-4 pb-4 pt-2 mt-4 flex-1 flex items-start">
-        <h3 className="font-graphik font-normal text-[14px] text-[#1D1D1D] w-full text-left line-clamp-2 leading-[1.4]">
+      {/* Name + Cart button row */}
+      <div className="px-4 pb-4 pt-2 mt-4 flex-1 flex items-center justify-between gap-2">
+        <h3 className="font-graphik font-bold text-[14px] text-[#1D1D1D] text-left line-clamp-2 leading-[1.4] flex-1 min-w-0">
           {product.name}
         </h3>
+        {purchaseAllow && (
+          <button
+            onClick={handleAddToCart}
+            aria-label="Add to cart"
+            className={`shrink-0 w-9 h-9 flex items-center justify-center rounded-full transition-all shadow-sm active:scale-95 ${addedToCart
+              ? "bg-[#00845F]"
+              : "bg-[#006B4D] hover:bg-[#005a3f]"
+              }`}
+          >
+            {addedToCart ? (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 6L9 17l-5-5" />
+              </svg>
+            ) : (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="9" cy="21" r="1" fill="white" stroke="none" />
+                <circle cx="20" cy="21" r="1" fill="white" stroke="none" />
+                <path d="M1 1h4l2.68 13.39a2 2 0 001.99 1.61h9.72a2 2 0 001.97-1.67L23 6H6" />
+              </svg>
+            )}
+          </button>
+        )}
       </div>
     </div>
   );
