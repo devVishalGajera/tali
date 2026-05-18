@@ -109,7 +109,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
         <div className="absolute inset-0 bg-black/70" />
 
         {/* Floating white card */}
-        <div className="relative z-10 w-full bg-white rounded-3xl shadow-2xl flex flex-col overflow-hidden">
+        <div className="relative z-10 w-full bg-white rounded-3xl shadow-2xl flex flex-col overflow-y-auto">
 
           {/* Mobile logo */}
           <div className="lg:hidden px-8 pt-8">
@@ -119,20 +119,19 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
           </div>
 
           {/* Form area — scrollable inside the card */}
-          <div className="flex-1 overflow-y-auto flex items-start justify-center px-8 py-10">
+          <div className="flex-1 flex items-start justify-center px-8 py-10">
             <div className="w-full max-w-[380px]">
               {children}
             </div>
           </div>
 
           {/* Bottom illustration */}
-          <div className="relative w-full h-[130px] flex-shrink-0 overflow-hidden">
+          <div className="w-full overflow-hidden max-h-[200px]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/assets/auth/right-side-bottom.jpeg"
+              src="/assets/auth/right-side-bottom.png"
               alt=""
-              className="w-full h-full object-cover object-bottom"
-              style={{ filter: "invert(1)", opacity: 0.2 }}
+              className="w-full h-full object-cover"
             />
           </div>
 
