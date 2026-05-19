@@ -34,25 +34,22 @@ const ChevronDown = () => (
 );
 
 const CheckoutPage = () => {
-  const { items, removeFromCart } = useCart();
+  const { items, removeFromCart, updateQuantity } = useCart();
   const { isAuthenticated } = useAuth();
   const { purchaseAllow } = useLocation();
-  const [quantities, setQuantities] = useState<Record<number, number>>(
-    Object.fromEntries(items.map((i) => [i.id, i.quantity]))
-  );
   const [coupon, setCoupon] = useState("");
   const [deliveryNote, setDeliveryNote] = useState("");
 
   const changeQty = (id: number, delta: number) => {
-    setQuantities((prev) => {
-      const next = (prev[id] ?? 1) + delta;
-      if (next < 1) return prev;
-      return { ...prev, [id]: next };
-    });
+    const item = items.find((i) => i.id === id);
+    if (!item) return;
+    const next = item.quantity + delta;
+    if (next < 1) return;
+    updateQuantity(id, next);
   };
 
-  const subtotal     = items.reduce((s, i) => s + i.priceValue * (quantities[i.id] ?? i.quantity), 0);
-  const totalItems   = items.reduce((s, i) => s + (quantities[i.id] ?? i.quantity), 0);
+  const subtotal     = items.reduce((s, i) => s + i.priceValue * i.quantity, 0);
+  const totalItems   = items.reduce((s, i) => s + i.quantity, 0);
   const totalExclTax = subtotal + SHIPPING;
   const taxes        = totalExclTax * TAX_RATE;
   const totalInclTax = totalExclTax + taxes;
@@ -103,7 +100,7 @@ const CheckoutPage = () => {
             ) : (
               <div className="divide-y divide-[#F0F0F0]">
                 {items.map((item) => {
-                  const qty      = quantities[item.id] ?? item.quantity;
+                  const qty = item.quantity;
                   const lineTotal = item.priceValue * qty;
 
                   return (

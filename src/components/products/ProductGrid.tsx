@@ -1,14 +1,11 @@
 /**
  * ProductGrid — Server Component.
  * Receives pre-fetched product data from the page and renders the grid.
- * Interactive leaf nodes (cart, wishlist, pagination) are Client Components.
+ * Uses the same ProductCard as the homepage carousels.
  */
 
-import Link from "next/link";
-import StarRating from "@/components/shared/StarRating";
-import ProductCardActions from "./ProductCardActions";
+import ProductCard from "@/components/shared/ProductCard";
 import ProductGridPagination from "./ProductGridPagination";
-import { proxyImageUrl } from "@/lib/utils/image";
 import type { ProductListItem } from "@/lib/api/products";
 import { toProductCardItem } from "@/lib/api/products";
 
@@ -17,9 +14,16 @@ interface Props {
   currentPage: number;
   totalPages: number;
   totalRecords: number;
+  showPagination?: boolean;
 }
 
-export default function ProductGrid({ products, currentPage, totalPages, totalRecords }: Props) {
+export default function ProductGrid({
+  products,
+  currentPage,
+  totalPages,
+  totalRecords,
+  showPagination = false,
+}: Props) {
   return (
     <div className="flex-1 min-w-0">
       {products.length === 0 ? (
@@ -29,7 +33,7 @@ export default function ProductGrid({ products, currentPage, totalPages, totalRe
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-x-4 md:gap-x-6 gap-y-10 md:gap-y-12 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 mb-6">
 
             {/* Discover banner — first cell */}
             <div className="bg-white overflow-hidden rounded-[17.1px] border border-[#F0F0F0] shadow-[0px_8.55px_8.55px_0px_#EAE0DA4D,0px_0px_0px_1.07px_#5757571A]">
@@ -49,65 +53,26 @@ export default function ProductGrid({ products, currentPage, totalPages, totalRe
               </div>
             </div>
 
-            {/* Product cards */}
             {products.map((product) => {
               const card = toProductCardItem(product);
               return (
-                <div
+                <ProductCard
                   key={product.id}
-                  className="relative bg-white overflow-visible rounded-[17.1px] border border-[#F0F0F0] shadow-[0px_8.55px_8.55px_0px_#EAE0DA4D,0px_0px_0px_1.07px_#5757571A] md:hover:shadow-lg md:hover:scale-105 active:scale-95 transition-all duration-300 flex flex-col"
-                >
-                  {/* Cart + Wishlist — absolutely positioned top-right, outside Link */}
-                  <div className="absolute top-2 right-2 z-20 flex flex-col gap-1.5">
-                    <ProductCardActions product={card} initialWishlist={product.is_wishlist} />
-                  </div>
-
-                  <Link href={`/products/${product.id}`} className="flex flex-col flex-1 h-full">
-                    <div className="relative p-3 w-full h-[240px] flex items-end justify-between overflow-visible cursor-pointer">
-                      {/* Product image */}
-                      <div className="h-full -top-12 relative flex-1">
-                        <img
-                          src={proxyImageUrl(card.image)}
-                          alt={card.name}
-                          className="max-w-[104px] h-full object-contain"
-                          loading="lazy"
-                        />
-                      </div>
-
-                      {/* Right column: rating + price */}
-                      <div className="flex flex-col items-end gap-3 z-10">
-                        <div className="flex flex-col items-center gap-[10px]">
-                          <span className="font-graphik font-medium text-base leading-tight text-[#1E1E1E]">
-                            {card.rating > 0 ? card.rating.toFixed(1) : "—"}
-                          </span>
-                          <StarRating score={card.rating} />
-                          <span className="font-graphik font-normal text-[11px] text-center text-[#1E1E1E] whitespace-nowrap">
-                            {card.ratingCount > 0 ? `${card.ratingCount} orders` : "New"}
-                          </span>
-                          <span className="bg-[#00845F] text-white font-graphik font-semibold py-1 px-3 rounded-full text-sm whitespace-nowrap">
-                            {card.price}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Name — flex-1 keeps cards the same total height */}
-                    <div className="px-4 pt-2 pb-4 mt-4 flex-1 flex items-start">
-                      <h3 className="font-graphik font-normal text-[14px] text-[#1D1D1D] w-full text-left line-clamp-2 leading-[1.4]">
-                        {card.name}
-                      </h3>
-                    </div>
-                  </Link>
-                </div>
+                  product={card}
+                  linkTo={`/products/${product.id}`}
+                  fullWidth
+                />
               );
             })}
           </div>
 
-          <ProductGridPagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            totalRecords={totalRecords}
-          />
+          {showPagination && (
+            <ProductGridPagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalRecords={totalRecords}
+            />
+          )}
         </>
       )}
     </div>

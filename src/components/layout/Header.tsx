@@ -251,12 +251,15 @@ const Header = ({ navCategories }: Props) => {
         style={{ paddingTop: scrolled ? "8px" : "10px", paddingBottom: scrolled ? "8px" : "10px" }}
       >
         {/* Left — location (always visible) */}
-        <LocationBtn />
+        <div className="flex-1 flex items-center justify-start min-w-0 z-10">
+          <LocationBtn />
+        </div>
 
-        {/* Center — logo + optional search bar */}
-        <div className="flex-1 flex items-center justify-center gap-3">
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-3 z-10 pointer-events-none max-w-[calc(100%-180px)] sm:max-w-[calc(100%-260px)]">
           {/* Logo — shrinks on scroll, always centered */}
-          <Link href="/" className="flex-shrink-0 transition-all duration-300"
+          <Link
+            href="/"
+            className="flex-shrink-0 transition-all duration-300 pointer-events-auto"
             style={{ width: scrolled ? 36 : 48, height: scrolled ? 36 : 48 }}
           >
             <Image
@@ -271,15 +274,15 @@ const Header = ({ navCategories }: Props) => {
 
           {/* Search bar — slides in when scrolled */}
           <div
-            className="overflow-hidden"
+            className="overflow-hidden min-w-0 pointer-events-auto"
             style={{
-              maxWidth: scrolled ? "480px" : "0px",
+              maxWidth: scrolled ? "min(480px, 50vw)" : "0px",
               opacity: scrolled ? 1 : 0,
               flex: scrolled ? "1" : "0 0 0px",
               transition: "max-width 350ms ease, opacity 300ms ease, flex 350ms ease",
             }}
           >
-            <form onSubmit={handleHeaderSearch} className="w-full">
+            <form onSubmit={handleHeaderSearch} className="w-full min-w-[180px]">
               <div className="flex items-center bg-gray-100 rounded-full px-3 py-2 gap-2 w-full">
                 <Image src="/assets/header/icons/searchIcon.svg" alt="" width={15} height={15} className="opacity-40 flex-shrink-0" />
                 <input
@@ -300,8 +303,10 @@ const Header = ({ navCategories }: Props) => {
           </div>
         </div>
 
-        {/* Right — action icons (always visible) */}
-        <ActionIcons />
+        {/* Right — action icons */}
+        <div className="flex-1 flex items-center justify-end min-w-0 z-10">
+          <ActionIcons />
+        </div>
       </div>
 
       {/* ── Category bar — morphs between icon+text and text-only ─ */}

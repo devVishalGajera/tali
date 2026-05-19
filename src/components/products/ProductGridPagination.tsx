@@ -15,7 +15,7 @@ export default function ProductGridPagination({ currentPage, totalPages, totalRe
   const params   = useSearchParams();
   const [isPending, startTransition] = useTransition();
 
-  if (totalPages <= 1) return null;
+  if (totalPages <= 1 || totalRecords <= 0) return null;
 
   const goTo = (page: number) => {
     const next = new URLSearchParams(params.toString());

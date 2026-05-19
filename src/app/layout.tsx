@@ -14,6 +14,8 @@ import WishlistDrawer from "@/components/modals/WishlistDrawer";
 import { getCities } from "@/lib/api/cities";
 import { getNavCategories, type NavCategory } from "@/lib/api/categories";
 import MainShell from "@/components/layout/MainShell";
+import LocationChangeRefresher from "@/components/modals/LocationChangeRefresher";
+import { Suspense } from "react";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -84,6 +86,9 @@ export default async function RootLayout({
             <LocationProvider citiesData={citiesData}>
               <CartProvider>
                 <WishlistProvider>
+                  <Suspense fallback={null}>
+                    <LocationChangeRefresher />
+                  </Suspense>
                   <MainShell
                     header={<Header navCategories={navCategories} />}
                     footer={<Footer />}

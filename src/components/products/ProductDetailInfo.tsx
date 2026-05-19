@@ -1,10 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, useMemo } from "react";
 import { useCart } from "@/components/modals/CartProvider";
 import { useLocation } from "@/components/modals/LocationProvider";
-import { useAuth } from "@/components/auth/AuthProvider";
 import type { ProductVolume } from "@/lib/api/product-detail";
 
 interface Props {
@@ -28,39 +26,63 @@ export default function ProductDetailInfo({
   rating,
   enablePurchase,
 }: Props) {
-  const { addToCart } = useCart();
+  const { addToCart, items, updateQuantity } = useCart();
   const { purchaseAllow } = useLocation();
-  const { isAuthenticated } = useAuth();
-  const router = useRouter();
 
-  /* Can purchase only if both the location allows it AND the API says so */
   const canBuy = purchaseAllow && enablePurchase;
 
   const defaultVolume = volumes.find((v) => v.price) ?? volumes[0] ?? null;
   const [selectedVolumeId, setSelectedVolumeId] = useState<number | null>(
     defaultVolume?.volume_id ?? null,
   );
-  const [quantity, setQuantity]       = useState(1);
+  const [quantity, setQuantity] = useState(1);
   const [addedToCart, setAddedToCart] = useState(false);
 
   const selectedVolume = volumes.find((v) => v.volume_id === selectedVolumeId) ?? defaultVolume;
-  const price          = selectedVolume?.price ? `₹${parseFloat(selectedVolume.price).toLocaleString("en-IN", { minimumFractionDigits: 2 })}` : null;
+  const price = selectedVolume?.price
+    ? `₹${parseFloat(selectedVolume.price).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`
+    : null;
+
+  const cartLine = useMemo(() => {
+    const spvId = selectedVolume?.store_product_volume_id;
+    if (!spvId) return undefined;
+    return items.find(
+      (i) =>
+        i.id === productId &&
+        i.store_product_volume_id === spvId,
+    );
+  }, [items, productId, selectedVolume?.store_product_volume_id]);
+
+  /* Keep stepper in sync with cart total for this product + size */
+  useEffect(() => {
+    if (cartLine) {
+      setQuantity(cartLine.quantity);
+    } else {
+      setQuantity(1);
+    }
+  }, [selectedVolumeId, cartLine?.quantity, cartLine?.store_product_volume_id]);
+
+  const changeQty = (delta: number) => {
+    const next = quantity + delta;
+    if (next < 1) return;
+    if (cartLine) {
+      updateQuantity(productId, next);
+    }
+    setQuantity(next);
+  };
 
   const handleAddToCart = () => {
-    if (!isAuthenticated) {
-      router.push(`/login?redirect=/products/${productId}`);
-      return;
-    }
     if (!selectedVolume) return;
     addToCart({
-      id:                      productId,
+      id: productId,
       store_product_volume_id: selectedVolume.store_product_volume_id ?? undefined,
       name,
-      price:      price ?? "—",
+      price: price ?? "—",
       priceValue: selectedVolume.price ? parseFloat(selectedVolume.price) : 0,
-      image:      "/assets/images/bottles/single-bottle.png",
-      size:       selectedVolume.volume || undefined,
-      quantity:   quantity,
+      image: "/assets/images/bottles/single-bottle.png",
+      size: selectedVolume.volume || undefined,
+      quantity,
+      requestType: "add_to_cart",
     });
     setAddedToCart(true);
     setTimeout(() => setAddedToCart(false), 2000);
@@ -172,7 +194,8 @@ export default function ProductDetailInfo({
         </label>
         <div className="inline-flex items-center border border-gray-200 rounded-lg overflow-hidden">
           <button
-            onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+            type="button"
+            onClick={() => changeQty(-1)}
             className="w-10 h-10 flex items-center justify-center text-xl font-light text-gray-600 hover:bg-gray-50 hover:text-[#006B4D] active:bg-gray-100 transition-colors cursor-pointer"
             aria-label="Decrease quantity"
           >
@@ -182,7 +205,8 @@ export default function ProductDetailInfo({
             {quantity}
           </span>
           <button
-            onClick={() => setQuantity((q) => q + 1)}
+            type="button"
+            onClick={() => changeQty(1)}
             className="w-10 h-10 flex items-center justify-center text-xl font-light text-gray-600 hover:bg-gray-50 hover:text-[#006B4D] active:bg-gray-100 transition-colors cursor-pointer"
             aria-label="Increase quantity"
           >

@@ -50,7 +50,7 @@ export async function addToCartApi(params: {
   const form = new FormData();
   form.append("store_product_volume_id", String(params.store_product_volume_id));
   form.append("quantity",                String(params.quantity));
-  form.append("request_type",            params.request_type ?? "people_also_added");
+  form.append("request_type",            params.request_type ?? "add_to_cart");
 
   const res = await fetch(`${BASE_URL}/product/add-update-cartNew`, {
     method:  "POST",

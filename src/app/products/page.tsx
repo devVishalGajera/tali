@@ -1,26 +1,27 @@
-import type { Metadata }           from "next";
-import { cookies }                 from "next/headers";
-import ProductListingBanner        from "@/components/products/ProductListingBanner";
-import CategoryTabs                from "@/components/products/CategoryTabs";
-import ProductFiltersSidebar       from "@/components/products/ProductFiltersSidebar";
-import ProductGrid                 from "@/components/products/ProductGrid";
-import ProductListingSaleBanner    from "@/components/products/ProductListingSaleBanner";
-import ProductSlider               from "@/components/products/ProductSlider";
-import { getFilterOptions }        from "@/lib/api/filters";
-import { getCategories }           from "@/lib/api/categories";
-import { getProducts }             from "@/lib/api/products";
-import type { PriceRange }         from "@/lib/api/filters";
+import type { Metadata } from "next";
+import { cookies } from "next/headers";
+import ProductListingBanner from "@/components/products/ProductListingBanner";
+import CategoryTabs from "@/components/products/CategoryTabs";
+import ProductFiltersSidebar from "@/components/products/ProductFiltersSidebar";
+import ProductGrid from "@/components/products/ProductGrid";
+import ProductListingSaleBanner from "@/components/products/ProductListingSaleBanner";
+import ProductSlider from "@/components/products/ProductSlider";
+import { getFilterOptions } from "@/lib/api/filters";
+import { getCategories } from "@/lib/api/categories";
+import { getProducts } from "@/lib/api/products";
+import { getProductListPagination } from "@/lib/utils/pagination";
+import type { PriceRange } from "@/lib/api/filters";
 
 /* ── Metadata ────────────────────────────────────────────────── */
 
 export const metadata: Metadata = {
-  title:       "Shop All Products | Talli — Wine, Spirits & Beer Online",
+  title: "Shop All Products | Talli — Wine, Spirits & Beer Online",
   description: "Browse our full range of wines, spirits, beer and more. Filter by category, brand and price. Fast delivery across India.",
   openGraph: {
-    title:       "Shop All Products | Talli",
+    title: "Shop All Products | Talli",
     description: "Browse our full range of wines, spirits, beer and more.",
-    url:         "/products",
-    type:        "website",
+    url: "/products",
+    type: "website",
   },
   alternates: { canonical: "/products" },
 };
@@ -29,11 +30,11 @@ export const metadata: Metadata = {
 
 export interface ProductsSearchParams {
   categories?: string;   // category id e.g. "23"
-  subcats?:    string;   // subcategory id e.g. "17"
-  brand_id?:   string;   // brand id e.g. "46"
-  price?:      string;   // price range label e.g. "₹500 - ₹1000"
-  q?:          string;   // free-text search term
-  page?:       string;   // page number
+  subcats?: string;   // subcategory id e.g. "17"
+  brand_id?: string;   // brand id e.g. "46"
+  price?: string;   // price range label e.g. "₹500 - ₹1000"
+  q?: string;   // free-text search term
+  page?: string;   // page number
 }
 
 interface PageProps {
@@ -54,8 +55,8 @@ function resolvePriceRange(label: string | undefined, ranges: PriceRange[]) {
 
 function deriveCategoryId(
   selectedCategoryId: string | undefined,
-  subcatId:           string | undefined,
-  subcategoryArray:   { id: number; category_id: number }[] | undefined,
+  subcatId: string | undefined,
+  subcategoryArray: { id: number; category_id: number }[] | undefined,
 ) {
   if (selectedCategoryId) return selectedCategoryId;
   if (!subcatId || !subcategoryArray) return undefined;
@@ -70,11 +71,11 @@ export default async function ProductsPage({ searchParams: searchParamsPromise }
 
   const cookieStore = await cookies();
   const storeId = cookieStore.get("talli_store_id")?.value || undefined;
-  const city    = cookieStore.get("talli_city")?.value    || undefined;
+  const city = cookieStore.get("talli_city")?.value || undefined;
 
   const [filterOptions, categoriesData] = await Promise.all([
     getFilterOptions().catch(() => null),
-    getCategories().catch(() => null),
+    getCategories({ store_id: storeId, city }).catch(() => null),
   ]);
 
   const category_id = deriveCategoryId(
@@ -84,15 +85,21 @@ export default async function ProductsPage({ searchParams: searchParamsPromise }
   );
 
   const productsData = await getProducts({
-    page_no:         page,
+    page_no: page,
     category_id,
-    sub_category_id: searchParams.subcats  || undefined,
-    brand_id:        searchParams.brand_id  || undefined,
-    term:            searchParams.q        || undefined,
-    store_id:        storeId,
+    sub_category_id: searchParams.subcats || undefined,
+    brand_id: searchParams.brand_id || undefined,
+    term: searchParams.q || undefined,
+    store_id: storeId,
     city,
     ...resolvePriceRange(searchParams.price, filterOptions?.priceRangeArray ?? []),
   }).catch(() => null);
+
+  const { totalPages, showPagination } = getProductListPagination(
+    productsData?.total_records ?? 0,
+    productsData?.record_per_page,
+    productsData?.total_pages,
+  );
 
   return (
     <main className="w-full m-0 p-0">
@@ -109,10 +116,11 @@ export default async function ProductsPage({ searchParams: searchParamsPromise }
               searchParams={searchParams}
             />
             <ProductGrid
-              products={productsData?.data      ?? []}
+              products={productsData?.data ?? []}
               currentPage={page}
-              totalPages={productsData?.total_pages    ?? 1}
-              totalRecords={productsData?.total_records  ?? 0}
+              totalPages={totalPages}
+              totalRecords={productsData?.total_records ?? 0}
+              showPagination={showPagination}
             />
           </div>
 

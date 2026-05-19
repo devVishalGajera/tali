@@ -47,6 +47,7 @@ export default function ProductCardActions({ product, initialWishlist = false }:
       />
       {purchaseAllow && (
         <button
+          type="button"
           onClick={handleAddToCart}
           aria-label="Add to cart"
           className={`w-7 h-7 flex items-center justify-center rounded-full transition-colors border border-gray-200 ${

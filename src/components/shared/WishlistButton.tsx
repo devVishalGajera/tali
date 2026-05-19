@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useWishlist } from "@/components/modals/WishlistProvider";
 import { addToWishlistApi } from "@/lib/api/wishlist";
@@ -38,30 +37,46 @@ export default function WishlistButton({
   productVolume,
 }: Props) {
   const { isAuthenticated, token } = useAuth();
-  const { addItem, removeItem, refreshWishlist } = useWishlist();
-  const router = useRouter();
-  const pathname = usePathname();
+  const { addItem, removeItem, isWishlisted } = useWishlist();
 
   const [wishlisted, setWishlisted] = useState(initialWishlisted);
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    if (isWishlisted(productId)) setWishlisted(true);
+  }, [productId, isWishlisted]);
+
   const { icon: iconSize, container } = sizes[size];
+
+  const buildItem = () => {
+    const priceValue = parseFloat(productPrice?.replace(/[^0-9.]/g, "") ?? "0") || 0;
+    return {
+      productId,
+      storeProductVolumeId: storeProductVolumeId!,
+      name: productName ?? "",
+      price: productPrice ?? "",
+      priceValue,
+      image: proxyImageUrl(productImage ?? ""),
+      volume: productVolume ?? "",
+    };
+  };
 
   const handleClick = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
-    if (!isAuthenticated || !token) {
-      router.push(`/login?redirect=${encodeURIComponent(pathname)}`);
-      return;
-    }
-
     if (!storeProductVolumeId) return;
 
-    setLoading(true);
     const next = !wishlisted;
     setWishlisted(next);
 
+    if (!isAuthenticated || !token) {
+      if (next) addItem(buildItem());
+      else removeItem(productId);
+      return;
+    }
+
+    setLoading(true);
     try {
       const res = await addToWishlistApi({
         product_id: productId,
@@ -72,19 +87,8 @@ export default function WishlistButton({
       if (res.code !== 1) {
         setWishlisted(!next);
       } else if (next) {
-        /* Added — push a lightweight entry so the count badge updates */
-        const priceValue = parseFloat(productPrice?.replace(/[^0-9.]/g, "") ?? "0") || 0;
-        addItem({
-          productId: productId,
-          storeProductVolumeId: storeProductVolumeId,
-          name: productName ?? "",
-          price: productPrice ?? "",
-          priceValue,
-          image: proxyImageUrl(productImage ?? ""),
-          volume: productVolume ?? "",
-        });
+        addItem(buildItem());
       } else {
-        /* Removed — remove from provider by productId */
         removeItem(productId);
       }
     } catch {

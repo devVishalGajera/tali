@@ -73,6 +73,8 @@ export interface CategoriesData {
 export interface GetCategoriesOptions {
   /** Pass the user's Bearer token to get personalised data (e.g. is_wishlist) */
   token?: string;
+  store_id?: number | string;
+  city?: string;
 }
 
 /**
@@ -83,12 +85,18 @@ export interface GetCategoriesOptions {
  * so we skip the shared cache to avoid data leaking between users.
  */
 export async function getCategories(
-  { token }: GetCategoriesOptions = {}
+  { token, store_id, city }: GetCategoriesOptions = {}
 ): Promise<CategoriesData> {
-  return apiFetch<CategoriesData>("/guest/new/categoriesNew", {
+  const qs = new URLSearchParams();
+  if (store_id) qs.set("store_id", String(store_id));
+  if (city) qs.set("city", city);
+  const query = qs.toString();
+  const path = query ? `/guest/new/categoriesNew?${query}` : "/guest/new/categoriesNew";
+
+  return apiFetch<CategoriesData>(path, {
     token,
-    tags: token ? undefined : [TAGS.categories],
-    revalidate: token ? 0 : 600,
+    tags: token || store_id || city ? undefined : [TAGS.categories],
+    revalidate: token || store_id || city ? 0 : 600,
   });
 }
 

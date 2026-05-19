@@ -17,6 +17,7 @@ export interface CartProduct {
   image:                    string;
   size?:                    string;
   quantity:                 number;
+  requestType?:             string;
 }
 
 interface CartItem extends CartProduct {}
@@ -76,11 +77,17 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   /* Fetch cart once we have a valid location */
   useEffect(() => {
-    if (flag === null || flag === 3) return;
+    if (flag === null || flag === 3) {
+      setItems([]);
+      return;
+    }
     if (flag === 1 && !storeId) return;
     if (flag === 2 && !city) return;
     const token = getAuthToken();
-    if (!token) return;
+    if (!token) {
+      setItems([]);
+      return;
+    }
 
     const params = flag === 2
       ? { token, city: city ?? undefined }
@@ -96,17 +103,30 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   }, [storeId, city, flag]);
 
   const addToCart = useCallback((product: CartProduct) => {
+    const addQty = product.quantity || 1;
+    let apiQuantity = addQty;
+
     /* Optimistically update local state first for instant UI feedback */
     setItems((prev) => {
-      const existing = prev.find((i) => i.id === product.id);
+      const existing = prev.find(
+        (i) =>
+          i.id === product.id ||
+          (product.store_product_volume_id &&
+            i.store_product_volume_id === product.store_product_volume_id),
+      );
+      apiQuantity = existing ? existing.quantity + addQty : addQty;
       if (existing) {
         return prev.map((i) =>
-          i.id === product.id ? { ...i, quantity: i.quantity + (product.quantity || 1) } : i,
+          i.id === existing.id ||
+          (product.store_product_volume_id &&
+            i.store_product_volume_id === product.store_product_volume_id)
+            ? { ...i, ...product, quantity: apiQuantity }
+            : i,
         );
       }
-      return [...prev, { ...product }];
+      return [...prev, { ...product, quantity: addQty }];
     });
-    setLastAdded(product);
+    setLastAdded({ ...product, quantity: addQty });
     setIsModalOpen(true);
 
     /* Sync with API if logged in */
@@ -115,7 +135,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
     addToCartApi({
       store_product_volume_id: product.store_product_volume_id,
-      quantity:                product.quantity || 1,
+      quantity:                apiQuantity,
+      request_type:            product.requestType ?? "add_to_cart",
       token,
     })
       .then((res) => {
@@ -167,10 +188,36 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   const updateQuantity = useCallback((productId: number, quantity: number) => {
     if (quantity < 1) return;
+
+    const target = items.find((i) => i.id === productId);
     setItems((prev) =>
       prev.map((i) => (i.id === productId ? { ...i, quantity } : i)),
     );
-  }, []);
+
+    const token = getAuthToken();
+    if (!token || !target?.store_product_volume_id) return;
+
+    const cartParams = flag === 2
+      ? { token, city: city ?? undefined }
+      : { token, store_id: storeId ?? undefined, city: city ?? undefined };
+
+    addToCartApi({
+      store_product_volume_id: target.store_product_volume_id,
+      quantity,
+      request_type: "add_to_cart",
+      token,
+    })
+      .then((res) => {
+        if (res.code !== 1) return;
+        return getCartApi(cartParams);
+      })
+      .then((cart) => {
+        if (cart?.code === 1 && Array.isArray(cart.data)) {
+          setItems(cart.data.map(fromApiItem));
+        }
+      })
+      .catch(() => { /* keep optimistic state on error */ });
+  }, [items, storeId, city, flag]);
 
   const closeModal  = useCallback(() => setIsModalOpen(false),  []);
   const openDrawer  = useCallback(() => setIsDrawerOpen(true),  []);
