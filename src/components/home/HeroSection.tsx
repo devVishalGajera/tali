@@ -5,8 +5,7 @@ import Link from "next/link";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { proxyImageUrl } from "@/lib/utils/image";
-
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://3.7.224.122/dev/talli/api";
+import { API_BASE_URL } from "@/lib/api/base-url";
 
 interface SearchProduct {
   id: number;
@@ -34,7 +33,7 @@ async function fetchSearchResults(term: string): Promise<SearchProduct[]> {
   if (storeId) form.append("store_id", storeId);
   if (city)    form.append("city", city);
 
-  const res = await fetch(`${BASE_URL}/product/viewAllNew`, {
+  const res = await fetch(`${API_BASE_URL}/product/viewAllNew`, {
     method: "POST",
     body: form,
     cache: "no-store",

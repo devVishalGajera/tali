@@ -35,6 +35,7 @@ interface CartContextType {
   openDrawer:     () => void;
   closeDrawer:    () => void;
   refreshCart:    () => void;
+  clearCart:      () => void;
 }
 
 /* ── Context ─────────────────────────────────────────────────── */
@@ -136,6 +137,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     addToCartApi({
       store_product_volume_id: product.store_product_volume_id,
       quantity:                apiQuantity,
+      store_id:                storeId ?? undefined,
       request_type:            product.requestType ?? "add_to_cart",
       token,
     })
@@ -152,7 +154,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         }
       })
       .catch(() => { /* keep optimistic state on error */ });
-  }, [storeId, city]);
+  }, [storeId, city, flag]);
 
   const refreshCart = useCallback(() => {
     const token = getAuthToken();
@@ -204,6 +206,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     addToCartApi({
       store_product_volume_id: target.store_product_volume_id,
       quantity,
+      store_id: storeId ?? undefined,
       request_type: "add_to_cart",
       token,
     })
@@ -218,6 +221,11 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       })
       .catch(() => { /* keep optimistic state on error */ });
   }, [items, storeId, city, flag]);
+
+  const clearCart = useCallback(() => {
+    setItems([]);
+    setLastAdded(null);
+  }, []);
 
   const closeModal  = useCallback(() => setIsModalOpen(false),  []);
   const openDrawer  = useCallback(() => setIsDrawerOpen(true),  []);
@@ -238,6 +246,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         openDrawer,
         closeDrawer,
         refreshCart,
+        clearCart,
       }}
     >
       {children}

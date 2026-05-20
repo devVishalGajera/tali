@@ -7,7 +7,7 @@
  * All endpoints require a Bearer token.
  */
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://3.7.224.122/dev/talli/api";
+import { API_BASE_URL } from "./base-url";
 
 /* ── Types ──────────────────────────────────────────────────── */
 
@@ -70,7 +70,7 @@ export async function getWishlistApi(params: {
   if (params.store_id) qs.set("store_id", String(params.store_id));
   if (params.city)     qs.set("city",     params.city);
 
-  const res = await fetch(`${BASE_URL}/product/wishlist-getNew?${qs.toString()}`, {
+  const res = await fetch(`${API_BASE_URL}/product/wishlist-getNew?${qs.toString()}`, {
     headers: authHeaders(params.token),
     cache:   "no-store",
   });
@@ -89,7 +89,7 @@ export async function addToWishlistApi(params: {
   body.append("product_id",              String(params.product_id));
   body.append("store_product_volume_id", String(params.store_product_volume_id));
 
-  const res = await fetch(`${BASE_URL}/product/Addwishlist`, {
+  const res = await fetch(`${API_BASE_URL}/product/Addwishlist`, {
     method:  "POST",
     headers: {
       ...authHeaders(params.token),
@@ -113,7 +113,7 @@ export async function addCartWishlistAllApi(params: {
   form.append("cart_items",     JSON.stringify(params.cart_items));
   form.append("wishlist_items", JSON.stringify(params.wishlist_items));
 
-  const res = await fetch(`${BASE_URL}/product/add-cart-wishlist-all`, {
+  const res = await fetch(`${API_BASE_URL}/product/add-cart-wishlist-all`, {
     method:  "POST",
     headers: authHeaders(params.token),
     body:    form,

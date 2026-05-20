@@ -9,7 +9,7 @@
  *   revalidate omitted → force-cache (cached indefinitely until tag is invalidated)
  */
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://3.7.224.122/dev/talli/api";
+import { API_BASE_URL } from "./base-url";
 
 /** Standard API envelope returned by every endpoint */
 export interface ApiEnvelope<T> {
@@ -31,7 +31,7 @@ export async function apiFetch<T>(
   path: string,
   { token, tags, revalidate, headers: extraHeaders, ...init }: FetchOptions = {}
 ): Promise<T> {
-  const url = `${BASE_URL}${path}`;
+  const url = `${API_BASE_URL}${path}`;
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",

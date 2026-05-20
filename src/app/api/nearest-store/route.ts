@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://3.7.224.122/dev/talli/api";
+import { API_BASE_URL } from "@/lib/api/base-url";
 
 export interface NearestStoreResult {
   flag: 1 | 2 | 3;
@@ -21,7 +20,7 @@ export async function POST(request: NextRequest) {
   if (body.city) form.append("city", body.city);
 
   try {
-    const res = await fetch(`${BASE_URL}/get-nearest-storeNew`, {
+    const res = await fetch(`${API_BASE_URL}/get-nearest-storeNew`, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: form.toString(),

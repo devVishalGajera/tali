@@ -8,7 +8,7 @@ import {
   useCallback,
   ReactNode,
 } from "react";
-import { logoutApi, getDisplayName } from "@/lib/api/auth";
+import { logoutApi, getProfileApi, getDisplayName } from "@/lib/api/auth";
 import type { AuthUser } from "@/lib/api/auth";
 
 export { getDisplayName };
@@ -19,7 +19,9 @@ interface AuthContextType {
   user:            AuthUser | null;
   token:           string | null;
   isAuthenticated: boolean;
+  profileLoading:  boolean;
   setAuth:         (token: string, user: AuthUser) => void;
+  refreshProfile:  () => Promise<void>;
   logout:          () => void;
 }
 
@@ -68,21 +70,56 @@ function clearAuth() {
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [token, setToken] = useState<string | null>(null);
-  const [user,  setUser]  = useState<AuthUser | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [profileLoading, setProfileLoading] = useState(false);
 
-  /* Restore persisted auth on mount */
+  const refreshProfile = useCallback(async () => {
+    const activeToken = token ?? loadAuth()?.token;
+    if (!activeToken) return;
+
+    setProfileLoading(true);
+    try {
+      const res = await getProfileApi(activeToken);
+      if (res.code === 1 && res.data) {
+        saveAuth(activeToken, res.data);
+        setToken(activeToken);
+        setUser(res.data);
+      }
+    } catch {
+      /* keep cached user on network errors */
+    } finally {
+      setProfileLoading(false);
+    }
+  }, [token]);
+
+  /* Restore persisted auth on mount, then refresh from API */
   useEffect(() => {
     const saved = loadAuth();
-    if (saved) {
-      setToken(saved.token);
-      setUser(saved.user);
-    }
+    if (!saved) return;
+    setToken(saved.token);
+    setUser(saved.user);
+    getProfileApi(saved.token)
+      .then((res) => {
+        if (res.code === 1 && res.data) {
+          saveAuth(saved.token, res.data);
+          setUser(res.data);
+        }
+      })
+      .catch(() => { /* keep cached user */ });
   }, []);
 
   const setAuth = useCallback((newToken: string, newUser: AuthUser) => {
     saveAuth(newToken, newUser);
     setToken(newToken);
     setUser(newUser);
+    getProfileApi(newToken)
+      .then((res) => {
+        if (res.code === 1 && res.data) {
+          saveAuth(newToken, res.data);
+          setUser(res.data);
+        }
+      })
+      .catch(() => { /* login data is enough */ });
   }, []);
 
   const logout = useCallback(() => {
@@ -94,7 +131,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <AuthContext.Provider
-      value={{ user, token, isAuthenticated: !!token, setAuth, logout }}
+      value={{
+        user,
+        token,
+        isAuthenticated: !!token,
+        profileLoading,
+        setAuth,
+        refreshProfile,
+        logout,
+      }}
     >
       {children}
     </AuthContext.Provider>

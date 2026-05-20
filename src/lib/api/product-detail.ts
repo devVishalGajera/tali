@@ -7,8 +7,7 @@
  */
 
 import { TAGS } from "./cache-tags";
-
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://3.7.224.122/dev/talli/api";
+import { API_BASE_URL } from "./base-url";
 
 /* ── Types ──────────────────────────────────────────────────── */
 
@@ -153,7 +152,7 @@ export async function getProductDetail(
   };
   if (token) headers["Authorization"] = `Bearer ${token}`;
 
-  const res = await fetch(`${BASE_URL}/guest/ProductDescriptionNew`, {
+  const res = await fetch(`${API_BASE_URL}/guest/ProductDescriptionNew`, {
     method:  "POST",
     headers,
     body:    body.toString(),

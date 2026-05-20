@@ -18,6 +18,7 @@
 
 import { apiFetch } from "./client";
 import { TAGS } from "./cache-tags";
+import { API_BASE_URL } from "./base-url";
 
 /* ── Types ──────────────────────────────────────────────────── */
 
@@ -118,7 +119,7 @@ export interface NavCategory {
   subcategory: NavSubCategory[];
 }
 
-const NAV_CAT_URL = "https://admin.tallidrinks.com/api/guest/catSubCategory";
+const NAV_CAT_URL = `${API_BASE_URL}/guest/catSubCategory`;
 
 /**
  * Fetch category + subcategory tree for the navigation bar.

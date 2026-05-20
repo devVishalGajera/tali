@@ -9,7 +9,7 @@
  *  - Per-user data (is_wishlist) must never be shared across users
  */
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://3.7.224.122/dev/talli/api";
+import { API_BASE_URL } from "./base-url";
 
 /* ── Types ──────────────────────────────────────────────────── */
 
@@ -74,7 +74,7 @@ export async function getProducts(params: GetProductsParams = {}): Promise<Produ
   const headers: Record<string, string> = {};
   if (token) headers["Authorization"] = `Bearer ${token}`;
 
-  const res = await fetch(`${BASE_URL}/product/viewAllNew`, {
+  const res = await fetch(`${API_BASE_URL}/product/viewAllNew`, {
     method: "POST",
     headers,
     body: form,

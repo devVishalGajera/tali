@@ -1,14 +1,14 @@
 /**
  * Auth API
- *  POST https://admin.tallidrinks.com/api/user/login    — login
- *  POST /user/register                                  — register
- *  POST /auth/logout                                    — invalidate token
+ *  POST /user/login
+ *  GET  /user/get/profile
+ *  POST /user/register
+ *  POST /auth/logout
  *
- * Both login and register use multipart/form-data.
+ * Login and register use multipart/form-data.
  */
 
-const BASE_URL   = process.env.NEXT_PUBLIC_API_URL ?? "http://3.7.224.122/dev/talli/api";
-const ADMIN_URL  = "https://admin.tallidrinks.com/api";
+import { API_BASE_URL } from "./base-url";
 
 /* ── Types ──────────────────────────────────────────────────── */
 
@@ -43,6 +43,12 @@ export interface AuthResponse {
   data?:   AuthUser;
 }
 
+export interface ProfileResponse {
+  code:    number;
+  message: string;
+  data?:   AuthUser;
+}
+
 /* ── Fetchers ────────────────────────────────────────────────── */
 
 export async function loginApi(params: {
@@ -54,7 +60,7 @@ export async function loginApi(params: {
   form.append("password", params.password);
   form.append("device_type", "3");
 
-  const res = await fetch(`${ADMIN_URL}/user/login`, {
+  const res = await fetch(`${API_BASE_URL}/user/login`, {
     method: "POST",
     body:   form,
     cache:  "no-store",
@@ -80,7 +86,7 @@ export async function signupApi(params: {
   form.append("password", params.password);
   form.append("device_type", "3");
 
-  const res = await fetch(`${BASE_URL}/user/register`, {
+  const res = await fetch(`${API_BASE_URL}/user/register`, {
     method: "POST",
     body:   form,
     cache:  "no-store",
@@ -89,9 +95,22 @@ export async function signupApi(params: {
   return res.json() as Promise<AuthResponse>;
 }
 
+export async function getProfileApi(token: string): Promise<ProfileResponse> {
+  const res = await fetch(`${API_BASE_URL}/user/get/profile`, {
+    method:  "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept:        "application/json",
+    },
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`Profile fetch failed: ${res.status}`);
+  return res.json() as Promise<ProfileResponse>;
+}
+
 export async function logoutApi(token: string): Promise<void> {
   const form = new FormData();
-  await fetch(`${BASE_URL}/auth/logout`, {
+  await fetch(`${API_BASE_URL}/auth/logout`, {
     method:  "POST",
     headers: { Authorization: `Bearer ${token}` },
     body:    form,

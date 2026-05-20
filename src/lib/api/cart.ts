@@ -7,7 +7,7 @@
  * All endpoints require a Bearer token (logged-in users only).
  */
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://3.7.224.122/dev/talli/api";
+import { API_BASE_URL } from "./base-url";
 
 /* ── Types ──────────────────────────────────────────────────── */
 
@@ -44,15 +44,19 @@ function authHeaders(token: string): Record<string, string> {
 export async function addToCartApi(params: {
   store_product_volume_id: number;
   quantity:                number;
+  store_id?:               number | string;
   request_type?:           string;
   token:                   string;
 }): Promise<{ code: number; message: string }> {
   const form = new FormData();
   form.append("store_product_volume_id", String(params.store_product_volume_id));
   form.append("quantity",                String(params.quantity));
+  if (params.store_id != null && params.store_id !== "") {
+    form.append("store_id", String(params.store_id));
+  }
   form.append("request_type",            params.request_type ?? "add_to_cart");
 
-  const res = await fetch(`${BASE_URL}/product/add-update-cartNew`, {
+  const res = await fetch(`${API_BASE_URL}/product/add-update-cartNew`, {
     method:  "POST",
     headers: authHeaders(params.token),
     body:    form,
@@ -71,7 +75,7 @@ export async function removeFromCartApi(params: {
   const form = new FormData();
   form.append("id", String(params.cartItemId));
 
-  const res = await fetch(`${BASE_URL}/product/delete-cart`, {
+  const res = await fetch(`${API_BASE_URL}/product/delete-cart`, {
     method:  "POST",
     headers: authHeaders(params.token),
     body:    form,
@@ -92,7 +96,7 @@ export async function getCartApi(params: {
   if (params.store_id) qs.set("store_id", String(params.store_id));
   if (params.city)     qs.set("city",     params.city);
 
-  const res = await fetch(`${BASE_URL}/product/cart-getNew?${qs.toString()}`, {
+  const res = await fetch(`${API_BASE_URL}/product/cart-getNew?${qs.toString()}`, {
     headers: authHeaders(params.token),
     cache:   "no-store",
   });

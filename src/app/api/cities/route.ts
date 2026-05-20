@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-
-const CITIES_URL = "https://admin.tallidrinks.com/api/guest/popularcity";
+import { API_BASE_URL } from "@/lib/api/base-url";
 
 export interface CitiesApiData {
   popularCities: string[];
@@ -9,7 +8,7 @@ export interface CitiesApiData {
 
 export async function GET() {
   try {
-    const res = await fetch(CITIES_URL, { next: { revalidate: 3600 } });
+    const res = await fetch(`${API_BASE_URL}/guest/popularcity`, { next: { revalidate: 3600 } });
     if (!res.ok) throw new Error(`Cities API ${res.status}`);
     const json = await res.json();
     if (json.code !== 1) throw new Error(json.message);
