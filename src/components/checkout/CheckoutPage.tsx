@@ -6,15 +6,11 @@ import { useRouter } from "next/navigation";
 import { useCart } from "@/components/modals/CartProvider";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useLocation } from "@/components/modals/LocationProvider";
-import { saveUserAddressApi, extractAddressId } from "@/lib/api/address";
 import { createOrderApi, extractOrderId } from "@/lib/api/order";
+import { getPermitFee, getGrandTotal } from "@/lib/api/cart";
 import { getDisplayName } from "@/lib/api/auth";
-
-const SHIPPING = 596;
-const TAX_RATE = 0;
-
-const fmt = (n: number) =>
-  `₹${n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+import CheckoutDeliveryAddress from "@/components/checkout/CheckoutDeliveryAddress";
+import { fmtInr } from "@/lib/checkout/formatMoney";
 
 const TrashIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -48,7 +44,7 @@ const checkoutMain =
 
 const CheckoutPage = () => {
   const router = useRouter();
-  const { items, removeFromCart, updateQuantity, clearCart } = useCart();
+  const { items, summary, removeFromCart, updateQuantity, clearCart, refreshCart } = useCart();
   const { isAuthenticated, token, user } = useAuth();
   const { purchaseAllow, city, lat, long } = useLocation();
 
@@ -60,20 +56,17 @@ const CheckoutPage = () => {
 
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
-  const [addressLine, setAddressLine] = useState("");
-  const [houseNo, setHouseNo] = useState("");
-  const [addressCity, setAddressCity] = useState("");
-  const [pincode, setPincode] = useState("");
-  const [landmark, setLandmark] = useState("");
+  const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
 
   useEffect(() => {
     if (!user) return;
     setFullName(getDisplayName(user));
     setPhone(user.mobile_number ?? "");
-    if (user.user_address?.address) setAddressLine(user.user_address.address);
-    if (user.user_address?.city) setAddressCity(user.user_address.city);
-    else if (city) setAddressCity(city);
-  }, [user, city]);
+  }, [user]);
+
+  useEffect(() => {
+    if (isAuthenticated && token) refreshCart();
+  }, [isAuthenticated, token, refreshCart]);
 
   const changeQty = (id: number, delta: number) => {
     const item = items.find((i) => i.id === id);
@@ -83,37 +76,18 @@ const CheckoutPage = () => {
     updateQuantity(id, next);
   };
 
-  const subtotal = items.reduce((s, i) => s + i.priceValue * i.quantity, 0);
   const totalItems = items.reduce((s, i) => s + i.quantity, 0);
-  const totalExclTax = subtotal + SHIPPING;
-  const taxes = totalExclTax * TAX_RATE;
-  const totalInclTax = totalExclTax + taxes;
+  const permitFee = getPermitFee(permitNumber);
+  const grandTotal = getGrandTotal(summary, permitFee);
 
-  const resolveAddressId = async (): Promise<number> => {
-    if (!token) throw new Error("Please log in to place an order.");
-
-    const existingId = user?.user_address?.id ?? null;
-
-    const saved = await saveUserAddressApi({
-      token,
-      address: addressLine.trim(),
-      city: addressCity.trim(),
-      existingId: existingId ?? undefined,
-      house_no: houseNo.trim(),
-      landmark: landmark.trim(),
-      latitude: lat != null ? String(lat) : "",
-      longitude: long != null ? String(long) : "",
-      save_as: "Home",
-    });
-
-    if (saved.code !== 1) throw new Error(saved.message || "Could not save delivery address.");
-
-    const newId = extractAddressId(saved.data);
-    if (newId) return newId;
-    if (existingId) return existingId;
-
-    throw new Error("Address saved but no address id returned. Please try again.");
-  };
+  const summaryRows = [
+    { label: `${totalItems} Items`, value: fmtInr(summary.orderTotal), bold: false },
+    { label: "Shipping (per order)", value: fmtInr(summary.shippingCharge), bold: false },
+    ...(permitFee > 0
+      ? [{ label: "Permit fee", value: fmtInr(permitFee), bold: false as const }]
+      : []),
+    { label: "Total", value: fmtInr(grandTotal), bold: true as const },
+  ];
 
   const handlePlaceOrder = async () => {
     setOrderError(null);
@@ -134,22 +108,16 @@ const CheckoutPage = () => {
       setOrderError("Please enter your phone number.");
       return;
     }
-    if (!addressLine.trim()) {
-      setOrderError("Please enter your delivery address.");
-      return;
-    }
-    if (!addressCity.trim()) {
-      setOrderError("Please enter your city.");
+    if (!selectedAddressId) {
+      setOrderError("Please add and select a delivery address.");
       return;
     }
 
     setPlacing(true);
     try {
-      const addressId = await resolveAddressId();
-
       const res = await createOrderApi({
         token,
-        address_id: addressId,
+        address_id: selectedAddressId,
         special_instruction: deliveryNote.trim(),
         permit_number: permitNumber.trim(),
       });
@@ -191,18 +159,81 @@ const CheckoutPage = () => {
     );
   }
 
+  const orderSummaryBlock = (
+    <div className={`${checkoutCard} flex flex-col lg:max-h-[calc(100vh-3rem)]`}>
+      <h2 className="text-lg font-bold text-[#1D1D1D] mb-4">Order summary</h2>
+
+      <div className="space-y-2 flex-1 min-h-0">
+        {summaryRows.map(({ label, value, bold }) => (
+          <div key={label} className="flex justify-between items-center gap-3">
+            <span className={`text-sm ${bold ? "font-bold text-[#1D1D1D]" : "text-[#1D1D1D80]"}`}>
+              {label}
+            </span>
+            <span className={`text-sm shrink-0 ${bold ? "font-bold text-[#1D1D1D]" : "text-[#1D1D1D]"}`}>
+              {value}
+            </span>
+          </div>
+        ))}
+        <p className="text-[11px] text-[#1D1D1D50] pt-1">
+          Shipping is charged once per order, not per item.
+        </p>
+      </div>
+
+      <div className="mt-4 pt-4 border-t border-[#F0F0F0] space-y-3 shrink-0">
+        <div>
+          <p className="text-xs font-semibold text-[#1D1D1D80] uppercase tracking-wide mb-2">Payment</p>
+          <div className="flex items-center gap-2 rounded-xl border-2 border-[#006B4D] bg-[#006B4D0D] px-3 py-2.5">
+            <span className="w-4 h-4 rounded-full border-[5px] border-[#006B4D] bg-white shrink-0" />
+            <span className="text-sm font-semibold text-[#1D1D1D]">Cash on delivery</span>
+          </div>
+        </div>
+
+        {orderError && (
+          <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+            {orderError}
+          </p>
+        )}
+
+        {isAuthenticated ? (
+          <button
+            type="button"
+            onClick={handlePlaceOrder}
+            disabled={placing || items.length === 0}
+            className="w-full py-3.5 bg-[#00845F] hover:bg-[#006e4f] disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-xl transition-colors"
+          >
+            {placing ? "Placing order…" : "Place order (Cash)"}
+          </button>
+        ) : (
+          <div className="rounded-xl border border-[#E8E8E8] bg-[#FAFAFA] px-4 py-4 text-center">
+            <p className="text-sm font-semibold text-[#1D1D1D] mb-1">Login required</p>
+            <p className="text-xs text-[#1D1D1D80] mb-3">Sign in to complete checkout.</p>
+            <Link
+              href="/login?redirect=/checkout"
+              className="w-full py-3 bg-[#006B4D] hover:bg-[#005a3f] text-white text-sm font-semibold rounded-xl flex items-center justify-center"
+            >
+              Login / Sign Up
+            </Link>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <main className={checkoutMain}>
-      <div className="max-w-6xl mx-auto w-full flex flex-col lg:flex-row gap-0 lg:gap-6 items-stretch lg:items-start">
+      <div className="max-w-6xl mx-auto w-full px-4 sm:px-0 py-4 sm:py-0">
+        <h1 className="text-2xl font-bold text-[#1D1D1D] mb-4 sm:mb-6">Checkout</h1>
 
-        <div className="flex-1 min-w-0 flex flex-col gap-0 sm:gap-4">
+        <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 lg:items-start">
+
+        <div className="flex-1 min-w-0 flex flex-col gap-4">
           <div className={checkoutCard}>
-            <h1 className="text-2xl font-bold text-[#1D1D1D] mb-6">Shopping Cart</h1>
+            <h2 className="text-lg font-bold text-[#1D1D1D] mb-4">Your items</h2>
 
             {items.length === 0 ? (
               <p className="text-sm text-[#1D1D1D80] py-10 text-center">Your cart is empty.</p>
             ) : (
-              <div className="divide-y divide-[#F0F0F0]">
+              <div className="divide-y divide-[#F0F0F0] max-h-[min(420px,50vh)] overflow-y-auto">
                 {items.map((item) => {
                   const qty = item.quantity;
                   const lineTotal = item.priceValue * qty;
@@ -218,7 +249,9 @@ const CheckoutPage = () => {
                         />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-[#1D1D1D] leading-snug">{item.name}</p>
+                        <p className="text-sm font-bold text-[#1D1D1D] leading-snug line-clamp-2">
+                          {item.name || "Product"}
+                        </p>
                         <p className="text-base font-bold text-[#1D1D1D] mt-1">{item.price}</p>
                         {item.size && (
                           <p className="text-xs text-[#1D1D1D80] mt-1">Size: {item.size}</p>
@@ -250,7 +283,7 @@ const CheckoutPage = () => {
                         </div>
                       </div>
                       <p className="text-sm font-bold text-[#1D1D1D] min-w-[4.5rem] text-right shrink-0">
-                        {fmt(lineTotal)}
+                        {fmtInr(lineTotal)}
                       </p>
                       <button
                         type="button"
@@ -268,92 +301,57 @@ const CheckoutPage = () => {
             )}
           </div>
 
-          {isAuthenticated && items.length > 0 && (
-            <div className={checkoutCard}>
-              <h2 className="text-lg font-bold text-[#1D1D1D] mb-4">Delivery details</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-[#1D1D1D] mb-1.5">Full name</label>
-                  <input
-                    type="text"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    className={inputClass}
-                    placeholder="Your name"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-[#1D1D1D] mb-1.5">Phone</label>
-                  <input
-                    type="tel"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className={inputClass}
-                    placeholder="Mobile number"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-[#1D1D1D] mb-1.5">House / flat no.</label>
-                  <input
-                    type="text"
-                    value={houseNo}
-                    onChange={(e) => setHouseNo(e.target.value)}
-                    className={inputClass}
-                    placeholder="e.g. C/9"
-                  />
-                </div>
-                <div className="sm:col-span-2">
-                  <label className="block text-xs font-semibold text-[#1D1D1D] mb-1.5">Street address</label>
-                  <textarea
-                    rows={2}
-                    value={addressLine}
-                    onChange={(e) => setAddressLine(e.target.value)}
-                    className={`${inputClass} resize-none`}
-                    placeholder="Building, street, area"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-[#1D1D1D] mb-1.5">City</label>
-                  <input
-                    type="text"
-                    value={addressCity}
-                    onChange={(e) => setAddressCity(e.target.value)}
-                    className={inputClass}
-                    placeholder="City"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-[#1D1D1D] mb-1.5">Pincode</label>
-                  <input
-                    type="text"
-                    value={pincode}
-                    onChange={(e) => setPincode(e.target.value)}
-                    className={inputClass}
-                    placeholder="Optional"
-                  />
-                </div>
-                <div className="sm:col-span-2">
-                  <label className="block text-xs font-semibold text-[#1D1D1D] mb-1.5">Landmark</label>
-                  <input
-                    type="text"
-                    value={landmark}
-                    onChange={(e) => setLandmark(e.target.value)}
-                    className={inputClass}
-                    placeholder="Optional — near…"
-                  />
-                </div>
-                <div className="sm:col-span-2">
-                  <label className="block text-xs font-semibold text-[#1D1D1D] mb-1.5">Permit number</label>
-                  <input
-                    type="text"
-                    value={permitNumber}
-                    onChange={(e) => setPermitNumber(e.target.value)}
-                    className={inputClass}
-                    placeholder="Optional"
-                  />
+          {isAuthenticated && token && items.length > 0 && (
+            <>
+              <CheckoutDeliveryAddress
+                token={token}
+                defaultCity={city ?? ""}
+                latitude={lat}
+                longitude={long}
+                selectedId={selectedAddressId}
+                onSelectedIdChange={setSelectedAddressId}
+              />
+              <div className={checkoutCard}>
+                <h2 className="text-lg font-bold text-[#1D1D1D] mb-4">Contact details</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-[#1D1D1D] mb-1.5">Full name</label>
+                    <input
+                      type="text"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      className={inputClass}
+                      placeholder="Your name"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-[#1D1D1D] mb-1.5">Phone</label>
+                    <input
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      className={inputClass}
+                      placeholder="Mobile number"
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-semibold text-[#1D1D1D] mb-1.5">Permit number</label>
+                    <input
+                      type="text"
+                      value={permitNumber}
+                      onChange={(e) => setPermitNumber(e.target.value)}
+                      className={inputClass}
+                      placeholder="Optional — leave empty adds ₹5 fee"
+                    />
+                    <p className="text-[11px] text-[#1D1D1D60] mt-1">
+                      {permitNumber.trim()
+                        ? "No permit fee when permit number is provided."
+                        : "₹5 permit fee applies if permit number is not provided."}
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
+            </>
           )}
 
           <div className={checkoutCard}>
@@ -373,15 +371,15 @@ const CheckoutPage = () => {
 
           <Link
             href="/"
-            className="inline-flex items-center gap-1 text-sm text-[#1D1D1D80] hover:text-[#1D1D1D] transition-colors px-4 py-3 sm:px-0 sm:py-0"
+            className="inline-flex items-center gap-1 text-sm text-[#1D1D1D80] hover:text-[#1D1D1D] transition-colors"
           >
-            Continue Shopping
+            ← Continue shopping
           </Link>
         </div>
 
-        <div className="w-full lg:w-[320px] shrink-0 flex flex-col gap-0 sm:gap-4">
+        <aside className="w-full lg:w-[340px] shrink-0 flex flex-col gap-4 lg:sticky lg:top-6">
           <div className={checkoutCard}>
-            <p className="text-sm font-semibold text-[#1D1D1D] mb-3">Enter Coupon Code</p>
+            <p className="text-sm font-semibold text-[#1D1D1D] mb-3">Coupon code</p>
             <div className="flex w-full min-w-0 gap-2">
               <input
                 type="text"
@@ -391,65 +389,13 @@ const CheckoutPage = () => {
                 className="min-w-0 flex-1 border border-[#E8E8E8] rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#1D1D1D]"
               />
               <button type="button" className="shrink-0 bg-[#1D1D1D] hover:bg-[#333] text-white text-sm font-semibold px-4 py-2.5 rounded-lg">
-                Submit
+                Apply
               </button>
             </div>
           </div>
 
-          <div className={`${checkoutCard} space-y-3 max-lg:border-b-0`}>
-            <div className="pb-3 border-b border-[#F0F0F0]">
-              <p className="text-xs font-semibold text-[#1D1D1D80] uppercase tracking-wide mb-2">Payment</p>
-              <div className="flex items-center gap-2 rounded-xl border-2 border-[#006B4D] bg-[#006B4D0D] px-3 py-2.5">
-                <span className="w-4 h-4 rounded-full border-[5px] border-[#006B4D] bg-white shrink-0" />
-                <span className="text-sm font-semibold text-[#1D1D1D]">Cash on delivery</span>
-              </div>
-            </div>
-
-            {[
-              { label: `${totalItems} Items`, value: fmt(subtotal), bold: false },
-              { label: "Shipping", value: fmt(SHIPPING), bold: false },
-              { label: "Total (tax excl.)", value: fmt(totalExclTax), bold: false },
-              { label: "Total (tax incl.)", value: fmt(totalInclTax), bold: true },
-              { label: "Taxes:", value: fmt(taxes), bold: false },
-            ].map(({ label, value, bold }) => (
-              <div key={label} className="flex justify-between items-center">
-                <span className={`text-sm ${bold ? "font-bold text-[#1D1D1D]" : "text-[#1D1D1D80]"}`}>
-                  {label}
-                </span>
-                <span className={`text-sm ${bold ? "font-bold text-[#1D1D1D]" : "text-[#1D1D1D]"}`}>
-                  {value}
-                </span>
-              </div>
-            ))}
-
-            {orderError && (
-              <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
-                {orderError}
-              </p>
-            )}
-
-            {isAuthenticated ? (
-              <button
-                type="button"
-                onClick={handlePlaceOrder}
-                disabled={placing || items.length === 0}
-                className="mt-3 w-full py-3.5 bg-[#00845F] hover:bg-[#006e4f] disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-xl transition-colors"
-              >
-                {placing ? "Placing order…" : "Place order (Cash)"}
-              </button>
-            ) : (
-              <div className="mt-3 rounded-xl border border-[#E8E8E8] bg-[#FAFAFA] px-4 py-4 text-center">
-                <p className="text-sm font-semibold text-[#1D1D1D] mb-1">Login required to checkout</p>
-                <p className="text-xs text-[#1D1D1D80] mb-3">Sign in to add your delivery address and place an order.</p>
-                <Link
-                  href="/login?redirect=/checkout"
-                  className="w-full py-3 bg-[#006B4D] hover:bg-[#005a3f] text-white text-sm font-semibold rounded-xl flex items-center justify-center"
-                >
-                  Login / Sign Up
-                </Link>
-              </div>
-            )}
-          </div>
+          {orderSummaryBlock}
+        </aside>
         </div>
       </div>
     </main>

@@ -15,15 +15,14 @@ export interface AddressApiResponse {
   data?: unknown;
 }
 
-export interface SaveAddressParams {
-  token: string;
+export interface UserAddress {
+  id: number;
   address: string;
   city: string;
-  /** When set, calls updateNew instead of createNew */
-  existingId?: number | null;
   house_no?: string;
   landmark?: string;
   save_as?: string;
+  is_default?: boolean;
   latitude?: string;
   longitude?: string;
 }
@@ -153,23 +152,73 @@ export async function setDefaultAddressApi(params: { token: string; id: number }
   return res.json() as Promise<AddressApiResponse>;
 }
 
-/** Create or update delivery address (used by checkout). */
-export async function saveUserAddressApi(params: SaveAddressParams): Promise<AddressApiResponse> {
-  const common = {
-    token: params.token,
-    address: params.address,
-    city: params.city,
-    house_no: params.house_no,
-    landmark: params.landmark,
-    save_as: params.save_as ?? "Home",
-    latitude: params.latitude,
-    longitude: params.longitude,
-  };
+function parseAddressRecord(raw: Record<string, unknown>): UserAddress | null {
+  const id = extractAddressId(raw.id);
+  if (id == null) return null;
+  const address = String(raw.address ?? "").trim();
+  if (!address) return null;
 
-  if (params.existingId) {
-    return updateAddressApi({ ...common, id: params.existingId });
+  const defaultFlag = String(
+    raw.is_default ?? raw.default ?? raw.default_address ?? "",
+  )
+    .trim()
+    .toUpperCase();
+  const isDefault =
+    defaultFlag === "Y" ||
+    defaultFlag === "YES" ||
+    defaultFlag === "1" ||
+    defaultFlag === "TRUE" ||
+    raw.is_default === true ||
+    raw.is_default === 1;
+
+  return {
+    id,
+    address,
+    city: String(raw.city ?? "").trim(),
+    house_no: String(raw.house_no ?? "").trim() || undefined,
+    landmark: String(raw.landmark ?? "").trim() || undefined,
+    save_as: String(raw.save_as ?? "Home").trim() || "Home",
+    is_default: isDefault,
+    latitude: raw.latitude != null ? String(raw.latitude) : undefined,
+    longitude: raw.longitude != null ? String(raw.longitude) : undefined,
+  };
+}
+
+/** Normalize GET /addresses/get `data` into a list of addresses. */
+export function parseAddressesFromApi(data: unknown): UserAddress[] {
+  if (data == null) return [];
+
+  if (Array.isArray(data)) {
+    const list = data
+      .map((item) =>
+        typeof item === "object" && item != null
+          ? parseAddressRecord(item as Record<string, unknown>)
+          : null,
+      )
+      .filter((a): a is UserAddress => a != null);
+    return sortAddresses(list);
   }
-  return createAddressApi(common);
+
+  if (typeof data === "object") {
+    const d = data as Record<string, unknown>;
+    for (const key of ["addresses", "address_list", "data", "items"]) {
+      const nested = d[key];
+      if (Array.isArray(nested)) return sortAddresses(parseAddressesFromApi(nested));
+    }
+    const single = parseAddressRecord(d);
+    if (single) return [single];
+  }
+
+  return [];
+}
+
+/** Default address first, then newest by id. */
+export function sortAddresses(list: UserAddress[]): UserAddress[] {
+  return [...list].sort((a, b) => {
+    if (a.is_default && !b.is_default) return -1;
+    if (!a.is_default && b.is_default) return 1;
+    return b.id - a.id;
+  });
 }
 
 export function extractAddressId(data: unknown): number | null {

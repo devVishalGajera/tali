@@ -14,20 +14,97 @@ import { API_BASE_URL } from "./base-url";
 export interface CartApiItem {
   id:                       number;   // cart-row id (used for delete)
   product_id:               number;
-  product_name:             string;
-  store_product_volume_id:  number;
+  name?:                    string;
+  product_name?:            string;
+  store_product_volume_id:  number | string;
   volume:                   string;
   price:                    string;
   quantity:                 number;
   image_full_path:          string;
+  image_path?:              string;
   short_description?:       string;
 }
 
-export interface CartApiResponse {
-  code:    number;
-  message: string;
-  data:    CartApiItem[];
+/** Product title from cart-getNew (API uses `name`, not `product_name`). */
+export function getCartItemName(item: CartApiItem): string {
+  const n = (item.name ?? item.product_name ?? "").trim();
+  return n || item.short_description?.trim() || "";
 }
+
+export interface CartApiAddress {
+  id?: number;
+  address?: string;
+  house_no?: string;
+  landmark?: string;
+  save_as?: string;
+  longitude?: string;
+  latitude?: string;
+  city?: string;
+}
+
+export interface CartApiResponse {
+  code:             number;
+  message:          string;
+  data:             CartApiItem[];
+  address?:         CartApiAddress;
+  order_total?:     string;
+  shipping_charge?: string;
+  total?:           string;
+  store_name?:      string;
+  store_address?:   string;
+  close?:           string;
+}
+
+export interface CartSummary {
+  orderTotal:     number;
+  shippingCharge: number;
+  total:          number;
+  storeName?:     string;
+  storeAddress?:  string;
+}
+
+export const PERMIT_FEE_WITHOUT_NUMBER = 5;
+
+export function parseMoney(value: string | number | undefined | null): number {
+  if (value == null || value === "") return 0;
+  const n = typeof value === "number" ? value : parseFloat(String(value).replace(/,/g, ""));
+  return Number.isFinite(n) ? n : 0;
+}
+
+/** Permit fee: ₹0 if number provided, else ₹5. */
+export function getPermitFee(permitNumber: string): number {
+  return permitNumber.trim() ? 0 : PERMIT_FEE_WITHOUT_NUMBER;
+}
+
+export function buildCartSummaryFromResponse(
+  res: CartApiResponse,
+  items: { priceValue: number; quantity: number }[],
+): CartSummary {
+  const computedSubtotal = items.reduce((s, i) => s + i.priceValue * i.quantity, 0);
+  const orderTotal = parseMoney(res.order_total) || computedSubtotal;
+  // Flat per-order fee from API — never multiplied by item quantity
+  const shippingCharge = parseMoney(res.shipping_charge);
+  const apiTotal = parseMoney(res.total);
+  const total = apiTotal > 0 ? apiTotal : orderTotal + shippingCharge;
+
+  return {
+    orderTotal,
+    shippingCharge,
+    total,
+    storeName: res.store_name,
+    storeAddress: res.store_address,
+  };
+}
+
+export function getGrandTotal(summary: CartSummary, permitFee = 0): number {
+  return summary.total + permitFee;
+}
+
+export const emptyCartSummary = (): CartSummary => ({
+  orderTotal: 0,
+  shippingCharge: 0,
+  total: 0,
+});
 
 /* ── Helpers ─────────────────────────────────────────────────── */
 

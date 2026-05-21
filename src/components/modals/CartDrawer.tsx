@@ -2,12 +2,7 @@
 
 import Link from "next/link";
 import { useCart } from "./CartProvider";
-
-const SHIPPING = 596;
-const TAX_RATE = 0;
-
-const fmt = (n: number) =>
-  `₹${n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+import { fmtInr } from "@/lib/checkout/formatMoney";
 
 const TrashIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -19,13 +14,10 @@ const TrashIcon = () => (
 );
 
 const CartDrawer = () => {
-  const { isDrawerOpen, closeDrawer, items, removeFromCart } = useCart();
+  const { isDrawerOpen, closeDrawer, items, summary, removeFromCart } = useCart();
 
-  const totalItems   = items.reduce((s, i) => s + i.quantity, 0);
-  const subtotal     = items.reduce((s, i) => s + i.priceValue * i.quantity, 0);
-  const totalExclTax = subtotal + SHIPPING;
-  const taxes        = totalExclTax * TAX_RATE;
-  const totalInclTax = totalExclTax + taxes;
+  const totalItems = items.reduce((s, i) => s + i.quantity, 0);
+  const grandTotal = summary.total;
 
   return (
     <>
@@ -77,7 +69,9 @@ const CartDrawer = () => {
                 <div className="flex-1 flex flex-col justify-between min-w-0">
                   <div>
                     <div className="flex items-start justify-between gap-2">
-                      <p className="text-sm font-bold text-[#1D1D1D] leading-snug">{item.name}</p>
+                      <p className="text-sm font-bold text-[#1D1D1D] leading-snug line-clamp-2">
+                        {item.name || "Product"}
+                      </p>
                       <button
                         onClick={() => removeFromCart(item.id)}
                         className="shrink-0 text-[#1D1D1D80] hover:text-[#F02A0B] transition-colors mt-0.5"
@@ -104,11 +98,9 @@ const CartDrawer = () => {
         {items.length > 0 && (
           <div className="border-t border-[#F0F0F0] px-5 py-4 space-y-2">
             {[
-              { label: `${totalItems} Items`,      value: fmt(subtotal),     bold: false },
-              { label: "Shipping",                 value: fmt(SHIPPING),     bold: false },
-              { label: "Total (tax excl.)",        value: fmt(totalExclTax), bold: false },
-              { label: "Total (tax incl.)",        value: fmt(totalInclTax), bold: true  },
-              { label: "Taxes:",                   value: fmt(taxes),        bold: false },
+              { label: `${totalItems} Items`, value: fmtInr(summary.orderTotal), bold: false },
+              { label: "Shipping (per order)", value: fmtInr(summary.shippingCharge), bold: false },
+              { label: "Total", value: fmtInr(grandTotal), bold: true },
             ].map(({ label, value, bold }) => (
               <div key={label} className="flex justify-between items-center">
                 <span className={`text-sm ${bold ? "font-bold text-[#1D1D1D]" : "text-[#1D1D1D80]"}`}>

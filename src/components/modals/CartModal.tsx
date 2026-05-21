@@ -2,23 +2,15 @@
 
 import Link from "next/link";
 import { useCart } from "./CartProvider";
-
-const SHIPPING = 596;
-const TAX_RATE = 0;
-
-const fmt = (n: number) =>
-  `₹${n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+import { fmtInr } from "@/lib/checkout/formatMoney";
 
 const CartModal = () => {
-  const { isModalOpen, closeModal, lastAdded, items } = useCart();
+  const { isModalOpen, closeModal, lastAdded, items, summary } = useCart();
 
   if (!isModalOpen || !lastAdded) return null;
 
-  const totalItems   = items.reduce((s, i) => s + i.quantity, 0);
-  const subtotal     = items.reduce((s, i) => s + i.priceValue * i.quantity, 0);
-  const totalExclTax = subtotal + SHIPPING;
-  const taxes        = totalExclTax * TAX_RATE;
-  const totalInclTax = totalExclTax + taxes;
+  const totalItems = items.reduce((s, i) => s + i.quantity, 0);
+  const grandTotal = summary.total;
 
   const qty = items.find((i) => i.id === lastAdded.id)?.quantity ?? 1;
 
@@ -80,11 +72,9 @@ const CartModal = () => {
 
               <div className="space-y-2">
                 {[
-                  { label: "Subtotal:",          value: fmt(subtotal),     bold: true },
-                  { label: "Shipping:",           value: fmt(SHIPPING),     bold: false },
-                  { label: "Total (tax excl.):",  value: fmt(totalExclTax), bold: false },
-                  { label: "Total (tax incl.):",  value: fmt(totalInclTax), bold: true },
-                  { label: "Taxes:",              value: fmt(taxes),        bold: false },
+                  { label: "Subtotal:", value: fmtInr(summary.orderTotal), bold: true },
+                  { label: "Shipping (per order):", value: fmtInr(summary.shippingCharge), bold: false },
+                  { label: "Total:", value: fmtInr(grandTotal), bold: true },
                 ].map(({ label, value, bold }) => (
                   <div key={label} className="flex justify-between items-center">
                     <span className={`text-sm ${bold ? "font-bold text-[#1D1D1D]" : "text-[#1D1D1D80]"}`}>

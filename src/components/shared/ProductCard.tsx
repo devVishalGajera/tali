@@ -59,8 +59,9 @@ const ProductCard = ({ product, linkTo, fullWidth = false }: ProductCardProps) =
   };
 
   const imageBlock = (
-    <div className="relative p-3 w-full h-[240px] flex items-end justify-between overflow-visible cursor-pointer">
-      <div className="absolute top-1 right-2 z-20" onClick={(e) => e.stopPropagation()}>
+    <div className="relative p-3 w-full h-[200px] flex items-end justify-between overflow-hidden cursor-pointer">
+      {/* overflow-visible — allowed bottle to extend outside card */}
+      <div className="absolute top-3 right-2 z-20" onClick={(e) => e.stopPropagation()}>
         <WishlistButton
           productId={product.id}
           storeProductVolumeId={product.store_product_volume_id}
@@ -73,14 +74,16 @@ const ProductCard = ({ product, linkTo, fullWidth = false }: ProductCardProps) =
         />
       </div>
 
-      <div className="h-full -top-12 relative flex-1">
+      {/* Pop-out layout: h-full -top-12 pulls image above card top */}
+      {/* <div className="h-full -top-12 relative flex-1"> */}
+      <div className="relative flex-1 flex items-end justify-center h-full max-h-[200px]">
         <img
           src={proxyImageUrl(product.image)}
           alt={product.name}
-          className="max-w-[104px] h-full object-contain"
+          className="max-w-[104px] max-h-full w-auto object-contain"
         />
       </div>
-      <div className="flex flex-col items-end gap-3 z-10">
+      <div className="flex flex-col items-end gap-3 z-10 -translate-y-1.5">
         {product.isNewArrival && (
           <div className="relative top-2 w-[46.18px] h-[46.18px]">
             <div className="absolute inset-0 rounded-full bg-[#1E1E1E] opacity-50 border border-[#808080]" />
@@ -108,10 +111,11 @@ const ProductCard = ({ product, linkTo, fullWidth = false }: ProductCardProps) =
 
   return (
     <div
-      className={`bg-white transition-all duration-300 overflow-visible w-full rounded-[17.1px] border border-[#F0F0F0] shadow-[0px_8.55px_8.55px_0px_#EAE0DA4D,0px_0px_0px_1.07px_#5757571A] md:hover:shadow-lg md:hover:scale-105 active:scale-95 flex flex-col h-full ${
+      className={`bg-white transition-all duration-300 overflow-hidden w-full rounded-[17.1px] border border-[#F0F0F0] shadow-[0px_8.55px_8.55px_0px_#EAE0DA4D,0px_0px_0px_1.07px_#5757571A] md:hover:shadow-lg md:hover:scale-105 active:scale-95 flex flex-col h-full ${
         fullWidth ? "" : "max-w-[200px] md:max-w-[227px]"
       }`}
     >
+      {/* overflow-visible — allowed product image to overflow card border */}
       {linkTo ? (
         <Link href={linkTo} className="block">
           {imageBlock}
