@@ -58,9 +58,9 @@ interface FormCoords {
 
 const emptyCoords = (): FormCoords => ({ latitude: "", longitude: "" });
 
-const coordsFromProps = (lat?: number | null, long?: number | null): FormCoords => ({
-  latitude: lat != null ? String(lat) : "",
-  longitude: long != null ? String(long) : "",
+const coordsFromProps = (lat?: string | number | null, long?: string | number | null): FormCoords => ({
+  latitude: lat != null && String(lat) !== "" ? String(lat) : "",
+  longitude: long != null && String(long) !== "" ? String(long) : "",
 });
 
 async function reverseGeocode(lat: string, lon: string): Promise<{
@@ -102,8 +102,8 @@ async function reverseGeocode(lat: string, lon: string): Promise<{
 interface Props {
   token: string;
   defaultCity?: string;
-  latitude?: number | null;
-  longitude?: number | null;
+  latitude?: string | number | null;
+  longitude?: string | number | null;
   selectedId: number | null;
   onSelectedIdChange: (id: number | null) => void;
 }
