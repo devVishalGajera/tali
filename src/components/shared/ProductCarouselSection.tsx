@@ -44,7 +44,7 @@ const ProductCarouselSection = ({
           </Link>
         )}
       </div>
-      <div className="overflow-x-hidden -mx-4 sm:-mx-6 md:-mx-8 px-4 sm:px-6 md:px-8 mt-3 pt-14 pb-8">
+      <div className="overflow-x-hidden -mx-4 sm:-mx-6 md:-mx-8 px-4 sm:px-6 md:px-8 mt-3 pt-0 pb-8">
         <Swiper
           modules={[FreeMode]}
           freeMode={true}
