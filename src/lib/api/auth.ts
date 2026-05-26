@@ -108,6 +108,77 @@ export async function getProfileApi(token: string): Promise<ProfileResponse> {
   return res.json() as Promise<ProfileResponse>;
 }
 
+export interface ForgotPasswordResponse {
+  code:    number;
+  message: string;
+  data?:   unknown;
+}
+
+export interface ResetPasswordResponse {
+  code:    number;
+  message: string;
+  data?:   unknown;
+}
+
+/**
+ * Pulls the user id out of a forgot-password response. The backend has been
+ * observed to return it under different keys, so try the common ones.
+ */
+export function extractUserIdFromForgotResponse(res: ForgotPasswordResponse): number | null {
+  const candidates: unknown[] = [];
+  const root = res as unknown as Record<string, unknown>;
+  candidates.push(root.id, root.user_id);
+  if (root.data && typeof root.data === "object") {
+    const data = root.data as Record<string, unknown>;
+    candidates.push(data.id, data.user_id);
+    if (data.user && typeof data.user === "object") {
+      candidates.push((data.user as Record<string, unknown>).id);
+    }
+  }
+  for (const c of candidates) {
+    if (typeof c === "number" && Number.isFinite(c) && c > 0) return c;
+    if (typeof c === "string") {
+      const n = Number.parseInt(c, 10);
+      if (Number.isFinite(n) && n > 0) return n;
+    }
+  }
+  return null;
+}
+
+export async function forgotPasswordApi(params: {
+  email: string;
+}): Promise<ForgotPasswordResponse> {
+  const form = new FormData();
+  form.append("email", params.email);
+
+  const res = await fetch(`${API_BASE_URL}/user/forgotpassword`, {
+    method: "POST",
+    body:   form,
+    cache:  "no-store",
+  });
+  if (!res.ok) throw new Error(`Forgot password failed: ${res.status}`);
+  return res.json() as Promise<ForgotPasswordResponse>;
+}
+
+export async function resetPasswordApi(params: {
+  id:       number;
+  otp:      string;
+  password: string;
+}): Promise<ResetPasswordResponse> {
+  const form = new FormData();
+  form.append("id", String(params.id));
+  form.append("otp", params.otp);
+  form.append("password", params.password);
+
+  const res = await fetch(`${API_BASE_URL}/user/resetpassword`, {
+    method: "POST",
+    body:   form,
+    cache:  "no-store",
+  });
+  if (!res.ok) throw new Error(`Reset password failed: ${res.status}`);
+  return res.json() as Promise<ResetPasswordResponse>;
+}
+
 export async function logoutApi(token: string): Promise<void> {
   const form = new FormData();
   await fetch(`${API_BASE_URL}/auth/logout`, {

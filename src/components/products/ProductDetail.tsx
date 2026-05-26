@@ -169,7 +169,7 @@ export default function ProductDetail({ data, city }: Props) {
             title="Related products"
             products={relatedProducts}
             linkProducts
-            centerTitle
+            // centerTitle
           />
           {/* <ProductCarouselSection
             title="Similar products"

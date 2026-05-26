@@ -91,7 +91,7 @@ export default async function RootLayout({
                   </Suspense>
                   <MainShell
                     header={<Header navCategories={navCategories} />}
-                    footer={<Footer />}
+                    footer={<Footer navCategories={navCategories} />}
                     cartModal={<CartModal />}
                     cartDrawer={<CartDrawer />}
                     wishlistDrawer={<WishlistDrawer />}

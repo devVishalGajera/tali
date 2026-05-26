@@ -32,13 +32,14 @@ const HeroSection = () => {
     };
   }, []);
 
-  // Dynamic height calculation
-  const heroHeight = isDesktop && headerHeight > 0 ? `calc(100vh - ${headerHeight}px)` : "75vh";
+  // Desktop: fill viewport below header; Mobile: size to content with a sensible minimum
+  const desktopHeight =
+    isDesktop && headerHeight > 0 ? `calc(100vh - ${headerHeight}px)` : undefined;
 
   return (
     <section
-      className="relative w-full bg-[#FAF4F2] flex flex-col justify-center min-h-0"
-      style={{ height: heroHeight }}
+      className="relative w-full bg-[#FAF4F2] flex flex-col justify-center min-h-[420px] md:min-h-0 py-8 md:py-0"
+      style={desktopHeight ? { height: desktopHeight } : undefined}
     >
       {/* Clipped background layer — overflow-hidden lives here only */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -86,8 +87,8 @@ const HeroSection = () => {
       {/* Content Container */}
       <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 md:px-8 flex flex-col justify-center flex-1">
         {/* Heading and Subheading */}
-        <div className="text-center mb-6 md:mb-8 lg:mb-12 animate-fadeInUp">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-[#1D1D1D] mb-4">
+        <div className="text-center mb-4 md:mb-8 lg:mb-12 animate-fadeInUp">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-[#1D1D1D] mb-2 md:mb-4">
             Find the best price for wines, beers and spirits.
           </h1>
           <p className="text-sm sm:text-base md:text-lg text-[#1D1D1D]">

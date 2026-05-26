@@ -57,21 +57,29 @@ const CartDrawer = () => {
             items.map((item) => (
               <div key={item.id} className="flex gap-4 pb-4 border-b border-[#F0F0F0] last:border-0">
                 {/* Image */}
-                <div className="w-[90px] h-[110px] shrink-0 bg-[#F5F5F5] rounded-xl overflow-hidden flex items-center justify-center">
+                <Link
+                  href={`/products/${item.id}`}
+                  onClick={closeDrawer}
+                  className="w-[90px] h-[110px] shrink-0 bg-[#F5F5F5] rounded-xl overflow-hidden flex items-center justify-center hover:opacity-90 transition-opacity"
+                >
                   <img
                     src={item.image}
                     alt={item.name}
                     className="h-full w-full object-contain p-2"
                   />
-                </div>
+                </Link>
 
                 {/* Info */}
                 <div className="flex-1 flex flex-col justify-between min-w-0">
                   <div>
                     <div className="flex items-start justify-between gap-2">
-                      <p className="text-sm font-bold text-[#1D1D1D] leading-snug line-clamp-2">
+                      <Link
+                        href={`/products/${item.id}`}
+                        onClick={closeDrawer}
+                        className="text-sm font-bold text-[#1D1D1D] leading-snug line-clamp-2 hover:text-[#006B4D] transition-colors"
+                      >
                         {item.name || "Product"}
-                      </p>
+                      </Link>
                       <button
                         onClick={() => removeFromCart(item.id)}
                         className="shrink-0 text-[#1D1D1D80] hover:text-[#F02A0B] transition-colors mt-0.5"

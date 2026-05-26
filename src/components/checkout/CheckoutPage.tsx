@@ -6,7 +6,8 @@ import { useRouter } from "next/navigation";
 import { useCart } from "@/components/modals/CartProvider";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useLocation } from "@/components/modals/LocationProvider";
-import { createOrderApi, extractOrderId } from "@/lib/api/order";
+import { createOrderApi, extractOrderId, parsePlacedOrder, type PlacedOrderInfo } from "@/lib/api/order";
+import OrderConfirmedModal from "@/components/orders/OrderConfirmedModal";
 import { getPermitFee, getGrandTotal } from "@/lib/api/cart";
 import { getDisplayName } from "@/lib/api/auth";
 import CheckoutDeliveryAddress from "@/components/checkout/CheckoutDeliveryAddress";
@@ -53,6 +54,7 @@ const CheckoutPage = () => {
   const [permitNumber, setPermitNumber] = useState("");
   const [placing, setPlacing] = useState(false);
   const [orderError, setOrderError] = useState<string | null>(null);
+  const [confirmedOrder, setConfirmedOrder] = useState<PlacedOrderInfo | null>(null);
 
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
@@ -127,9 +129,20 @@ const CheckoutPage = () => {
       }
 
       clearCart();
-      const orderId = extractOrderId(res.data as { id?: number; order_id?: number });
-      if (orderId) {
-        router.push(`/orders/${orderId}`);
+      const placed =
+        parsePlacedOrder(res.data, grandTotal) ??
+        (() => {
+          const orderId = extractOrderId(res.data);
+          if (orderId == null) return null;
+          return {
+            id: orderId,
+            orderNumber: `TL${orderId}`,
+            total: grandTotal,
+            placedAt: new Date().toISOString(),
+          };
+        })();
+      if (placed) {
+        setConfirmedOrder(placed);
       } else {
         router.push("/orders");
       }
@@ -241,22 +254,28 @@ const CheckoutPage = () => {
                   return (
                     <div key={item.id} className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4 py-5">
                       <div className="flex gap-3 sm:contents">
-                        <div className="w-[90px] h-[110px] shrink-0 bg-[#F5F5F5] rounded-xl overflow-hidden flex items-center justify-center">
-                        <img
-                          src={item.image}
-                          alt={item.name}
-                          className="h-full w-full object-contain p-2"
-                        />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-[#1D1D1D] leading-snug line-clamp-2">
-                          {item.name || "Product"}
-                        </p>
-                        <p className="text-base font-bold text-[#1D1D1D] mt-1">{item.price}</p>
-                        {item.size && (
-                          <p className="text-xs text-[#1D1D1D80] mt-1">Size: {item.size}</p>
-                        )}
-                      </div>
+                        <Link
+                          href={`/products/${item.id}`}
+                          className="w-[90px] h-[110px] shrink-0 bg-[#F5F5F5] rounded-xl overflow-hidden flex items-center justify-center hover:opacity-90 transition-opacity"
+                        >
+                          <img
+                            src={item.image}
+                            alt={item.name}
+                            className="h-full w-full object-contain p-2"
+                          />
+                        </Link>
+                        <div className="flex-1 min-w-0">
+                          <Link
+                            href={`/products/${item.id}`}
+                            className="text-sm font-bold text-[#1D1D1D] leading-snug line-clamp-2 hover:text-[#006B4D] transition-colors"
+                          >
+                            {item.name || "Product"}
+                          </Link>
+                          <p className="text-base font-bold text-[#1D1D1D] mt-1">{item.price}</p>
+                          {item.size && (
+                            <p className="text-xs text-[#1D1D1D80] mt-1">Size: {item.size}</p>
+                          )}
+                        </div>
                       </div>
                       <div className="flex flex-wrap items-center justify-between gap-3 sm:justify-end sm:flex-nowrap sm:gap-4">
                       <div className="flex items-center border border-[#E8E8E8] rounded-lg overflow-hidden shrink-0">
@@ -398,6 +417,12 @@ const CheckoutPage = () => {
         </aside>
         </div>
       </div>
+
+      <OrderConfirmedModal
+        open={confirmedOrder != null}
+        order={confirmedOrder}
+        onClose={() => setConfirmedOrder(null)}
+      />
     </main>
   );
 };

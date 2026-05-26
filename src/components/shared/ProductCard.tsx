@@ -59,7 +59,7 @@ const ProductCard = ({ product, linkTo, fullWidth = false }: ProductCardProps) =
   };
 
   const imageBlock = (
-    <div className="relative p-3 w-full h-[200px] flex items-end justify-between overflow-hidden cursor-pointer">
+    <div className="relative px-3 pt-3 pb-2 w-full h-[210px] flex items-end justify-between gap-2 overflow-hidden cursor-pointer">
       {/* overflow-visible — allowed bottle to extend outside card */}
       <div className="absolute top-3 right-2 z-20" onClick={(e) => e.stopPropagation()}>
         <WishlistButton
@@ -76,14 +76,15 @@ const ProductCard = ({ product, linkTo, fullWidth = false }: ProductCardProps) =
 
       {/* Pop-out layout: h-full -top-12 pulls image above card top */}
       {/* <div className="h-full -top-12 relative flex-1"> */}
-      <div className="relative flex-1 flex items-end justify-center h-full max-h-[200px]">
+      <div className="relative flex-1 min-w-0 flex items-end justify-center h-full">
         <img
           src={proxyImageUrl(product.image)}
           alt={product.name}
-          className="max-w-[104px] max-h-full w-auto object-contain"
+          className="max-w-full md:max-w-[160px] max-h-[200px] w-auto h-auto object-contain"
         />
       </div>
-      <div className="flex flex-col items-end gap-3 z-10 -translate-y-1.5">
+      <div className="flex flex-col items-end gap-2 z-10 -translate-y-1.5 shrink-0">
+        {/* New Arrival badge — temporarily disabled
         {product.isNewArrival && (
           <div className="relative top-2 w-[46.18px] h-[46.18px]">
             <div className="absolute inset-0 rounded-full bg-[#1E1E1E] opacity-50 border border-[#808080]" />
@@ -93,15 +94,16 @@ const ProductCard = ({ product, linkTo, fullWidth = false }: ProductCardProps) =
             </div>
           </div>
         )}
-        <div className="flex flex-col items-center gap-[10px]">
-          <span className="font-graphik font-medium text-base leading-tight text-[#1E1E1E] mb-1">
+        */}
+        <div className="flex flex-col items-center gap-0.5">
+          <span className="font-graphik font-medium text-base leading-tight text-[#1E1E1E]">
             {product.rating > 0 ? product.rating : "5.0"}
           </span>
-          <div className="flex items-center gap-0.5 mb-1"><StarRating score={product.rating} /></div>
-          <span className="font-graphik font-normal text-[11px] leading-[14px] text-center text-[#1E1E1E] whitespace-nowrap mb-1">
+          <div className="flex items-center gap-0.5"><StarRating score={product.rating} /></div>
+          <span className="font-graphik font-normal text-[11px] leading-[14px] text-center text-[#1E1E1E] whitespace-nowrap">
             {product.ratingCount > 0 ? `${product.ratingCount} Rating` : ""}
           </span>
-          <span className="bg-[#00845F] text-white font-graphik font-semibold py-1 px-3 whitespace-nowrap rounded-full text-center text-sm leading-[18px]">
+          <span className="mt-1 bg-[#00845F] text-white font-graphik font-semibold py-1 px-3 whitespace-nowrap rounded-full text-center text-sm leading-[18px]">
             {product.price}
           </span>
         </div>
@@ -112,7 +114,7 @@ const ProductCard = ({ product, linkTo, fullWidth = false }: ProductCardProps) =
   return (
     <div
       className={`bg-white transition-all duration-300 overflow-hidden w-full rounded-[17.1px] border border-[#F0F0F0] shadow-[0px_8.55px_8.55px_0px_#EAE0DA4D,0px_0px_0px_1.07px_#5757571A] md:hover:shadow-lg md:hover:scale-105 active:scale-95 flex flex-col h-full ${
-        fullWidth ? "" : "max-w-[200px] md:max-w-[227px]"
+        fullWidth ? "" : "max-w-[210px] md:max-w-[250px]"
       }`}
     >
       {/* overflow-visible — allowed product image to overflow card border */}

@@ -2,19 +2,35 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { getOrderDetailApi, trackOrderApi } from "@/lib/api/order";
+import {
+  getOrderDetailApi,
+  trackOrderApi,
+  formatOrderDate,
+  type OrderDetail,
+  type OrderTracking,
+} from "@/lib/api/order";
+import OrderTracker from "@/components/orders/OrderTracker";
+import { fmtInr } from "@/lib/checkout/formatMoney";
 
 interface Props {
   orderId: string;
 }
 
+const statusColor = (status: string) => {
+  const s = status.toLowerCase();
+  if (s.includes("deliver")) return "bg-[#E8F5EF] text-[#006B4D]";
+  if (s.includes("cancel")) return "bg-red-50 text-red-700";
+  return "bg-[#FFF4E8] text-[#B45309]";
+};
+
 export default function OrderDetailPage({ orderId }: Props) {
   const router = useRouter();
   const { isAuthenticated, token } = useAuth();
-  const [detail, setDetail] = useState<Record<string, unknown> | null>(null);
-  const [tracking, setTracking] = useState<Record<string, unknown> | null>(null);
+  const [detail, setDetail] = useState<OrderDetail | null>(null);
+  const [tracking, setTracking] = useState<OrderTracking | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -31,52 +47,154 @@ export default function OrderDetailPage({ orderId }: Props) {
     ])
       .then(([detailRes, trackRes]) => {
         if (detailRes.code === 1 && detailRes.data) {
-          setDetail(
-            typeof detailRes.data === "object" && detailRes.data !== null
-              ? (detailRes.data as Record<string, unknown>)
-              : { raw: detailRes.data },
-          );
+          setDetail(detailRes.data);
         } else {
           setError(detailRes.message || "Order not found.");
         }
         if (trackRes?.code === 1 && trackRes.data) {
-          setTracking(
-            typeof trackRes.data === "object" && trackRes.data !== null
-              ? (trackRes.data as Record<string, unknown>)
-              : { raw: trackRes.data },
-          );
+          setTracking(trackRes.data);
         }
       })
       .catch(() => setError("Could not load order."))
       .finally(() => setLoading(false));
   }, [isAuthenticated, token, orderId, router]);
 
-  const renderBlock = (label: string, data: Record<string, unknown> | null) => {
-    if (!data) return null;
-    return (
-      <div className="bg-white rounded-2xl border border-[#E8E8E8] px-5 py-5">
-        <h2 className="text-sm font-bold text-[#1D1D1D] mb-3">{label}</h2>
-        <pre className="text-xs text-[#1D1D1D80] whitespace-pre-wrap break-words overflow-x-auto">
-          {JSON.stringify(data, null, 2)}
-        </pre>
-      </div>
-    );
-  };
+  const steps = tracking?.steps;
+  const displayTotal = detail?.total ?? 0;
 
   return (
-    <main className="min-h-screen bg-[#FAFAFA] py-10 px-4 sm:px-6 md:px-10">
-      <div className="max-w-3xl mx-auto space-y-4">
-        <Link href="/orders" className="text-sm text-[#006B4D] hover:underline">
+    <main className="min-h-screen bg-[#FAFAFA] py-8 px-4 sm:px-6 md:px-10">
+      <div className="max-w-3xl mx-auto space-y-5">
+        <Link href="/orders" className="inline-flex items-center gap-1 text-sm text-[#006B4D] hover:underline">
           ← Back to orders
         </Link>
 
-        <h1 className="text-2xl font-bold text-[#1D1D1D]">Order #{orderId}</h1>
+        {loading && (
+          <p className="text-sm text-[#1D1D1D80] text-center py-16">Loading order…</p>
+        )}
 
-        {loading && <p className="text-sm text-[#1D1D1D80]">Loading…</p>}
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && !loading && (
+          <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-3">{error}</p>
+        )}
 
-        {renderBlock("Order details", detail)}
-        {renderBlock("Tracking", tracking)}
+        {detail && !loading && (
+          <>
+            <div className="bg-white rounded-2xl border border-[#E8E8E8] px-5 sm:px-6 py-6">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h1 className="text-xl font-bold text-[#1D1D1D]">Order {detail.orderNumber}</h1>
+                  <p className="text-xs text-[#1D1D1D80] mt-1">{formatOrderDate(detail.placedAt)}</p>
+                </div>
+                <span className={`text-xs font-semibold px-3 py-1 rounded-full ${statusColor(detail.status)}`}>
+                  {detail.status}
+                </span>
+              </div>
+
+              <div className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-3 bg-[#F0F7F4] rounded-xl px-4 py-4">
+                <div>
+                  <p className="text-[10px] font-semibold text-[#1D1D1D60] uppercase">Order ID</p>
+                  <p className="text-sm font-bold text-[#1D1D1D] mt-0.5">{detail.orderNumber}</p>
+                </div>
+                <div className="border-t sm:border-t-0 sm:border-l border-[#E8E8E8] pt-3 sm:pt-0 sm:pl-4">
+                  <p className="text-[10px] font-semibold text-[#1D1D1D60] uppercase">Payment</p>
+                  <p className="text-sm font-bold text-[#1D1D1D] mt-0.5">{detail.paymentType ?? "Cash"}</p>
+                </div>
+                <div className="border-t sm:border-t-0 sm:border-l border-[#E8E8E8] pt-3 sm:pt-0 sm:pl-4">
+                  <p className="text-[10px] font-semibold text-[#1D1D1D60] uppercase">Total</p>
+                  <p className="text-sm font-bold text-[#006B4D] mt-0.5">{fmtInr(displayTotal)}</p>
+                </div>
+              </div>
+            </div>
+
+            {steps && steps.length > 0 && (
+              <div className="bg-white rounded-2xl border border-[#E8E8E8] px-5 sm:px-6 py-6">
+                <h2 className="text-sm font-bold text-[#1D1D1D] mb-5">Order status</h2>
+                <OrderTracker steps={steps} />
+              </div>
+            )}
+
+            {detail.address && (
+              <div className="bg-white rounded-2xl border border-[#E8E8E8] px-5 py-5">
+                <h2 className="text-sm font-bold text-[#1D1D1D] mb-2">Delivery address</h2>
+                <p className="text-sm text-[#1D1D1D80] leading-relaxed">{detail.address}</p>
+              </div>
+            )}
+
+            <div className="bg-white rounded-2xl border border-[#E8E8E8] overflow-hidden">
+              <h2 className="text-sm font-bold text-[#1D1D1D] px-5 pt-5 pb-3">Items</h2>
+              {detail.items.length === 0 ? (
+                <p className="text-sm text-[#1D1D1D80] px-5 pb-5">No line items returned for this order.</p>
+              ) : (
+                <ul className="divide-y divide-[#E8E8E8]">
+                  {detail.items.map((item, idx) => (
+                    <li key={`${item.name}-${idx}`} className="flex gap-4 px-5 py-4">
+                      <div className="w-14 h-14 rounded-lg bg-[#F5F5F5] shrink-0 overflow-hidden relative">
+                        {item.image ? (
+                          <Image
+                            src={item.image}
+                            alt=""
+                            fill
+                            className="object-contain p-1"
+                            sizes="56px"
+                            unoptimized
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-xl opacity-40">🍾</div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-[#1D1D1D] truncate">{item.name}</p>
+                        {item.volume && (
+                          <p className="text-xs text-[#1D1D1D60] mt-0.5">{item.volume}</p>
+                        )}
+                        <p className="text-xs text-[#1D1D1D80] mt-1">Qty: {item.quantity}</p>
+                      </div>
+                      <p className="text-sm font-bold text-[#1D1D1D] shrink-0">
+                        {fmtInr(item.price * item.quantity || item.price)}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              <div className="border-t border-[#E8E8E8] px-5 py-4 space-y-2">
+                {detail.subtotal != null && detail.subtotal > 0 && (
+                  <div className="flex justify-between text-sm text-[#1D1D1D80]">
+                    <span>Subtotal</span>
+                    <span>{fmtInr(detail.subtotal)}</span>
+                  </div>
+                )}
+                {detail.shipping != null && detail.shipping > 0 && (
+                  <div className="flex justify-between text-sm text-[#1D1D1D80]">
+                    <span>Shipping</span>
+                    <span>{fmtInr(detail.shipping)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between text-sm font-bold text-[#1D1D1D] pt-1">
+                  <span>Total</span>
+                  <span className="text-[#006B4D]">{fmtInr(displayTotal)}</span>
+                </div>
+              </div>
+            </div>
+
+            {(detail.specialInstruction || detail.permitNumber) && (
+              <div className="bg-white rounded-2xl border border-[#E8E8E8] px-5 py-5 space-y-3">
+                {detail.permitNumber && (
+                  <div>
+                    <p className="text-xs font-semibold text-[#1D1D1D60] uppercase">Permit number</p>
+                    <p className="text-sm text-[#1D1D1D] mt-0.5">{detail.permitNumber}</p>
+                  </div>
+                )}
+                {detail.specialInstruction && (
+                  <div>
+                    <p className="text-xs font-semibold text-[#1D1D1D60] uppercase">Delivery instructions</p>
+                    <p className="text-sm text-[#1D1D1D] mt-0.5">{detail.specialInstruction}</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </>
+        )}
       </div>
     </main>
   );

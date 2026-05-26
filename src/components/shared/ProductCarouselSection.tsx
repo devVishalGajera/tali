@@ -48,12 +48,12 @@ const ProductCarouselSection = ({
         <Swiper
           modules={[FreeMode]}
           freeMode={true}
-          spaceBetween={16}
+          spaceBetween={14}
           slidesPerView="auto"
           breakpoints={{
-            640: { spaceBetween: 20 },
-            768: { spaceBetween: 24 },
-            1024: { spaceBetween: 32 },
+            640: { spaceBetween: 16 },
+            768: { spaceBetween: 20 },
+            1024: { spaceBetween: 24 },
           }}
           className="!overflow-visible"
           style={{ alignItems: "stretch" }}
@@ -61,7 +61,7 @@ const ProductCarouselSection = ({
           {products.map((product) => (
             <SwiperSlide
               key={product.store_product_volume_id ?? product.id}
-              className="!w-[200px] md:!w-[227px] !h-auto"
+              className="!w-[210px] md:!w-[250px] !h-auto"
             >
               <ProductCard
                 product={product}

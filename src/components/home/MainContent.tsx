@@ -16,22 +16,35 @@ interface Props {
 }
 
 const MainContent = ({ categoriesData }: Props) => {
+  const allSubCategories = (categoriesData?.SubCategory ?? []).filter(
+    (sc) => sc.data?.length > 0,
+  );
+  const firstRow = allSubCategories.slice(0, 1);
+  const secondRow = allSubCategories.slice(1, 2);
+  const restRows = allSubCategories.slice(2);
+
   return (
     <>
       <div className="w-full bg-white py-6 md:py-12 lg:py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
           <PopularCategoriesSection categories={categoriesData?.Category ?? []} />
           <TopBrandsSection brands={categoriesData?.popular_brands ?? []} />
-          <SubCategoryProductSections subCategories={categoriesData?.SubCategory ?? []} />
-          <ProductsSection />
-          <PromotionalCardsSection />
+          {/* <ProductsSection /> */}
+          <SubCategoryProductSections subCategories={firstRow} />
+          {firstRow.length > 0 && (
+            <div className="mb-6 md:mb-10">
+              <PromotionalCardsSection />
+            </div>
+          )}
+          <SubCategoryProductSections subCategories={secondRow} />
         </div>
       </div>
-      <BannerSection />
+      {secondRow.length > 0 && <BannerSection />}
       <div className="w-full bg-white py-6 md:py-12 lg:py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
+          <SubCategoryProductSections subCategories={restRows} />
           <WhyTalliDrinks />
-          <BestsellerSection />
+          {/* <BestsellerSection /> */}
           <TrustedSection />
           <FAQSection />
           <VideoSection />

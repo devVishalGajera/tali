@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useWishlist } from "./WishlistProvider";
 import { useCart } from "./CartProvider";
 import { useLocation } from "./LocationProvider";
@@ -30,6 +31,7 @@ function getAuthToken(): string | null {
 }
 
 const WishlistDrawer = () => {
+  const router = useRouter();
   const { isDrawerOpen, closeDrawer, items, removeItem, refreshWishlist } = useWishlist();
   const { refreshCart, openDrawer: openCartDrawer } = useCart();
   const { purchaseAllow } = useLocation();
@@ -39,12 +41,20 @@ const WishlistDrawer = () => {
 
   const moveableItems = items.filter((i) => Boolean(Number(i.storeProductVolumeId)));
 
-  const handleRemove = async (item: (typeof items)[number]) => {
-    const token = getAuthToken();
-    if (!token) return;
+  const goToLogin = () => {
+    closeDrawer();
+    router.push("/login?redirect=/wishlist");
+  };
 
+  const handleRemove = async (item: (typeof items)[number]) => {
     setRemovingId(item.productId);
     removeItem(item.productId);
+
+    const token = getAuthToken();
+    if (!token) {
+      setRemovingId(null);
+      return;
+    }
 
     try {
       const spvId = Number(item.storeProductVolumeId);
@@ -60,7 +70,10 @@ const WishlistDrawer = () => {
 
   const handleMoveToCart = async (item: (typeof items)[number]) => {
     const token = getAuthToken();
-    if (!token) return;
+    if (!token) {
+      goToLogin();
+      return;
+    }
 
     const spvId = Number(item.storeProductVolumeId);
     if (!spvId) return;
@@ -89,8 +102,13 @@ const WishlistDrawer = () => {
   };
 
   const handleMoveAllToCart = async () => {
+    if (moveableItems.length === 0) return;
+
     const token = getAuthToken();
-    if (!token || moveableItems.length === 0) return;
+    if (!token) {
+      goToLogin();
+      return;
+    }
 
     setMovingAll(true);
 
@@ -215,11 +233,12 @@ const WishlistDrawer = () => {
                       {item.price && <p className="text-base font-bold text-[#1D1D1D] mt-1">{item.price}</p>}
                     </div>
 
-                    {hasVolume && purchaseAllow && (
+                    {hasVolume && (
                       <button
                         onClick={() => handleMoveToCart(item)}
-                        disabled={isMoving}
-                        className="mt-2 self-start flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#00845F] text-[#00845F] text-xs font-semibold hover:bg-[#00845F] hover:text-white transition-all disabled:opacity-50"
+                        disabled={isMoving || !purchaseAllow}
+                        className="mt-2 self-start flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#00845F] text-[#00845F] text-xs font-semibold hover:bg-[#00845F] hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        title={!purchaseAllow ? "Purchases not available in your area" : undefined}
                       >
                         <CartPlusIcon />
                         {isMoving ? "Moving…" : "Move to Cart"}
@@ -235,12 +254,13 @@ const WishlistDrawer = () => {
         {/* Footer */}
         {items.length > 0 && (
           <div className="border-t border-[#F0F0F0] px-5 py-4 flex flex-col gap-3">
-            {/* Move all — only shown when at least one item has a volume and purchase is allowed */}
-            {purchaseAllow && moveableItems.length > 1 && (
+            {/* Move all — shown when more than one item is moveable; disabled if purchase not allowed */}
+            {moveableItems.length > 1 && (
               <button
                 onClick={handleMoveAllToCart}
-                disabled={movingAll}
-                className="w-full py-3 flex items-center justify-center gap-2 bg-[#00845F] hover:bg-[#006e4f] text-white text-sm font-semibold rounded-xl transition-colors disabled:opacity-60"
+                disabled={movingAll || !purchaseAllow}
+                className="w-full py-3 flex items-center justify-center gap-2 bg-[#00845F] hover:bg-[#006e4f] text-white text-sm font-semibold rounded-xl transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                title={!purchaseAllow ? "Purchases not available in your area" : undefined}
               >
                 <CartPlusIcon />
                 {movingAll ? "Moving All…" : `Move All to Cart (${moveableItems.length})`}

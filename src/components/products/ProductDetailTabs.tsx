@@ -20,10 +20,10 @@ interface Props {
   alcohol?:       string;
 }
 
-const TABS: { key: TabKey; label: string }[] = [
-  { key: "prices",      label: "Prices"                },
-  { key: "additional",  label: "Additional information" },
-  { key: "description", label: "Description"            },
+const TABS: { key: TabKey; label: string; shortLabel: string }[] = [
+  { key: "prices",      label: "Prices",                 shortLabel: "Prices"      },
+  { key: "additional",  label: "Additional information", shortLabel: "Details"     },
+  { key: "description", label: "Description",            shortLabel: "Description" },
 ];
 
 /* Static shop data — will be replaced once a stores-by-product API is available */
@@ -61,19 +61,20 @@ export default function ProductDetailTabs({
   return (
     <>
       {/* Tab bar */}
-      <div className="w-full border-b border-[#1D1D1D33] pt-[30px]">
-        <div className="flex items-center justify-center -mb-px">
-          {TABS.map(({ key, label }) => (
+      <div className="w-full border-b border-[#1D1D1D33] pt-6 sm:pt-[30px]">
+        <div className="flex items-stretch justify-center -mb-px gap-1 sm:gap-0">
+          {TABS.map(({ key, label, shortLabel }) => (
             <button
               key={key}
               onClick={() => setActiveTab(key)}
-              className={`flex-1 py-3 text-center text-sm sm:text-base md:text-lg leading-snug transition-colors cursor-pointer border-b-2 ${
+              className={`flex-1 px-2 py-2.5 sm:py-3 text-center text-[13px] sm:text-base md:text-lg leading-snug whitespace-nowrap transition-colors cursor-pointer border-b-2 ${
                 activeTab === key
                   ? "text-[#1D1D1D] font-bold border-[#1D1D1D]"
-                  : "text-[#3C3232] font-normal border-transparent"
+                  : "text-[#3C3232] font-normal border-transparent hover:text-[#1D1D1D]"
               }`}
             >
-              {label}
+              <span className="sm:hidden">{shortLabel}</span>
+              <span className="hidden sm:inline">{label}</span>
             </button>
           ))}
         </div>

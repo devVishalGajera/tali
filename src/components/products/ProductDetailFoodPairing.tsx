@@ -31,7 +31,7 @@ export default function ProductDetailFoodPairing({ foodPairing }: Props) {
 
         {/* Food items grid */}
         {foodpairing_product.length > 0 && (
-          <div className="grid grid-cols-3 gap-4 sm:gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-6">
             {foodpairing_product.map((item) => (
               <div
                 key={item.id}
@@ -40,7 +40,7 @@ export default function ProductDetailFoodPairing({ foodPairing }: Props) {
                 <p className="text-xs sm:text-sm text-[#1D1D1D] text-center mb-2 min-h-[32px] sm:min-h-[40px] line-clamp-2">
                   {item.product_name}
                 </p>
-                <div className="relative w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 rounded-full overflow-hidden">
+                <div className="relative w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 lg:w-36 lg:h-36 rounded-full overflow-hidden">
                   <img
                     src={proxyImageUrl(item.product_image)}
                     alt={item.product_name}

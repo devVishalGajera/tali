@@ -36,8 +36,6 @@ const Header = ({ navCategories }: Props) => {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [showBanner, setShowBanner] = useState(true);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const userMenuRef = useRef<HTMLDivElement>(null);
   const lastScrollY = useRef(0);
   const ticking = useRef(false);
 
@@ -47,11 +45,10 @@ const Header = ({ navCategories }: Props) => {
       ticking.current = true;
       requestAnimationFrame(() => {
         const y = window.scrollY;
-        const dir = y > lastScrollY.current ? "down" : "up";
         lastScrollY.current = y;
         setScrolled((prev) => {
-          if (!prev && dir === "down" && y > 100) return true;
-          if (prev && dir === "up" && y < 40) return false;
+          if (!prev && y > 140) return true;
+          if (prev && y < 60) return false;
           return prev;
         });
         ticking.current = false;
@@ -63,10 +60,12 @@ const Header = ({ navCategories }: Props) => {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      const target = event.target as Element | null;
+      if (!target) return;
+      if (!target.closest("[data-category-dropdown]")) {
         setOpenDropdown(null);
       }
-      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+      if (!target.closest("[data-user-menu]")) {
         setUserMenuOpen(false);
       }
     };
@@ -80,7 +79,7 @@ const Header = ({ navCategories }: Props) => {
 
   const openCategory = navCategories.find((c) => c.id === openDropdown);
 
-  const LocationBtn = () => (
+  const locationBtn = (
     <div
       onClick={showModal}
       className="flex items-center gap-1.5 cursor-pointer group flex-shrink-0 hover:opacity-80 transition-opacity"
@@ -108,7 +107,7 @@ const Header = ({ navCategories }: Props) => {
     ? "flex flex-col items-center gap-1 cursor-pointer hover:opacity-80 transition-opacity md:hidden"
     : iconBtnClass;
 
-  const ActionIcons = () => (
+  const actionIcons = (
     <div className="flex items-center flex-shrink-0 gap-4">
       <div onClick={openWishlistDrawer} className={scrolled ? wishlistBtnClass : iconBtnClass}>
         <div className="relative">
@@ -131,7 +130,7 @@ const Header = ({ navCategories }: Props) => {
       )}
 
       {isAuthenticated ? (
-        <div className="relative" ref={userMenuRef}>
+        <div className="relative" data-user-menu>
           <button
             type="button"
             onClick={() => setUserMenuOpen((v) => !v)}
@@ -200,10 +199,10 @@ const Header = ({ navCategories }: Props) => {
     </div>
   );
 
-  const DropdownMenu = () => (
+  const dropdownMenu = (
     <>
       {openDropdown !== null && openCategory && (
-        <div ref={dropdownRef} className="absolute left-0 right-0 z-40 bg-white shadow-lg border-t border-gray-200 animate-fadeInDown" style={{ top: "100%" }}>
+        <div data-category-dropdown className="absolute left-0 right-0 z-40 bg-white shadow-lg border-t border-gray-200 animate-fadeInDown" style={{ top: "100%" }}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-6 md:py-8">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
               <div className="md:col-span-1">
@@ -278,18 +277,22 @@ const Header = ({ navCategories }: Props) => {
 
       {/* Top bar — desktop: single row; mobile: default centered logo / scrolled compact row + search */}
       <div
-        className={`bg-white transition-all duration-300 !pb-0 ${scrolled ? "px-3 py-2 md:px-8 md:py-3" : "px-4 py-3 md:px-8 md:py-4"
+        className={`bg-white !pb-0 transition-[padding] duration-300 ease-out ${scrolled ? "px-3 py-2 md:px-8 md:py-3" : "px-4 py-3 md:px-8 md:py-4"
           }`}
       >
         {/* Desktop */}
         <div className="hidden md:flex items-center gap-4">
           <div className="flex items-center justify-start min-w-0 flex-1">
-            <LocationBtn />
+            {locationBtn}
           </div>
-          <div className="flex items-center justify-center flex-1 max-w-2xl mx-4 gap-3 min-w-0">
+          <div
+            className={`flex items-center justify-center flex-1 max-w-2xl mx-4 min-w-0 transition-[gap] duration-300 ease-out ${
+              scrolled ? "gap-3" : "gap-0"
+            }`}
+          >
             <Link
               href="/"
-              className="flex-shrink-0 transition-all duration-300"
+              className="flex-shrink-0 transition-[width,height] duration-300 ease-out"
               style={{
                 width: scrolled ? LOGO_SIZE_SCROLLED : LOGO_SIZE_DEFAULT,
                 height: scrolled ? LOGO_SIZE_SCROLLED : LOGO_SIZE_DEFAULT,
@@ -304,14 +307,17 @@ const Header = ({ navCategories }: Props) => {
                 priority
               />
             </Link>
-            {scrolled && (
-              <div className="flex-1 min-w-0 max-w-xl">
-                <SearchWithDropdown variant="header" />
-              </div>
-            )}
+            <div
+              className={`overflow-hidden transition-all duration-300 ease-out min-w-0 ${
+                scrolled ? "opacity-100 flex-1 max-w-xl ml-0" : "opacity-0 max-w-0 flex-[0]"
+              }`}
+              aria-hidden={!scrolled}
+            >
+              <SearchWithDropdown variant="header" />
+            </div>
           </div>
           <div className="flex items-center justify-end min-w-0 flex-1">
-            <ActionIcons />
+            {actionIcons}
           </div>
         </div>
 
@@ -319,7 +325,7 @@ const Header = ({ navCategories }: Props) => {
         {!scrolled && (
           <div className="flex md:hidden items-center">
             <div className="flex items-center justify-start min-w-0 flex-1">
-              <LocationBtn />
+              {locationBtn}
             </div>
             <div className="flex items-center justify-center flex-1">
               <Link href="/" className="flex-shrink-0" style={{ width: 48, height: 48 }}>
@@ -334,16 +340,16 @@ const Header = ({ navCategories }: Props) => {
               </Link>
             </div>
             <div className="flex items-center justify-end min-w-0 flex-1">
-              <ActionIcons />
+              {actionIcons}
             </div>
           </div>
         )}
 
         {/* Mobile — scrolled */}
         {scrolled && (
-          <div className="flex md:hidden items-center justify-between">
+          <div className="flex md:hidden items-center justify-between animate-[fadeIn_0.25s_ease-out]">
             <div className="shrink-0">
-              <LocationBtn />
+              {locationBtn}
             </div>
             <Link href="/" className="shrink-0" style={{ width: 36, height: 36 }}>
               <Image
@@ -355,25 +361,28 @@ const Header = ({ navCategories }: Props) => {
               />
             </Link>
             <div className="flex items-center">
-              <ActionIcons />
+              {actionIcons}
             </div>
           </div>
         )}
 
-        {scrolled && (
-          <div className="md:hidden mt-2 w-full min-w-0">
-            <SearchWithDropdown variant="header" />
-          </div>
-        )}
+        <div
+          className={`md:hidden w-full min-w-0 overflow-hidden transition-all duration-300 ease-out ${
+            scrolled ? "max-h-16 opacity-100 mt-2" : "max-h-0 opacity-0 mt-0"
+          }`}
+          aria-hidden={!scrolled}
+        >
+          <SearchWithDropdown variant="header" />
+        </div>
       </div>
 
-      {/* Category bar — desktop always; mobile only when scrolled (no transition on border/layout) */}
+      {/* Category bar — desktop always; mobile only when scrolled */}
       {navCategories.length > 0 && (
         <div
-          className={`w-full max-w-7xl mx-auto bg-white border-b border-gray-100 flex items-center overflow-x-auto ${
+          className={`w-full max-w-7xl mx-auto bg-white border-b justify-center border-gray-100 flex items-center overflow-x-auto transition-[padding] duration-300 ease-out ${
             scrolled
-              ? "flex gap-6 py-2.5 px-3 justify-start max-md:border-t max-md:border-gray-200 md:justify-center md:gap-14 md:py-3 md:px-8 md:mt-[5px] md:!pb-0"
-              : "hidden md:flex gap-10 md:gap-14 py-3 px-4 md:px-8 justify-center"
+              ? "flex gap-6 py-2.5 px-3 max-md:border-t max-md:border-gray-200 max-md:animate-[fadeIn_0.3s_ease-out] md:justify-center md:gap-14 md:py-3 md:px-8 md:mt-[5px] md:!pb-0"
+              : "hidden md:flex gap-10 md:gap-14 py-3 px-4 md:px-8 "
           }`}
         >
           {navCategories.map((category) => (
@@ -381,13 +390,13 @@ const Header = ({ navCategories }: Props) => {
               key={category.id}
               type="button"
               onClick={() => handleCategoryClick(category.id)}
-              className={`flex-shrink-0 cursor-pointer group transition-all duration-300 ${scrolled
+              className={`flex-shrink-0 cursor-pointer group ${scrolled
                 ? "flex flex-col items-center"
-                : "flex flex-col items-center gap-1.5 hover:scale-105 active:scale-95"
+                : "flex flex-col items-center gap-1.5 hover:scale-105 active:scale-95 transition-transform duration-200"
                 }`}
             >
               {!scrolled && (
-                <div className="hidden md:flex w-14 h-14 rounded-full overflow-hidden items-center justify-center bg-gray-50 border border-gray-100">
+                <div className="hidden md:flex w-14 h-14 rounded-xl overflow-hidden items-center justify-center bg-gray-50 border border-gray-100">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={proxyImageUrl(category.image_full_path)}
@@ -428,7 +437,7 @@ const Header = ({ navCategories }: Props) => {
         </div>
       )}
 
-      <DropdownMenu />
+      {dropdownMenu}
     </header>
   );
 };

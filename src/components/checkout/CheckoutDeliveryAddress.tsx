@@ -243,7 +243,7 @@ const CheckoutDeliveryAddress = ({
       return;
     }
     if (!formCoords.latitude.trim() || !formCoords.longitude.trim()) {
-      setActionError("Please use current location or ensure latitude and longitude are set.");
+      setActionError("Please tap \u201CUse current location\u201D so we can confirm your delivery area.");
       return;
     }
 
@@ -375,8 +375,11 @@ const CheckoutDeliveryAddress = ({
             </button>
           </div>
           {formCoords.latitude && formCoords.longitude && (
-            <p className="text-xs text-[#006B4D]">
-              Location set ({Number(formCoords.latitude).toFixed(4)}, {Number(formCoords.longitude).toFixed(4)})
+            <p className="inline-flex items-center gap-1.5 text-xs font-medium text-[#006B4D]">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              Location detected
             </p>
           )}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
