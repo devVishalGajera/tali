@@ -64,7 +64,8 @@ const Footer = ({ navCategories = [] }: Props) => {
   ];
 
   const infoLinks: FooterLink[] = [
-    { label: "FAQ", href: "/support#faq" },
+    { label: "FAQ", href: "/faq" },
+    { label: "Track Order", href: "/track-order" },
     { label: "About Us", href: "/about" },
     { label: "Customer Support", href: "/support" },
     { label: "Locations", href: "/stores" },
@@ -78,6 +79,7 @@ const Footer = ({ navCategories = [] }: Props) => {
   const myChoiceLinks: FooterLink[] = [
     { label: "Favorites", href: "/wishlist" },
     { label: "My Orders", href: "/orders" },
+    { label: "Track Order", href: "/track-order" },
   ];
 
   const socialLinks = [

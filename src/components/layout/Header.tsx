@@ -25,12 +25,19 @@ function chunkArray<T>(arr: T[], size: number): T[][] {
 const LOGO_SIZE_DEFAULT = 60;
 const LOGO_SIZE_SCROLLED = 40;
 
+function profileImageSrc(path: string | undefined): string | null {
+  if (!path) return null;
+  if (path.startsWith("http")) return path;
+  return `/api/img?url=${encodeURIComponent(path)}`;
+}
+
 const Header = ({ navCategories }: Props) => {
   const { city, showModal, purchaseAllow } = useLocation();
   const { items, openDrawer } = useCart();
   const { count: wishlistCount, openDrawer: openWishlistDrawer } = useWishlist();
   const { isAuthenticated, user, logout } = useAuth();
   const cartCount = items.reduce((s, i) => s + i.quantity, 0);
+  const userAvatar = profileImageSrc(user?.profile_image_full_path);
 
   const [openDropdown, setOpenDropdown] = useState<number | null>(null);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -136,10 +143,18 @@ const Header = ({ navCategories }: Props) => {
             onClick={() => setUserMenuOpen((v) => !v)}
             className={iconBtnClass}
           >
-
-            <span className="w-7 h-7 rounded-full bg-[#006B4D] text-white text-xs font-bold flex items-center justify-center hover:bg-[#005a3f] transition-colors">
-              {user?.first_name?.charAt(0).toUpperCase() ?? "U"}
-            </span>
+            {userAvatar ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={userAvatar}
+                alt={user ? getDisplayName(user) : "User"}
+                className="w-7 h-7 rounded-full object-cover border border-[#006B4D]/20"
+              />
+            ) : (
+              <span className="w-7 h-7 rounded-full bg-[#006B4D] text-white text-xs font-bold flex items-center justify-center hover:bg-[#005a3f] transition-colors">
+                {user?.first_name?.charAt(0).toUpperCase() ?? "U"}
+              </span>
+            )}
           </button>
           {userMenuOpen && (
             <div className="absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-xl border border-gray-100 py-1.5 z-50 top-full">
@@ -150,6 +165,7 @@ const Header = ({ navCategories }: Props) => {
               {[
                 { label: "My Profile", href: "/profile" },
                 { label: "My Orders", href: "/orders" },
+                { label: "Track Order", href: "/track-order" },
                 { label: "My Wishlist", href: "/wishlist" },
               ].map(({ label, href }) => (
                 <Link key={label} href={href} onClick={() => setUserMenuOpen(false)} className="block px-4 py-2 text-sm text-[#1D1D1D] hover:bg-gray-50 transition-colors">

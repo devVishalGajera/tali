@@ -330,7 +330,7 @@ const CheckoutPage = () => {
                 selectedId={selectedAddressId}
                 onSelectedIdChange={setSelectedAddressId}
               />
-              <div className={checkoutCard}>
+              {/* <div className={checkoutCard}>
                 <h2 className="text-lg font-bold text-[#1D1D1D] mb-4">Contact details</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
@@ -369,7 +369,7 @@ const CheckoutPage = () => {
                     </p>
                   </div>
                 </div>
-              </div>
+              </div> */}
             </>
           )}
 
@@ -412,6 +412,24 @@ const CheckoutPage = () => {
               </button>
             </div>
           </div>
+
+          {items.length > 0 && (
+            <div className={checkoutCard}>
+              <p className="text-sm font-semibold text-[#1D1D1D] mb-3">Permit number</p>
+              <input
+                type="text"
+                value={permitNumber}
+                onChange={(e) => setPermitNumber(e.target.value)}
+                className={inputClass}
+                placeholder="Optional — leave empty adds ₹5 fee"
+              />
+              <p className="text-[11px] text-[#1D1D1D60] mt-1">
+                {permitNumber.trim()
+                  ? "No permit fee when permit number is provided."
+                  : "₹5 permit fee applies if permit number is not provided."}
+              </p>
+            </div>
+          )}
 
           {orderSummaryBlock}
         </aside>

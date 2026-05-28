@@ -49,6 +49,23 @@ export interface ProfileResponse {
   data?:   AuthUser;
 }
 
+export interface UpdateProfileParams {
+  token: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  country_code: string;
+  mobile_number: string;
+  dob?: string;
+  gender?: string;
+  profile?: File;
+}
+
+export interface ChangePasswordResponse {
+  code: number;
+  message: string;
+}
+
 /* ── Fetchers ────────────────────────────────────────────────── */
 
 export async function loginApi(params: {
@@ -106,6 +123,53 @@ export async function getProfileApi(token: string): Promise<ProfileResponse> {
   });
   if (!res.ok) throw new Error(`Profile fetch failed: ${res.status}`);
   return res.json() as Promise<ProfileResponse>;
+}
+
+export async function updateProfileApi(params: UpdateProfileParams): Promise<ProfileResponse> {
+  const form = new FormData();
+  form.append("first_name", params.first_name);
+  form.append("last_name", params.last_name);
+  form.append("email", params.email);
+  form.append("country_code", params.country_code);
+  form.append("mobile_number", params.mobile_number);
+  form.append("dob", params.dob ?? "");
+  form.append("gender", params.gender ?? "");
+  if (params.profile) form.append("profile", params.profile);
+
+  const res = await fetch(`${API_BASE_URL}/user/profile/setup`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${params.token}`,
+      Accept: "application/json",
+    },
+    body: form,
+    cache: "no-store",
+  });
+
+  if (!res.ok) throw new Error(`Profile update failed: ${res.status}`);
+  return res.json() as Promise<ProfileResponse>;
+}
+
+export async function changePasswordApi(params: {
+  token: string;
+  old_password: string;
+  password: string;
+}): Promise<ChangePasswordResponse> {
+  const form = new FormData();
+  form.append("old_password", params.old_password);
+  form.append("password", params.password);
+
+  const res = await fetch(`${API_BASE_URL}/user/change/password`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${params.token}`,
+      Accept: "application/json",
+    },
+    body: form,
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`Change password failed: ${res.status}`);
+  return res.json() as Promise<ChangePasswordResponse>;
 }
 
 export interface ForgotPasswordResponse {

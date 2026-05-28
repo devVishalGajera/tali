@@ -41,7 +41,7 @@ const TopBrandsSection = ({ brands }: Props) => {
               href={`/products?brand_id=${brand.id}`}
               className="flex flex-col items-center gap-1.5 group active:scale-95 md:hover:scale-105 transition-transform duration-300"
             >
-              <div className="rounded-full w-[90px] h-[90px] sm:w-[110px] sm:h-[110px] md:w-[130px] md:h-[130px] bg-gray-100 flex items-center justify-center group-active:bg-gray-200 md:group-hover:bg-gray-200 transition-colors duration-300 shadow-md overflow-hidden">
+              <div className="rounded-xl w-[90px] h-[90px] sm:w-[110px] sm:h-[110px] md:w-[130px] md:h-[130px] bg-gray-100 flex items-center justify-center group-active:bg-gray-200 md:group-hover:bg-gray-200 transition-colors duration-300 shadow-md overflow-hidden">
                 <img
                   src={proxyImageUrl(brand.image_full_path)}
                   alt={brand.name}

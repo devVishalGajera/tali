@@ -341,6 +341,31 @@ export async function getOrdersApi(params: {
   };
 }
 
+export async function getOrderIdApi(params: {
+  token: string;
+  voucher_id?: string;
+  permit_number?: string;
+}): Promise<ApiResult<{ id: number | null }>> {
+  const form = new FormData();
+  form.append("voucher_id", params.voucher_id ?? "");
+  form.append("permit_number", params.permit_number ?? "");
+
+  const res = await fetch(`${API_BASE_URL}/order/get-order-id`, {
+    method: "POST",
+    headers: authHeaders(params.token),
+    body: form,
+    cache: "no-store",
+  });
+
+  if (!res.ok) throw new Error(`getOrderId ${res.status}`);
+  const json = (await res.json()) as ApiResult<unknown>;
+  const id = extractOrderId(json.data);
+  return {
+    ...json,
+    data: { id },
+  };
+}
+
 export async function getOrderDetailApi(params: {
   token: string;
   id: number | string;
@@ -372,6 +397,32 @@ export async function trackOrderApi(params: {
   if (!res.ok) throw new Error(`trackOrder ${res.status}`);
   const json = (await res.json()) as ApiResult<unknown>;
   return { ...json, data: parseOrderTracking(json.data) };
+}
+
+export async function giveOrderRatingApi(params: {
+  token: string;
+  id: number | string;
+  shop_review: string;
+  shop_rating: number;
+  delivery_boy_review: string;
+  delivery_boy_rating: number;
+}): Promise<ApiResult<unknown>> {
+  const form = new FormData();
+  form.append("id", String(params.id));
+  form.append("shop_review", params.shop_review);
+  form.append("shop_rating", String(params.shop_rating));
+  form.append("delivery_boy_review", params.delivery_boy_review);
+  form.append("delivery_boy_rating", String(params.delivery_boy_rating));
+
+  const res = await fetch(`${API_BASE_URL}/order/give-rating`, {
+    method: "POST",
+    headers: authHeaders(params.token),
+    body: form,
+    cache: "no-store",
+  });
+
+  if (!res.ok) throw new Error(`giveRating ${res.status}`);
+  return res.json() as Promise<ApiResult<unknown>>;
 }
 
 export function formatOrderDate(value: string): string {

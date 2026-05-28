@@ -22,6 +22,7 @@ interface AuthContextType {
   profileLoading:  boolean;
   setAuth:         (token: string, user: AuthUser) => void;
   refreshProfile:  () => Promise<void>;
+  updateUser:      (nextUser: AuthUser) => void;
   logout:          () => void;
 }
 
@@ -129,6 +130,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(null);
   }, [token]);
 
+  const updateUser = useCallback((nextUser: AuthUser) => {
+    const activeToken = token ?? loadAuth()?.token;
+    if (!activeToken) return;
+    saveAuth(activeToken, nextUser);
+    setToken(activeToken);
+    setUser(nextUser);
+  }, [token]);
+
   return (
     <AuthContext.Provider
       value={{
@@ -138,6 +147,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         profileLoading,
         setAuth,
         refreshProfile,
+        updateUser,
         logout,
       }}
     >
