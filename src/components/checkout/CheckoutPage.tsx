@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/components/modals/CartProvider";
@@ -10,6 +10,7 @@ import { createOrderApi, extractOrderId, parsePlacedOrder, type PlacedOrderInfo 
 import OrderConfirmedModal from "@/components/orders/OrderConfirmedModal";
 import { getPermitFee, getGrandTotal } from "@/lib/api/cart";
 import { getDisplayName } from "@/lib/api/auth";
+import { applyVoucherApi, getVouchersApi, type VoucherItem } from "@/lib/api/vouchers";
 import CheckoutDeliveryAddress from "@/components/checkout/CheckoutDeliveryAddress";
 import { fmtInr } from "@/lib/checkout/formatMoney";
 
@@ -49,7 +50,13 @@ const CheckoutPage = () => {
   const { isAuthenticated, token, user } = useAuth();
   const { purchaseAllow, city, lat, long } = useLocation();
 
-  const [coupon, setCoupon] = useState("");
+  const [vouchers, setVouchers] = useState<VoucherItem[]>([]);
+  const [voucherLoading, setVoucherLoading] = useState(false);
+  const [voucherError, setVoucherError] = useState<string | null>(null);
+  const [applyingVoucherId, setApplyingVoucherId] = useState<number | null>(null);
+  const [appliedVoucherId, setAppliedVoucherId] = useState<number | null>(null);
+  const [voucherDiscount, setVoucherDiscount] = useState(0);
+  const [voucherMessage, setVoucherMessage] = useState<string | null>(null);
   const [deliveryNote, setDeliveryNote] = useState("");
   const [permitNumber, setPermitNumber] = useState("");
   const [placing, setPlacing] = useState(false);
@@ -59,6 +66,7 @@ const CheckoutPage = () => {
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
+  const lastVoucherFetchKey = useRef<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -70,6 +78,37 @@ const CheckoutPage = () => {
     if (isAuthenticated && token) refreshCart();
   }, [isAuthenticated, token, refreshCart]);
 
+  useEffect(() => {
+    if (!isAuthenticated || !token || items.length === 0) {
+      setVouchers([]);
+      setAppliedVoucherId(null);
+      setVoucherDiscount(0);
+      setVoucherMessage(null);
+      setVoucherError(null);
+      lastVoucherFetchKey.current = null;
+      return;
+    }
+    const fetchKey = `${token}:${items.length}`;
+    if (lastVoucherFetchKey.current === fetchKey) return;
+    lastVoucherFetchKey.current = fetchKey;
+    setVoucherLoading(true);
+    setVoucherError(null);
+    getVouchersApi({ token })
+      .then((res) => {
+        if (res.code !== 1) {
+          setVoucherError(null);
+          setVouchers([]);
+          return;
+        }
+        setVouchers(res.data);
+      })
+      .catch(() => {
+        setVoucherError(null);
+        setVouchers([]);
+      })
+      .finally(() => setVoucherLoading(false));
+  }, [isAuthenticated, token, items.length]);
+
   const changeQty = (id: number, delta: number) => {
     const item = items.find((i) => i.id === id);
     if (!item) return;
@@ -80,7 +119,8 @@ const CheckoutPage = () => {
 
   const totalItems = items.reduce((s, i) => s + i.quantity, 0);
   const permitFee = getPermitFee(permitNumber);
-  const grandTotal = getGrandTotal(summary, permitFee);
+  const grandTotalBeforeVoucher = getGrandTotal(summary, permitFee);
+  const grandTotal = Math.max(0, grandTotalBeforeVoucher - voucherDiscount);
 
   const summaryRows = [
     { label: `${totalItems} Items`, value: fmtInr(summary.orderTotal), bold: false },
@@ -88,8 +128,34 @@ const CheckoutPage = () => {
     ...(permitFee > 0
       ? [{ label: "Permit fee", value: fmtInr(permitFee), bold: false as const }]
       : []),
+    ...(voucherDiscount > 0
+      ? [{ label: "Voucher discount", value: `- ${fmtInr(voucherDiscount)}`, bold: false as const }]
+      : []),
     { label: "Total", value: fmtInr(grandTotal), bold: true as const },
   ];
+
+  const handleApplyVoucher = async (voucher: VoucherItem) => {
+    if (!token) return;
+    setApplyingVoucherId(voucher.id);
+    setVoucherError(null);
+    setVoucherMessage(null);
+    try {
+      const res = await applyVoucherApi({ token, id: voucher.id });
+      if (res.code !== 1) {
+        throw new Error(res.message || "Could not apply voucher.");
+      }
+      const fallbackAmount = voucher.amount > 0 ? voucher.amount : 0;
+      setVoucherDiscount(res.data.amount > 0 ? res.data.amount : fallbackAmount);
+      setAppliedVoucherId(voucher.id);
+      setVoucherMessage(res.message || "Voucher applied successfully.");
+    } catch (err) {
+      setAppliedVoucherId(null);
+      setVoucherDiscount(0);
+      setVoucherError(err instanceof Error ? err.message : "Could not apply voucher.");
+    } finally {
+      setApplyingVoucherId(null);
+    }
+  };
 
   const handlePlaceOrder = async () => {
     setOrderError(null);
@@ -122,6 +188,8 @@ const CheckoutPage = () => {
         address_id: selectedAddressId,
         special_instruction: deliveryNote.trim(),
         permit_number: permitNumber.trim(),
+        voucher_id: appliedVoucherId ? String(appliedVoucherId) : "",
+        voucher_amount: voucherDiscount > 0 ? String(voucherDiscount) : "0.0",
       });
 
       if (res.code !== 1) {
@@ -398,19 +466,51 @@ const CheckoutPage = () => {
 
         <aside className="w-full lg:w-[340px] shrink-0 flex flex-col gap-4 lg:sticky lg:top-6">
           <div className={checkoutCard}>
-            <p className="text-sm font-semibold text-[#1D1D1D] mb-3">Coupon code</p>
-            <div className="flex w-full min-w-0 gap-2">
-              <input
-                type="text"
-                placeholder="Code"
-                value={coupon}
-                onChange={(e) => setCoupon(e.target.value)}
-                className="min-w-0 flex-1 border border-[#E8E8E8] rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#1D1D1D]"
-              />
-              <button type="button" className="shrink-0 bg-[#1D1D1D] hover:bg-[#333] text-white text-sm font-semibold px-4 py-2.5 rounded-lg">
-                Apply
-              </button>
-            </div>
+            <p className="text-sm font-semibold text-[#1D1D1D] mb-3">Available vouchers</p>
+            {voucherMessage && (
+              <p className="text-xs text-[#006B4D] mt-2">{voucherMessage}</p>
+            )}
+            {voucherError && (
+              <p className="text-xs text-red-600 mt-2">{voucherError}</p>
+            )}
+            {voucherLoading ? (
+              <p className="text-xs text-[#1D1D1D60] mt-3">Loading vouchers…</p>
+            ) : vouchers.length > 0 ? (
+              <div className="mt-3 space-y-2">
+                {vouchers.map((voucher) => (
+                  <div key={voucher.id} className="border border-[#E8E8E8] rounded-lg p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-[#1D1D1D] truncate">
+                          {voucher.title}
+                        </p>
+                        <p className="text-xs text-[#1D1D1D80] mt-0.5">
+                          Code: {voucher.code}
+                          {voucher.amount > 0 ? ` • ${fmtInr(voucher.amount)} off` : ""}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleApplyVoucher(voucher)}
+                        disabled={applyingVoucherId === voucher.id || appliedVoucherId === voucher.id}
+                        className="shrink-0 bg-[#006B4D] hover:bg-[#005a3f] disabled:opacity-60 disabled:cursor-not-allowed text-white text-xs font-semibold px-3 py-1.5 rounded-md transition-colors"
+                      >
+                        {appliedVoucherId === voucher.id
+                          ? "Applied"
+                          : applyingVoucherId === voucher.id
+                            ? "Applying..."
+                            : "Apply"}
+                      </button>
+                    </div>
+                    {voucher.description && (
+                      <p className="text-xs text-[#1D1D1D60] mt-1.5">{voucher.description}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-[#1D1D1D60] mt-3">No vouchers available right now.</p>
+            )}
           </div>
 
           {items.length > 0 && (

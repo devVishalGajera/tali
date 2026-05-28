@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import ProfilePage from "@/components/profile/ProfilePage";
 
 export const metadata = {
@@ -5,5 +6,9 @@ export const metadata = {
 };
 
 export default function Page() {
-  return <ProfilePage />;
+  return (
+    <Suspense fallback={<main className="min-h-screen bg-[#FAFAFA]" />}>
+      <ProfilePage />
+    </Suspense>
+  );
 }
