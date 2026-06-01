@@ -65,14 +65,14 @@ export const mockStore: StoreDetail = {
       rating: 4,
       date: "01 Jun 2025",
       text: "Lorem ipsum dolor sit amet consectetur. Nec et semper dignissim mauris tristique quisque. Non morbi consequat euismod odio pharetra consequat amet semper. Tellus id.",
-      avatar: "https://randomuser.me/api/portraits/women/44.jpg",
+      avatar: "/assets/images/shops/shop-additional.png",
     },
     {
       name: "Lorem ipsum dolor",
       rating: 4,
       date: "01 Jun 2025",
       text: "Lorem ipsum dolor sit amet consectetur. Nec et semper dignissim mauris tristique quisque. Non morbi consequat euismod odio pharetra consequat amet semper. Tellus id.",
-      avatar: "https://randomuser.me/api/portraits/men/32.jpg",
+      avatar: "/assets/images/shops/shop-additional.png",
     },
   ],
 };

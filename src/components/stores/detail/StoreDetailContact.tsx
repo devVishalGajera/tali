@@ -47,8 +47,8 @@ const StoreDetailContact = ({ contact }: Props) => {
 
   return (
     <section className="py-6 border-t border-[#F0F0F0]">
-      <h2 className="text-xl font-bold text-[#1D1D1D] mb-6">Contact</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-y-6 gap-x-8">
+      <h2 className="text-lg sm:text-xl font-bold text-[#1D1D1D] mb-4 sm:mb-6">Contact</h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-5 sm:gap-y-6 gap-x-6 sm:gap-x-8">
         {rows.map((c) => (
           <div key={c.label} className="flex items-start gap-3">
             <img

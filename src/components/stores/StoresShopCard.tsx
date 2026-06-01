@@ -22,8 +22,8 @@ const StoresShopCard = ({
 }) => (
   <Link href={`/stores/${shop.id}`} className="block">
     <div className="bg-white rounded-xl border border-[#F0F0F0] shadow-sm overflow-hidden hover:shadow-md transition-shadow">
-      <div className="w-full h-[160px] overflow-hidden">
-        <img src={shop.image} alt={shop.name} className="w-full h-full object-cover" />
+      <div className="w-full h-[140px] sm:h-[160px] overflow-hidden">
+        <img src={shop.image} alt={shop.name} loading="lazy" className="w-full h-full object-cover" />
       </div>
       <div className="p-3">
         <div className="flex items-center gap-2 mb-1">

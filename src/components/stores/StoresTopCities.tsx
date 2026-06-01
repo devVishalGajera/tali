@@ -5,19 +5,21 @@ import { FreeMode } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/free-mode";
 
+const CITY_IMAGE = "/assets/images/shops/shop-additional.png";
+
 const cities = [
-  { name: "Mumbai",     image: "https://picsum.photos/seed/mumbai/200/160" },
-  { name: "Bangalore",  image: "https://picsum.photos/seed/bangalore/200/160" },
-  { name: "Kolkata",    image: "https://picsum.photos/seed/kolkata/200/160" },
-  { name: "Pune",       image: "https://picsum.photos/seed/pune/200/160" },
-  { name: "Delhi",      image: "https://picsum.photos/seed/delhi/200/160" },
-  { name: "Punjab",     image: "https://picsum.photos/seed/punjab/200/160" },
-  { name: "Chennai",    image: "https://picsum.photos/seed/chennai/200/160" },
-  { name: "Hyderabad",  image: "https://picsum.photos/seed/hyderabad/200/160" },
-  { name: "Jaipur",     image: "https://picsum.photos/seed/jaipur/200/160" },
-  { name: "Ahmedabad",  image: "https://picsum.photos/seed/ahmedabad/200/160" },
-  { name: "Goa",        image: "https://picsum.photos/seed/goa/200/160" },
-  { name: "Surat",      image: "https://picsum.photos/seed/surat/200/160" },
+  { name: "Mumbai", image: CITY_IMAGE },
+  { name: "Bangalore", image: CITY_IMAGE },
+  { name: "Kolkata", image: CITY_IMAGE },
+  { name: "Pune", image: CITY_IMAGE },
+  { name: "Delhi", image: CITY_IMAGE },
+  { name: "Punjab", image: CITY_IMAGE },
+  { name: "Chennai", image: CITY_IMAGE },
+  { name: "Hyderabad", image: CITY_IMAGE },
+  { name: "Jaipur", image: CITY_IMAGE },
+  { name: "Ahmedabad", image: CITY_IMAGE },
+  { name: "Goa", image: CITY_IMAGE },
+  { name: "Surat", image: CITY_IMAGE },
 ];
 
 const StoresTopCities = () => (
@@ -37,6 +39,7 @@ const StoresTopCities = () => (
               <img
                 src={city.image}
                 alt={city.name}
+                loading="lazy"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               />
             </div>

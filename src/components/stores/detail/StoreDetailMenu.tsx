@@ -44,12 +44,13 @@ const StoreDetailMenu = ({ menuTabs, menuItems }: Props) => {
       <h2 className="text-xl font-bold text-[#1D1D1D] mb-4">Our Menu</h2>
 
       {/* Tabs */}
-      <div className="flex gap-6 border-b border-[#F0F0F0] mb-4">
+      <div className="flex gap-4 sm:gap-6 border-b border-[#F0F0F0] mb-4 overflow-x-auto scrollbar-hide -mx-1 px-1">
         {menuTabs.map((tab) => (
           <button
             key={tab}
+            type="button"
             onClick={() => setActiveTab(tab)}
-            className={`pb-2 text-sm font-medium transition-colors ${
+            className={`pb-2 text-sm font-medium whitespace-nowrap shrink-0 transition-colors ${
               activeTab === tab
                 ? "text-[#1D1D1D] border-b-2 border-[#1D1D1D]"
                 : "text-[#1D1D1D80]"
@@ -61,7 +62,7 @@ const StoreDetailMenu = ({ menuTabs, menuItems }: Props) => {
       </div>
 
       {/* Search */}
-      <div className="relative max-w-xs mb-4">
+      <div className="relative w-full max-w-xs mb-4">
         <svg
           className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#1D1D1D80]"
           fill="none"
@@ -93,7 +94,7 @@ const StoreDetailMenu = ({ menuTabs, menuItems }: Props) => {
       </div>
 
       {/* Pagination */}
-      <div className="flex items-center justify-center gap-1">
+      <div className="flex flex-wrap items-center justify-center gap-1">
         {/* First / Prev */}
         <button onClick={() => goTo(1)}          disabled={page === 1} className="w-8 h-8 rounded-full text-xs text-[#1D1D1D80] border border-[#F1F1F1] hover:text-[#1D1D1D] disabled:opacity-40 transition-colors">«</button>
         <button onClick={() => goTo(page - 1)}   disabled={page === 1} className="w-8 h-8 rounded-full text-xs text-[#1D1D1D80] border border-[#F1F1F1] hover:text-[#1D1D1D] disabled:opacity-40 transition-colors">‹</button>

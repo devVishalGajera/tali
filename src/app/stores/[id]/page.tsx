@@ -1,9 +1,10 @@
 import StoreDetailPage from "@/components/stores/StoreDetailPage";
 
 interface PageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
-export default function StoreDetailRoute({ params }: PageProps) {
-  return <StoreDetailPage storeId={params.id} />;
+export default async function StoreDetailRoute({ params }: PageProps) {
+  const { id } = await params;
+  return <StoreDetailPage storeId={id} />;
 }

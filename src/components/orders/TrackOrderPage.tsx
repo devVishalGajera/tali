@@ -17,7 +17,8 @@ import {
   type OrderDetail,
   type OrderTracking,
 } from "@/lib/api/order";
-import OrderTracker from "@/components/orders/OrderTracker";
+import OrderTrackTimeline from "@/components/orders/OrderTrackTimeline";
+import Image from "next/image";
 
 type TrackMode = "orderId" | "mobile";
 
@@ -157,8 +158,20 @@ export default function TrackOrderPage() {
   const hasResult = tracking != null;
   const displayOrderNumber =
     tracking?.orderNumber ?? detail?.orderNumber ?? (tracking?.orderId ? `TL${tracking.orderId}` : "");
-  const displayPlacedAt =
-    tracking?.scheduledAt ?? (detail ? formatOrderDate(detail.placedAt) : "");
+  const displayPlacedAt = detail
+    ? formatOrderDate(detail.placedAt)
+    : tracking?.placedDate
+      ? formatOrderDate(tracking.placedDate)
+      : tracking?.scheduledAt ?? "";
+
+  const deliveryWindow =
+    tracking?.scheduledAt ||
+    (tracking?.placedDate && tracking?.scheduledTime
+      ? `${tracking.placedDate} ${tracking.scheduledTime}`
+      : tracking?.deliveryTime ?? "");
+
+  const deliveryPartner =
+    detail?.storeName || tracking?.driverName || "Talli Express";
 
   return (
     <main className="min-h-screen bg-[#FAFAFA]">
@@ -233,22 +246,36 @@ export default function TrackOrderPage() {
         </section>
 
         {!hasResult && !loading && (
-          <section className="mt-8 text-center bg-white border border-[#E8E8E8] rounded-2xl px-5 py-10 sm:py-12">
-            <div className="w-28 h-28 mx-auto rounded-full bg-[#006B4D]/5 flex items-center justify-center mb-5">
-              <svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="#006B4D" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z" />
-                <path d="M7.5 4.21L12 6.81l4.5-2.6" />
+          <section className="mt-8 text-center px-5 py-10 sm:py-14">
+            <div className="relative w-56 h-44 sm:w-64 sm:h-48 mx-auto mb-6">
+              <div className="absolute inset-x-6 bottom-0 h-24 rounded-2xl bg-[#FFE8E6]" />
+              <div className="absolute left-1/2 -translate-x-1/2 bottom-6 w-28 h-20 rounded-lg bg-[#F5C4BE] border-2 border-[#E8A8A0] shadow-sm" />
+              <div className="absolute left-1/2 -translate-x-1/2 bottom-[88px] w-0 h-0 border-l-[14px] border-r-[14px] border-b-[18px] border-l-transparent border-r-transparent border-b-[#F5C4BE]" />
+              <svg
+                className="absolute right-10 top-2 text-[#006B4D]/70"
+                width="44"
+                height="44"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              >
+                <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </div>
-            <h2 className="text-2xl font-bold text-[#1D1D1D]">No order to track yet!</h2>
-            <p className="text-sm text-[#1D1D1D80] mt-2 max-w-md mx-auto">
+            <h2 className="text-2xl sm:text-3xl font-bold text-[#1D1D1D]">No order to track yet!</h2>
+            <p className="text-sm text-[#1D1D1D80] mt-2 max-w-lg mx-auto leading-relaxed">
               Looks like you haven&apos;t placed any orders with us. When you place an order,
               you&apos;ll be able to track it here.
             </p>
             <Link
               href="/"
-              className="inline-flex items-center justify-center mt-5 bg-[#006B4D] hover:bg-[#005a3f] text-white text-sm font-semibold px-6 py-3 rounded-lg transition-colors"
+              className="inline-flex items-center gap-2 justify-center mt-6 bg-[#006B4D] hover:bg-[#005a3f] text-white text-sm font-semibold px-8 py-3.5 rounded-xl transition-colors"
             >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4H6z" />
+                <path d="M16 10a4 4 0 01-8 0" strokeLinecap="round" />
+              </svg>
               Start Shopping
             </Link>
           </section>
@@ -263,12 +290,7 @@ export default function TrackOrderPage() {
                     Order #{displayOrderNumber}
                   </h2>
                   {displayPlacedAt && (
-                    <p className="text-xs text-[#1D1D1D80] mt-1">Scheduled: {displayPlacedAt}</p>
-                  )}
-                  {tracking.deliveryTime && (
-                    <p className="text-xs text-[#006B4D] mt-1 font-medium">
-                      Estimated delivery: {tracking.deliveryTime}
-                    </p>
+                    <p className="text-xs text-[#1D1D1D80] mt-1">Placed on {displayPlacedAt}</p>
                   )}
                 </div>
                 <span
@@ -285,7 +307,7 @@ export default function TrackOrderPage() {
                   {detail?.rejectReason ? ` Reason: ${detail.rejectReason}.` : ""} Contact support if you need help.
                 </p>
               ) : (
-                <OrderTracker steps={tracking.steps} compact />
+                <OrderTrackTimeline steps={tracking.steps} />
               )}
             </div>
 
@@ -293,10 +315,14 @@ export default function TrackOrderPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <h3 className="text-sm font-bold text-[#1D1D1D] mb-3">Delivery Details</h3>
-                  <div className="space-y-2 text-sm">
-                    {tracking.driverName ? (
-                      <>
-                        <p className="text-[#1D1D1D80]">Delivery Partner</p>
+                  <div className="space-y-3 text-sm">
+                    <div>
+                      <p className="text-[#1D1D1D80] text-xs mb-0.5">Delivery Partner</p>
+                      <p className="font-semibold text-[#1D1D1D]">{deliveryPartner}</p>
+                    </div>
+                    {tracking.driverName && (
+                      <div>
+                        <p className="text-[#1D1D1D80] text-xs mb-0.5">Delivery Person</p>
                         <div className="flex items-center gap-3">
                           {tracking.driverImage ? (
                             <img
@@ -309,7 +335,7 @@ export default function TrackOrderPage() {
                             <p className="font-semibold text-[#1D1D1D]">{tracking.driverName}</p>
                             {tracking.driverMobile && (
                               <a
-                                href={`tel:${tracking.driverMobile}`}
+                                href={`tel:${tracking.driverMobile.replace(/\s/g, "")}`}
                                 className="text-xs text-[#006B4D] hover:underline"
                               >
                                 {tracking.driverMobile}
@@ -317,17 +343,26 @@ export default function TrackOrderPage() {
                             )}
                           </div>
                         </div>
-                      </>
-                    ) : (
-                      <>
-                        <p className="text-[#1D1D1D80]">Delivery Partner</p>
-                        <p className="font-semibold text-[#1D1D1D]">Talli Express</p>
-                      </>
+                      </div>
                     )}
-                    <p className="text-[#1D1D1D80] mt-3">Delivery Address</p>
-                    <p className="text-[#1D1D1D] leading-relaxed">
-                      {detail?.address || "Address unavailable."}
-                    </p>
+                    <div>
+                      <p className="text-[#1D1D1D80] text-xs mb-0.5">Delivery Address</p>
+                      <p className="text-[#1D1D1D] leading-relaxed">
+                        {detail?.address || "Address unavailable."}
+                      </p>
+                    </div>
+                    {deliveryWindow && (
+                      <div>
+                        <p className="text-[#1D1D1D80] text-xs mb-0.5">Delivery Time</p>
+                        <p className="font-semibold text-[#1D1D1D]">{deliveryWindow}</p>
+                      </div>
+                    )}
+                    {detail?.specialInstruction && (
+                      <div>
+                        <p className="text-[#1D1D1D80] text-xs mb-0.5">Instructions</p>
+                        <p className="text-[#1D1D1D]">{detail.specialInstruction}</p>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -336,10 +371,29 @@ export default function TrackOrderPage() {
                     <h3 className="text-sm font-bold text-[#1D1D1D] mb-3">Order Summary</h3>
                     <div className="space-y-2">
                       {detail.items.map((item, idx) => (
-                        <div key={`${item.name}-${idx}`} className="flex items-center justify-between gap-3 text-sm">
-                          <span className="text-[#1D1D1D] truncate">
-                            {item.name} <span className="text-[#1D1D1D80]">x {item.quantity}</span>
-                          </span>
+                        <div key={`${item.name}-${idx}`} className="flex items-center gap-3 text-sm py-1">
+                          <div className="w-12 h-12 rounded-lg border border-[#E8E8E8] bg-[#FAFAFA] overflow-hidden shrink-0 flex items-center justify-center">
+                            {item.image ? (
+                              <Image
+                                src={item.image}
+                                alt={item.name}
+                                width={48}
+                                height={48}
+                                className="w-full h-full object-contain"
+                                unoptimized
+                              />
+                            ) : (
+                              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#C5C5C5" strokeWidth="1.5">
+                                <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4H6z" />
+                              </svg>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[#1D1D1D] font-medium truncate">{item.name}</p>
+                            <p className="text-xs text-[#1D1D1D80]">
+                              {item.volume ? `${item.volume} · ` : ""}Qty: {item.quantity}
+                            </p>
+                          </div>
                           <span className="font-semibold text-[#1D1D1D] shrink-0">
                             {fmtInr(item.price * item.quantity)}
                           </span>
@@ -352,7 +406,9 @@ export default function TrackOrderPage() {
                         </div>
                         <div className="flex justify-between text-[#1D1D1D80]">
                           <span>Delivery Fee</span>
-                          <span>{fmtInr(summary?.shipping ?? 0)}</span>
+                          <span>
+                            {(summary?.shipping ?? 0) <= 0 ? "FREE" : fmtInr(summary?.shipping ?? 0)}
+                          </span>
                         </div>
                         {(summary?.permitCharge ?? 0) > 0 && (
                           <div className="flex justify-between text-[#1D1D1D80]">
@@ -477,13 +533,38 @@ export default function TrackOrderPage() {
             Our support team is here for you
           </p>
           <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <a href={PHONE_HREF} className="border border-[#E8E8E8] rounded-xl px-4 py-3 text-sm text-center font-semibold hover:bg-[#FAFAFA]">
+            <a
+              href={PHONE_HREF}
+              className="flex items-center justify-center gap-2 border border-[#E8E8E8] rounded-full px-4 py-3 text-sm font-semibold hover:bg-[#FAFAFA] transition-colors"
+            >
+              <span className="w-8 h-8 rounded-full bg-[#006B4D]/10 flex items-center justify-center text-[#006B4D]">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M6.6 10.8a15 15 0 006.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z" />
+                </svg>
+              </span>
               {PHONE_DISPLAY}
             </a>
-            <a href={WHATSAPP_HREF} target="_blank" rel="noopener noreferrer" className="border border-[#E8E8E8] rounded-xl px-4 py-3 text-sm text-center font-semibold hover:bg-[#FAFAFA]">
+            <a
+              href={WHATSAPP_HREF}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 border border-[#E8E8E8] rounded-full px-4 py-3 text-sm font-semibold hover:bg-[#FAFAFA] transition-colors"
+            >
+              <span className="w-8 h-8 rounded-full bg-[#25D366]/10 flex items-center justify-center text-[#25D366] font-bold text-xs">
+                WA
+              </span>
               WhatsApp Us
             </a>
-            <a href={EMAIL_HREF} className="border border-[#E8E8E8] rounded-xl px-4 py-3 text-sm text-center font-semibold hover:bg-[#FAFAFA]">
+            <a
+              href={EMAIL_HREF}
+              className="flex items-center justify-center gap-2 border border-[#E8E8E8] rounded-full px-4 py-3 text-sm font-semibold hover:bg-[#FAFAFA] transition-colors"
+            >
+              <span className="w-8 h-8 rounded-full bg-[#006B4D]/10 flex items-center justify-center text-[#006B4D]">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M4 4h16v16H4z" strokeLinejoin="round" />
+                  <path d="M4 7l8 6 8-6" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </span>
               Email Us
             </a>
           </div>

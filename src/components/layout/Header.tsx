@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useLocation } from "../modals/LocationProvider";
+import LocationCityLabel from "@/components/layout/LocationCityLabel";
 import SearchWithDropdown from "@/components/shared/SearchWithDropdown";
 import { useCart } from "../modals/CartProvider";
 import { useWishlist } from "../modals/WishlistProvider";
@@ -32,7 +33,7 @@ function profileImageSrc(path: string | undefined): string | null {
 }
 
 const Header = ({ navCategories }: Props) => {
-  const { city, showModal, purchaseAllow } = useLocation();
+  const { showModal, purchaseAllow } = useLocation();
   const { items, openDrawer } = useCart();
   const { count: wishlistCount, openDrawer: openWishlistDrawer } = useWishlist();
   const { isAuthenticated, user, logout } = useAuth();
@@ -95,7 +96,9 @@ const Header = ({ navCategories }: Props) => {
       <div className="flex flex-col">
         <span className="text-[9px] text-[#1D1D1D80] leading-tight">Delivering to</span>
         <div className="flex items-center gap-0.5">
-          <span className="text-xs font-semibold text-[#1D1D1D] leading-tight">{city || "Select"}</span>
+          <span className="text-xs font-semibold text-[#1D1D1D] leading-tight">
+            <LocationCityLabel />
+          </span>
           <Image src="/assets/header/icons/arrowDownIcon.svg" alt="" width={10} height={10} className="transition-transform duration-300 group-hover:rotate-180" />
         </div>
       </div>

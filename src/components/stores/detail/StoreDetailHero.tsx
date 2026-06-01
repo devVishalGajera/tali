@@ -10,7 +10,7 @@ interface Props {
 
 const StoreDetailHero = ({ name, description, heroImage, isVerified, isPremium }: Props) => (
   <section
-    className="relative w-full h-[320px] sm:h-[420px] bg-cover bg-center overflow-hidden"
+    className="relative w-full h-[240px] sm:h-[320px] md:h-[420px] bg-cover bg-center overflow-hidden"
     style={{ backgroundImage: `url(${heroImage})` }}
   >
     {/* Very light full-image vignette so edges stay visible */}
@@ -31,7 +31,7 @@ const StoreDetailHero = ({ name, description, heroImage, isVerified, isPremium }
 
     {/* Content */}
     <div className="relative z-10 h-full flex flex-col items-center justify-center text-center px-4">
-      <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-3 drop-shadow-lg">
+      <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold text-white mb-2 sm:mb-3 drop-shadow-lg px-1">
         {name}
       </h1>
       <p className="text-sm sm:text-base text-white/85 max-w-xl mb-6 leading-relaxed drop-shadow">

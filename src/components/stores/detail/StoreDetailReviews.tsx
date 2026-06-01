@@ -9,9 +9,9 @@ const StoreDetailReviews = ({ reviews }: { reviews: StoreReview[] }) => (
       {reviews.map((review, idx) => (
         <div
           key={idx}
-          className="rounded-[47.65px] p-[30px] bg-white shadow-[0px_20px_40px_0px_rgba(0,0,0,0.10)]"
+          className="rounded-2xl sm:rounded-3xl p-5 sm:p-8 bg-white shadow-[0px_8px_24px_0px_rgba(0,0,0,0.08)]"
         >
-          <div className="flex items-center justify-between mb-[30px]">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6">
             <div className="flex items-center gap-3">
               <img
                 src={review.avatar}

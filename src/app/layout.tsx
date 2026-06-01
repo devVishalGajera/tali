@@ -16,6 +16,8 @@ import { getNavCategories, type NavCategory } from "@/lib/api/categories";
 import MainShell from "@/components/layout/MainShell";
 import LocationChangeRefresher from "@/components/modals/LocationChangeRefresher";
 import { Suspense } from "react";
+import { cookies } from "next/headers";
+import type { LocationState } from "@/components/modals/LocationProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -70,10 +72,26 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [citiesData, navCategories] = await Promise.all([
+  const [citiesData, navCategories, cookieStore] = await Promise.all([
     getCities().catch(() => null),
     getNavCategories().catch(() => [] as NavCategory[]),
+    cookies(),
   ]);
+
+  const cityCookie = cookieStore.get("talli_city")?.value;
+  const storeIdCookie = cookieStore.get("talli_store_id")?.value;
+  const initialLocation: Partial<LocationState> = {};
+  if (cityCookie) {
+    try {
+      initialLocation.city = decodeURIComponent(cityCookie);
+    } catch {
+      initialLocation.city = cityCookie;
+    }
+  }
+  if (storeIdCookie) {
+    const id = parseInt(storeIdCookie, 10);
+    if (!Number.isNaN(id)) initialLocation.storeId = id;
+  }
 
   return (
     <html lang="en">
@@ -83,7 +101,7 @@ export default async function RootLayout({
       >
         <AgeVerificationProvider>
           <AuthProvider>
-            <LocationProvider citiesData={citiesData}>
+            <LocationProvider citiesData={citiesData} initialLocation={initialLocation}>
               <CartProvider>
                 <WishlistProvider>
                   <Suspense fallback={null}>

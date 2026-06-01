@@ -5,6 +5,7 @@ import {
   useContext,
   useState,
   useEffect,
+  useRef,
   startTransition,
   ReactNode,
 } from "react";
@@ -83,32 +84,66 @@ function clearStorage() {
   syncCookies({ city: "", storeId: null, lat: null, long: null, flag: null, purchaseAllow: false });
 }
 
+const defaultLocationState: LocationState = {
+  city: "",
+  storeId: null,
+  lat: null,
+  long: null,
+  flag: null,
+  purchaseAllow: false,
+};
+
 /* ── Provider ────────────────────────────────────────────────── */
+
+function mergeInitialLocation(partial?: Partial<LocationState>): LocationState {
+  if (!partial) return defaultLocationState;
+  return {
+    ...defaultLocationState,
+    city: partial.city ?? "",
+    storeId: partial.storeId ?? null,
+    lat: partial.lat ?? null,
+    long: partial.long ?? null,
+    flag: partial.flag ?? null,
+    purchaseAllow: partial.purchaseAllow ?? false,
+  };
+}
 
 export const LocationProvider = ({
   children,
   citiesData,
+  initialLocation,
 }: {
   children: ReactNode;
   citiesData: CitiesApiData | null;
+  initialLocation?: Partial<LocationState>;
 }) => {
-  const [state, setState] = useState<LocationState>({
-    city: "", storeId: null, lat: null, long: null, flag: null, purchaseAllow: false,
-  });
+  const [state, setState] = useState<LocationState>(() => mergeInitialLocation(initialLocation));
   const [isModalOpen, setModalOpen] = useState(false);
   const [isMounted, setMounted] = useState(false);
+  const geoStartedRef = useRef(false);
 
   useEffect(() => {
+    let cancelled = false;
+
     startTransition(() => {
       setMounted(true);
       const saved = loadFromStorage();
       if (saved?.city || saved?.storeId) {
-        setState(saved);
-        syncCookies(saved);
-      } else {
+        if (!cancelled) {
+          setState(saved);
+          syncCookies(saved);
+        }
+        return;
+      }
+
+      window.setTimeout(() => {
+        if (cancelled || geoStartedRef.current) return;
+        geoStartedRef.current = true;
+
         if (typeof navigator !== "undefined" && navigator.geolocation) {
           navigator.geolocation.getCurrentPosition(
             async (pos) => {
+              if (cancelled) return;
               const lat = String(pos.coords.latitude);
               const long = String(pos.coords.longitude);
               try {
@@ -141,6 +176,8 @@ export const LocationProvider = ({
                   purchaseAllow: data.purchaseAllow,
                 };
 
+                if (cancelled) return;
+
                 if (data.flag === 3) {
                   clearStorage();
                   setState({ ...next, storeId: null, city: "" });
@@ -149,18 +186,23 @@ export const LocationProvider = ({
                   setState(next);
                 }
               } catch {
-                setModalOpen(true);
+                if (!cancelled) setModalOpen(true);
               }
             },
-            () => setModalOpen(true),
-            { timeout: 8000 },
+            () => {
+              if (!cancelled) setModalOpen(true);
+            },
+            { timeout: 8000, maximumAge: 300000 },
           );
-        } else {
+        } else if (!cancelled) {
           setModalOpen(true);
         }
-      }
+      }, 0);
     });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {

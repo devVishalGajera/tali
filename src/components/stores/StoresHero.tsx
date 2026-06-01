@@ -6,8 +6,8 @@ const StoresHero = () => {
   const [search, setSearch] = useState("");
 
   return (
-    <section className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 pt-10 pb-8">
-      <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#1D1D1D] mb-1">
+    <section className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 pt-6 sm:pt-10 pb-6 sm:pb-8">
+      <h1 className="text-xl sm:text-3xl md:text-4xl font-bold text-[#1D1D1D] mb-1 leading-tight">
         Wine Shops, Liquor Stores &amp; Producers, Worldwide
       </h1>
       <p className="text-sm text-[#1D1D1D80] mb-6">Find Shops and Producers</p>

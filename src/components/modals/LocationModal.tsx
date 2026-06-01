@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { LocationState } from "./LocationProvider";
 import type { CitiesApiData } from "@/lib/api/cities";
 import type { NearestStoreResult } from "@/app/api/nearest-store/route";
+import { getCityFromPincode } from "@/lib/api/pincode";
 
 interface Props {
   isOpen: boolean;
@@ -48,15 +49,56 @@ const LocationModal = ({ isOpen, onClose, onApply, currentCity, citiesData }: Pr
   const [isApplying, setApplying] = useState(false);
   const [locationError, setLocationError] = useState("");
   const [geoPermission, setGeoPermission] = useState<PermissionState | "unsupported">("prompt");
+  const [pincodeCity, setPincodeCity] = useState("");
+  const [pincodeState, setPincodeState] = useState("");
+  const [pincodeLoading, setPincodeLoading] = useState(false);
+  const [pincodeLookupError, setPincodeLookupError] = useState("");
+  const pincodeLookupRef = useRef(0);
 
   useEffect(() => {
     if (isOpen) {
       setSelectedCity(currentCity);
       setPincode("");
+      setPincodeCity("");
+      setPincodeState("");
+      setPincodeLookupError("");
       setDropdownOpen(false);
       setLocationError("");
     }
   }, [isOpen, currentCity]);
+
+  useEffect(() => {
+    if (pincode.length !== 6) {
+      setPincodeCity("");
+      setPincodeState("");
+      setPincodeLookupError("");
+      setPincodeLoading(false);
+      return;
+    }
+
+    const requestId = ++pincodeLookupRef.current;
+    setPincodeLoading(true);
+    setPincodeLookupError("");
+
+    const timer = window.setTimeout(async () => {
+      const result = await getCityFromPincode(pincode);
+      if (pincodeLookupRef.current !== requestId) return;
+
+      setPincodeLoading(false);
+      if (result) {
+        setPincodeCity(result.city);
+        setPincodeState(result.state);
+        setSelectedCity("");
+        setPincodeLookupError("");
+      } else {
+        setPincodeCity("");
+        setPincodeState("");
+        setPincodeLookupError("Pincode not found. Please select a city.");
+      }
+    }, 400);
+
+    return () => window.clearTimeout(timer);
+  }, [pincode]);
 
   useEffect(() => {
     if (typeof navigator === "undefined") return;
@@ -132,13 +174,22 @@ const LocationModal = ({ isOpen, onClose, onApply, currentCity, citiesData }: Pr
   };
 
   const handleApply = async () => {
-    const city = selectedCity || pincode;
-    if (!city) return;
+    const cityToApply = selectedCity || pincodeCity;
+    if (!cityToApply) {
+      if (pincode.length === 6 && pincodeLoading) {
+        setLocationError("Looking up pincode, please wait…");
+      } else if (pincode.length === 6) {
+        setLocationError(pincodeLookupError || "Enter a valid 6-digit pincode or select a city.");
+      } else {
+        setLocationError("Select a city or enter a valid 6-digit pincode.");
+      }
+      return;
+    }
     setApplying(true);
     setLocationError("");
     try {
-      const result = await fetchNearestStore({ city: selectedCity || undefined });
-      onApply(buildLocationState(result, selectedCity, null, null));
+      const result = await fetchNearestStore({ city: cityToApply });
+      onApply(buildLocationState(result, cityToApply, null, null));
     } catch {
       setLocationError("Could not verify location. Please try again.");
     } finally {
@@ -150,10 +201,14 @@ const LocationModal = ({ isOpen, onClose, onApply, currentCity, citiesData }: Pr
     setSelectedCity(city);
     setDropdownOpen(false);
     setPincode("");
+    setPincodeCity("");
+    setPincodeState("");
+    setPincodeLookupError("");
     setLocationError("");
   };
 
-  const canApply = selectedCity.length > 0 || pincode.length === 6;
+  const canApply =
+    selectedCity.length > 0 || (pincode.length === 6 && !!pincodeCity && !pincodeLoading);
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
@@ -291,7 +346,11 @@ const LocationModal = ({ isOpen, onClose, onApply, currentCity, citiesData }: Pr
               onChange={(e) => {
                 const v = e.target.value.replace(/\D/g, "").slice(0, 6);
                 setPincode(v);
-                if (v.length > 0) setSelectedCity("");
+                if (v.length > 0) {
+                  setSelectedCity("");
+                  setPincodeCity("");
+                  setPincodeState("");
+                }
               }}
               placeholder="Enter Pincode"
               maxLength={6}
@@ -314,6 +373,18 @@ const LocationModal = ({ isOpen, onClose, onApply, currentCity, citiesData }: Pr
               ) : "Apply"}
             </button>
           </div>
+          {pincodeLoading && pincode.length === 6 && (
+            <p className="mt-2 text-xs text-[#006B4D]">Looking up pincode…</p>
+          )}
+          {!pincodeLoading && pincodeCity && (
+            <p className="mt-2 text-xs text-[#006B4D] font-medium">
+              {pincodeCity}
+              {pincodeState ? `, ${pincodeState}` : ""}
+            </p>
+          )}
+          {pincodeLookupError && !pincodeLoading && (
+            <p className="mt-2 text-xs text-red-500">{pincodeLookupError}</p>
+          )}
         </div>
       </div>
     </div>

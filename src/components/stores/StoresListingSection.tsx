@@ -72,6 +72,7 @@ const defaultFilters: Filters = {
 
 const StoresListingSection = () => {
   const [filters, setFilters] = useState<Filters>(defaultFilters);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const filtered = mockStores.filter((s) => {
     if (filters.premiumOnly && !s.isPremium) return false;
@@ -85,13 +86,33 @@ const StoresListingSection = () => {
   });
 
   return (
-    <section className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-10">
-      <h2 className="text-xl font-bold text-[#1D1D1D] mb-6">Popular Wine Wholesalers in Surat</h2>
+    <section className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-8 sm:py-10">
+      <h2 className="text-lg sm:text-xl font-bold text-[#1D1D1D] mb-4 sm:mb-6">
+        Popular Wine Wholesalers in Surat
+      </h2>
 
-      <div className="flex flex-col md:flex-row gap-6">
-        <StoresFilterSidebar filters={filters} onChange={setFilters} />
+      <button
+        type="button"
+        onClick={() => setFiltersOpen((o) => !o)}
+        className="md:hidden w-full flex items-center justify-between gap-2 mb-4 px-4 py-3 border border-[#E8E8E8] rounded-xl text-sm font-semibold text-[#1D1D1D] bg-white"
+      >
+        <span>Filters &amp; sort</span>
+        <svg
+          className={`w-5 h-5 text-[#1D1D1D80] transition-transform ${filtersOpen ? "rotate-180" : ""}`}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
 
-        <div className="flex-1 space-y-4">
+      <div className="flex flex-col md:flex-row gap-4 md:gap-6">
+        <div className={`${filtersOpen ? "block" : "hidden"} md:block`}>
+          <StoresFilterSidebar filters={filters} onChange={setFilters} />
+        </div>
+
+        <div className="flex-1 min-w-0 space-y-4">
           {sorted.length > 0 ? (
             sorted.map((store) => <StoresListCard key={store.id} store={store} />)
           ) : (

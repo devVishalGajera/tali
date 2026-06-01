@@ -157,10 +157,11 @@ export interface OrderTracking {
 }
 
 const TRACK_STEPS: Omit<OrderTrackStep, "active" | "completed" | "timestamp">[] = [
-  { key: "placed", label: "Order Placed", subtitle: "We've received your order" },
-  { key: "processing", label: "Processing", subtitle: "We're packing your items" },
-  { key: "delivery", label: "Out for Delivery", subtitle: "On the way to you" },
-  { key: "delivered", label: "Delivered", subtitle: "Get ready to enjoy!" },
+  { key: "placed", label: "Order Placed", subtitle: "" },
+  { key: "confirmed", label: "Confirmed", subtitle: "" },
+  { key: "packed", label: "Packed", subtitle: "" },
+  { key: "delivery", label: "In Transit", subtitle: "" },
+  { key: "delivered", label: "Delivered", subtitle: "" },
 ];
 
 function asRecord(v: unknown): Record<string, unknown> | null {
@@ -366,9 +367,13 @@ export function parseOrderDetail(data: unknown, orderId: number | string): Order
 
 function statusTextToStepIndex(status: string): number {
   const s = status.toLowerCase();
-  if (/\bdelivered\b/.test(s)) return 3;
-  if (s.includes("out for") || s.includes("dispatch") || s.includes("on the way")) return 2;
-  if (s.includes("process") || s.includes("pack") || s.includes("confirm")) return 1;
+  if (/\bdelivered\b/.test(s)) return 4;
+  if (s.includes("out for") || s.includes("in transit") || s.includes("dispatch") || s.includes("on the way")) {
+    return 3;
+  }
+  if (s.includes("pack")) return 2;
+  if (s.includes("confirm")) return 1;
+  if (s.includes("process")) return 2;
   return 0;
 }
 
@@ -390,9 +395,9 @@ function statusCodeToMeta(code: string): {
     case 3:
       return { step: 2, isRejected: false, isCancelled: false, isDelivered: false };
     case 4:
-      return { step: 3, isRejected: false, isCancelled: false, isDelivered: true };
+      return { step: 3, isRejected: false, isCancelled: false, isDelivered: false };
     case 5:
-      return { step: 0, isRejected: false, isCancelled: true, isDelivered: false };
+      return { step: 4, isRejected: false, isCancelled: false, isDelivered: true };
     case 6:
       return { step: 0, isRejected: true, isCancelled: false, isDelivered: false };
     default:
@@ -425,7 +430,7 @@ export function classifyOrderStatus(status?: string, statusCode?: string): Order
 
   const s = label.toLowerCase();
   if (s.includes("out for") || s.includes("dispatch") || s.includes("on the way")) return "in_transit";
-  if (codeMeta?.step === 2 || codeMeta?.step === 3) return "in_transit";
+  if (codeMeta?.step === 3) return "in_transit";
 
   if (s.includes("process") || s.includes("pack") || s.includes("confirm")) return "processing";
   if (codeMeta?.step === 1) return "processing";
@@ -445,7 +450,7 @@ export function getOrderStatusBadgeClass(status?: string, statusCode?: string): 
     case "delivered":
       return "bg-[#E8F5EF] text-[#006B4D] border border-[#CFEBDD]";
     case "in_transit":
-      return "bg-blue-50 text-blue-800 border border-blue-100";
+      return "bg-[#FFF4E8] text-[#B45309] border border-[#FDE8C8]";
     case "processing":
       return "bg-[#FFF4E8] text-[#B45309] border border-[#FDE8C8]";
     case "placed":
@@ -504,7 +509,7 @@ export function parseOrderTracking(data: unknown): OrderTracking {
     }
 
     const stepRaw = d?.current_step ?? d?.step ?? d?.status_id;
-    if (typeof stepRaw === "number" && stepRaw >= 0 && stepRaw <= 3 && !isRejected && !isCancelled) {
+    if (typeof stepRaw === "number" && stepRaw >= 0 && stepRaw <= 4 && !isRejected && !isCancelled) {
       stepIndex = stepRaw;
     }
   }
@@ -519,11 +524,19 @@ export function parseOrderTracking(data: unknown): OrderTracking {
 
   const placedTime = scheduledAt || placedDate || undefined;
 
+  const expectedDelivery =
+    deliveryTime && !isDelivered ? `Expected by ${deliveryTime}` : "";
+
   const steps: OrderTrackStep[] = TRACK_STEPS.map((step, i) => ({
     ...step,
     completed: !isRejected && !isCancelled && i < stepIndex,
     active: !isRejected && !isCancelled && i === stepIndex,
-    timestamp: i === 0 ? placedTime : undefined,
+    timestamp:
+      i === 0 && placedTime
+        ? placedTime
+        : i === TRACK_STEPS.length - 1 && !isDelivered && expectedDelivery
+          ? expectedDelivery
+          : undefined,
   }));
 
   const orderId = d ? extractOrderId(d) : null;

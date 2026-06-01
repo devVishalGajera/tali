@@ -13,20 +13,18 @@ const StoresSaleBanner = ({
 
   if (variant === "shelf") {
     return (
-      <div className="relative w-full my-10 min-h-[300px] md:min-h-[360px] flex items-center">
-        {/* Image — anchored right, 70% wide, sits behind card */}
-        <div className="absolute right-0 top-0 bottom-0 w-[80%] rounded-xl overflow-hidden">
-          <img src={image} alt="Wine Sale" className="w-full h-full object-cover" />
+      <div className="relative w-full my-8 sm:my-10 flex flex-col sm:block sm:min-h-[300px] md:min-h-[360px]">
+        <div className="relative sm:absolute sm:right-0 sm:top-0 sm:bottom-0 w-full sm:w-[80%] h-[200px] sm:h-auto rounded-xl overflow-hidden order-1 sm:order-none">
+          <img src={image} alt="Wine Sale" loading="lazy" className="w-full h-full object-cover" />
         </div>
-        {/* White card — overlaps image from left */}
-        <div className="relative z-10 rounded-lg p-8 md:p-10 w-full max-w-[380px] border border-transparent shadow-[10px_10px_20px_0px_rgba(0,0,0,0.2)] [background:linear-gradient(white,white)_padding-box,linear-gradient(90deg,#000000_0%,rgba(0,0,0,0)_100%)_border-box]">
-          <h2 className="text-2xl md:text-3xl font-bold text-[#1D1D1D] mb-3">
+        <div className="relative z-10 rounded-lg p-6 sm:p-8 md:p-10 w-full sm:max-w-[380px] mt-4 sm:mt-0 border border-[#E8E8E8] sm:border-transparent shadow-lg sm:shadow-[10px_10px_20px_0px_rgba(0,0,0,0.2)] bg-white sm:[background:linear-gradient(white,white)_padding-box,linear-gradient(90deg,#000000_0%,rgba(0,0,0,0)_100%)_border-box] order-2 sm:order-none">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-[#1D1D1D] mb-3">
             Wine Sale - 15%<br />Off All Bottles
           </h2>
-          <p className="text-sm text-[#1D1D1D80] mb-6 leading-relaxed">
+          <p className="text-sm text-[#1D1D1D80] mb-5 sm:mb-6 leading-relaxed">
             Sed ut perspiciatis unde omnis iste natus ut perspic iatis unde omnis iste.
           </p>
-          <button className="bg-[#1D1D1D] text-white px-6 py-2.5 rounded-full text-sm font-medium hover:bg-black transition-colors">
+          <button type="button" className="bg-[#1D1D1D] text-white px-6 py-2.5 rounded-full text-sm font-medium hover:bg-black transition-colors">
             Shop Now
           </button>
         </div>
@@ -39,8 +37,8 @@ const StoresSaleBanner = ({
       className="w-full overflow-hidden rounded-xl my-8 bg-cover bg-center"
       style={{ backgroundImage: `${overlayStyle}, url(${image})` }}
     >
-      <div className="px-8 md:px-16 py-14 md:py-18">
-        <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">
+      <div className="px-5 sm:px-8 md:px-16 py-10 sm:py-14 md:py-18">
+        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-3">
           Wine Sale - 15%<br />Off All Bottles
         </h2>
         <p className="text-sm text-white/70 mb-6 leading-relaxed">

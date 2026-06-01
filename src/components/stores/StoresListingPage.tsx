@@ -5,7 +5,7 @@ import StoresTopCities from "./StoresTopCities";
 import StoresTopShops from "./StoresTopShops";
 import StoresMoreShops from "./StoresMoreShops";
 import StoresListingSection from "./StoresListingSection";
-import FAQSection from "@/components/home/FAQSection";
+import StoresFaqSection from "./StoresFaqSection";
 
 /** Replace these values with API response data when the backend is ready */
 const bannerImages = {
@@ -37,8 +37,8 @@ const StoresListingPage = () => (
       <StoresSaleBanner variant="shelf" image={bannerImages.shelfBanner} />
     </div>
 
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
-      <FAQSection />
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 pb-10">
+      <StoresFaqSection />
     </div>
   </main>
 );
