@@ -8,10 +8,11 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import { useLocation } from "@/components/modals/LocationProvider";
 import { createOrderApi, extractOrderId, parsePlacedOrder, type PlacedOrderInfo } from "@/lib/api/order";
 import OrderConfirmedModal from "@/components/orders/OrderConfirmedModal";
-import { getPermitFee, getGrandTotal } from "@/lib/api/cart";
+import { getPermitFee, getGrandTotal, MIN_CHECKOUT_ORDER } from "@/lib/api/cart";
 import { getDisplayName } from "@/lib/api/auth";
 import { applyVoucherApi, getVouchersApi, type VoucherItem } from "@/lib/api/vouchers";
 import CheckoutDeliveryAddress from "@/components/checkout/CheckoutDeliveryAddress";
+import MinCheckoutProgressBar from "@/components/checkout/MinCheckoutProgressBar";
 import { fmtInr } from "@/lib/checkout/formatMoney";
 
 const TrashIcon = () => (
@@ -142,6 +143,7 @@ const CheckoutPage = () => {
   };
 
   const totalItems = items.reduce((s, i) => s + i.quantity, 0);
+  const meetsMinimum = summary.orderTotal >= MIN_CHECKOUT_ORDER;
   const permitFee = getPermitFee(permitNumber);
   const grandTotalBeforeVoucher = getGrandTotal(summary, permitFee);
   const grandTotal = Math.max(0, grandTotalBeforeVoucher - voucherDiscount);
@@ -190,6 +192,10 @@ const CheckoutPage = () => {
     }
     if (items.length === 0) {
       setOrderError("Your cart is empty.");
+      return;
+    }
+    if (summary.orderTotal < MIN_CHECKOUT_ORDER) {
+      setOrderError(`Minimum order value is ${fmtInr(MIN_CHECKOUT_ORDER)}. Please add more items to your cart.`);
       return;
     }
     if (!fullName.trim()) {
@@ -283,6 +289,14 @@ const CheckoutPage = () => {
     <div className={`${checkoutCard} flex flex-col lg:max-h-[calc(100vh-3rem)]`}>
       <h2 className="text-lg font-bold text-[#1D1D1D] mb-4">Order summary</h2>
 
+      {items.length > 0 && (
+        <MinCheckoutProgressBar
+          orderSubtotal={summary.orderTotal}
+          className="mb-4"
+          reachedMessage="Minimum order value reached — you can place your order"
+        />
+      )}
+
       <div className="space-y-2 flex-1 min-h-0">
         {summaryRows.map(({ label, value, bold }) => (
           <div key={label} className="flex justify-between items-center gap-3">
@@ -318,7 +332,7 @@ const CheckoutPage = () => {
           <button
             type="button"
             onClick={handlePlaceOrder}
-            disabled={placing || items.length === 0}
+            disabled={placing || items.length === 0 || !meetsMinimum}
             className="w-full py-3.5 bg-[#00845F] hover:bg-[#006e4f] disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-xl transition-colors"
           >
             {placing ? "Placing order…" : "Place order (Cash)"}

@@ -59,8 +59,7 @@ const ProductCard = ({ product, linkTo, fullWidth = false }: ProductCardProps) =
   };
 
   const imageBlock = (
-    <div className="relative px-3 pt-3 pb-2 w-full h-[210px] flex items-end justify-between gap-2 overflow-hidden cursor-pointer">
-      {/* overflow-visible — allowed bottle to extend outside card */}
+    <div className="relative px-3 pt-3 pb-3 w-full flex flex-col gap-2 md:flex-row md:items-end md:justify-between md:gap-2 md:h-[210px] overflow-hidden cursor-pointer">
       <div className="absolute top-3 right-2 z-20" onClick={(e) => e.stopPropagation()}>
         <WishlistButton
           productId={product.id}
@@ -74,39 +73,27 @@ const ProductCard = ({ product, linkTo, fullWidth = false }: ProductCardProps) =
         />
       </div>
 
-      {/* Pop-out layout: h-full -top-12 pulls image above card top */}
-      {/* <div className="h-full -top-12 relative flex-1"> */}
-      <div className="relative flex-1 min-w-0 flex items-end justify-center h-full">
+      <div className="relative w-full md:flex-1 md:min-w-0 flex items-center justify-center min-h-[150px] sm:min-h-[165px] md:min-h-0 md:h-full pr-8 md:pr-0">
         <img
           src={proxyImageUrl(product.image)}
           alt={product.name}
-          className="max-w-full md:max-w-[160px] max-h-[200px] w-auto h-auto object-contain"
+          className="w-auto h-auto max-h-[145px] sm:max-h-[165px] md:max-h-[200px] max-w-full md:max-w-[160px] object-contain"
         />
       </div>
-      <div className="flex flex-col items-end gap-2 z-10 -translate-y-1.5 shrink-0">
-        {/* New Arrival badge — temporarily disabled
-        {product.isNewArrival && (
-          <div className="relative top-2 w-[46.18px] h-[46.18px]">
-            <div className="absolute inset-0 rounded-full bg-[#1E1E1E] opacity-50 border border-[#808080]" />
-            <div className="absolute inset-[2.5%] rounded-full bg-[#1E1E1E] flex flex-col items-center justify-center">
-              <span className="font-graphik font-normal text-[6.93px] leading-[8.08px] text-center text-[#D5A184]">New</span>
-              <span className="font-graphik font-medium text-[9.24px] leading-[11.55px] text-center text-white">Arrival</span>
-            </div>
-          </div>
-        )}
-        */}
-        <div className="flex flex-col items-center gap-0.5">
-          <span className="font-graphik font-medium text-base leading-tight text-[#1E1E1E]">
+
+      <div className="flex flex-row md:flex-col items-center md:items-end justify-between md:justify-start gap-2 w-full md:w-auto shrink-0 z-10 md:-translate-y-1.5 pt-1 md:pt-0 border-t border-[#F5F5F5] md:border-0">
+        <div className="flex flex-col items-start md:items-center gap-0.5 min-w-0">
+          <span className="font-graphik font-medium text-sm sm:text-base leading-tight text-[#1E1E1E]">
             {product.rating > 0 ? product.rating : "5.0"}
           </span>
-          <div className="flex items-center gap-0.5"><StarRating score={product.rating} /></div>
-          <span className="font-graphik font-normal text-[11px] leading-[14px] text-center text-[#1E1E1E] whitespace-nowrap">
+          <StarRating score={product.rating} size="sm" className="scale-90 sm:scale-100 origin-left md:origin-center" />
+          <span className="font-graphik font-normal text-[10px] sm:text-[11px] leading-snug text-[#1E1E1E] md:text-center whitespace-nowrap">
             {product.ratingCount > 0 ? `${product.ratingCount} Rating` : ""}
           </span>
-          <span className="mt-1 bg-[#00845F] text-white font-graphik font-semibold py-1 px-3 whitespace-nowrap rounded-full text-center text-sm leading-[18px]">
-            {product.price}
-          </span>
         </div>
+        <span className="bg-[#00845F] text-white font-graphik font-semibold py-1.5 px-3 sm:px-3.5 whitespace-nowrap rounded-full text-center text-xs sm:text-sm leading-tight shrink-0">
+          {product.price}
+        </span>
       </div>
     </div>
   );
@@ -114,10 +101,9 @@ const ProductCard = ({ product, linkTo, fullWidth = false }: ProductCardProps) =
   return (
     <div
       className={`bg-white transition-all duration-300 overflow-hidden w-full rounded-[17.1px] border border-[#F0F0F0] shadow-[0px_8.55px_8.55px_0px_#EAE0DA4D,0px_0px_0px_1.07px_#5757571A] md:hover:shadow-lg md:hover:scale-105 active:scale-95 flex flex-col h-full ${
-        fullWidth ? "" : "max-w-[210px] md:max-w-[250px]"
+        fullWidth ? "" : "max-w-none md:max-w-[250px]"
       }`}
     >
-      {/* overflow-visible — allowed product image to overflow card border */}
       {linkTo ? (
         <Link href={linkTo} className="block">
           {imageBlock}
@@ -126,15 +112,15 @@ const ProductCard = ({ product, linkTo, fullWidth = false }: ProductCardProps) =
         imageBlock
       )}
 
-      <div className="px-4 pb-4 pt-2 mt-4 flex-1 flex items-center justify-between gap-2">
+      <div className="px-3 sm:px-4 pb-3 sm:pb-4 pt-1 md:pt-2 md:mt-2 flex-1 flex items-end justify-between gap-2 min-h-[48px]">
         {linkTo ? (
           <Link href={linkTo} className="flex-1 min-w-0">
-            <h3 className="font-graphik font-bold text-[14px] text-[#1D1D1D] text-left line-clamp-2 leading-[1.4] hover:text-[#006B4D] transition-colors">
+            <h3 className="font-graphik font-bold text-[12px] sm:text-[13px] md:text-[14px] text-[#1D1D1D] text-left line-clamp-2 leading-snug sm:leading-[1.4] hover:text-[#006B4D] transition-colors uppercase">
               {product.name}
             </h3>
           </Link>
         ) : (
-          <h3 className="font-graphik font-bold text-[14px] text-[#1D1D1D] text-left line-clamp-2 leading-[1.4] flex-1 min-w-0">
+          <h3 className="font-graphik font-bold text-[12px] sm:text-[13px] md:text-[14px] text-[#1D1D1D] text-left line-clamp-2 leading-snug sm:leading-[1.4] flex-1 min-w-0 uppercase">
             {product.name}
           </h3>
         )}
@@ -143,7 +129,7 @@ const ProductCard = ({ product, linkTo, fullWidth = false }: ProductCardProps) =
             type="button"
             onClick={handleAddToCart}
             aria-label="Add to cart"
-            className={`shrink-0 w-9 h-9 flex items-center justify-center rounded-full transition-all shadow-sm active:scale-95 ${addedToCart
+            className={`shrink-0 w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full transition-all shadow-sm active:scale-95 ${addedToCart
               ? "bg-[#00845F]"
               : "bg-[#006B4D] hover:bg-[#005a3f]"
               }`}
@@ -165,6 +151,5 @@ const ProductCard = ({ product, linkTo, fullWidth = false }: ProductCardProps) =
     </div>
   );
 };
-
 
 export default ProductCard;

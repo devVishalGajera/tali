@@ -60,6 +60,7 @@ export interface SubCategory {
   name: string;
   category_id: number;
   category_name: string;
+  description?: string;
   data: CategoryProduct[];
 }
 

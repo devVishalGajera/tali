@@ -460,11 +460,27 @@ export function getOrderStatusBadgeClass(status?: string, statusCode?: string): 
   }
 }
 
+/** Normalize user-entered order number for track/detail APIs (e.g. T01062615736). */
 export function resolveOrderIdFromInput(input: string): string {
-  const trimmed = input.trim();
-  if (/^\d+$/.test(trimmed)) return trimmed;
-  const match = trimmed.match(/(\d+)$/);
-  return match ? match[1] : trimmed;
+  let value = input.trim();
+  if (!value) return value;
+
+  value = value.replace(/^order\s*#?\s*/i, "").replace(/^#/, "").trim();
+
+  const tMatch = value.match(/^T(\d+)$/i);
+  if (tMatch) return `T${tMatch[1]}`;
+
+  const tlMatch = value.match(/^TL(\d+)$/i);
+  if (tlMatch) return `T${tlMatch[1]}`;
+
+  if (/^\d+$/.test(value)) {
+    if (value.length >= 8 || value.startsWith("0")) {
+      return `T${value}`;
+    }
+    return value;
+  }
+
+  return value;
 }
 
 export function formatScheduledDelivery(placedDate: string, time: string): string {

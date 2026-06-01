@@ -23,8 +23,8 @@ function chunkArray<T>(arr: T[], size: number): T[][] {
   return chunks;
 }
 
-const LOGO_SIZE_DEFAULT = 60;
-const LOGO_SIZE_SCROLLED = 40;
+const LOGO_SIZE_DEFAULT = 70;
+const LOGO_SIZE_SCROLLED = 50;
 
 function profileImageSrc(path: string | undefined): string | null {
   if (!path) return null;

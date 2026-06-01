@@ -25,7 +25,7 @@ const SubCategoryProductSections = ({ subCategories }: Props) => {
           <ProductCarouselSection
             key={`${sc.category_id}-${sc.id}`}
             title={sc.name}
-            subtitle={sc.category_name}
+            subtitle={sc.description?.trim() || undefined}
             products={products}
             linkProducts
             viewAllHref={`/products?categories=${sc.category_id}&subcats=${sc.id}`}

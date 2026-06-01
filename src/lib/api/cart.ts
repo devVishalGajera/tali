@@ -65,6 +65,9 @@ export interface CartSummary {
 
 export const PERMIT_FEE_WITHOUT_NUMBER = 5;
 
+/** Minimum cart subtotal (₹) required to proceed to checkout. */
+export const MIN_CHECKOUT_ORDER = 500;
+
 export function parseMoney(value: string | number | undefined | null): number {
   if (value == null || value === "") return 0;
   const n = typeof value === "number" ? value : parseFloat(String(value).replace(/,/g, ""));

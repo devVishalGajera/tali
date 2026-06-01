@@ -33,7 +33,7 @@ export default function ProductGrid({
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-6">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-5 mb-6">
 
             {/* Discover banner — first cell */}
             <div className="bg-white overflow-hidden rounded-[17.1px] border border-[#F0F0F0] shadow-[0px_8.55px_8.55px_0px_#EAE0DA4D,0px_0px_0px_1.07px_#5757571A]">
