@@ -10,7 +10,9 @@ import {
   getOrderIdApi,
   getOrderDetailApi,
   getOrdersApi,
+  getOrderStatusBadgeClass,
   giveOrderRatingApi,
+  resolveOrderIdFromInput,
   trackOrderApi,
   type OrderDetail,
   type OrderTracking,
@@ -44,19 +46,22 @@ export default function TrackOrderPage() {
 
   const summary = useMemo(() => {
     if (!detail) return null;
-    const itemsTotal = detail.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-    const shipping = detail.shipping ?? 0;
-    const discount = detail.subtotal != null && detail.subtotal > detail.total
-      ? detail.subtotal - detail.total
-      : 0;
-    return { itemsTotal, shipping, discount };
+    const itemsTotal =
+      detail.subtotal ??
+      detail.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    return {
+      itemsTotal,
+      shipping: detail.shipping ?? 0,
+      permitCharge: detail.permitCharge ?? 0,
+      voucherAmount: detail.voucherAmount ?? 0,
+    };
   }, [detail]);
 
   const resolveTrackOrderId = async (): Promise<string> => {
     if (mode === "orderId") {
-      const id = orderIdInput.trim();
-      if (!id) throw new Error("Please enter your order ID.");
-      return id;
+      const raw = orderIdInput.trim();
+      if (!raw) throw new Error("Please enter your order ID.");
+      return resolveOrderIdFromInput(raw);
     }
 
     const entered = mobileInput.replace(/\s+/g, "");
@@ -91,18 +96,23 @@ export default function TrackOrderPage() {
     setLoading(true);
     try {
       const id = await resolveTrackOrderId();
-      const [detailRes, trackRes] = await Promise.all([
-        getOrderDetailApi({ token, id }),
-        trackOrderApi({ token, id }),
-      ]);
-      if (detailRes.code !== 1 || !detailRes.data) {
-        throw new Error(detailRes.message || "Order not found.");
-      }
+      const trackRes = await trackOrderApi({ token, id });
       if (trackRes.code !== 1 || !trackRes.data) {
         throw new Error(trackRes.message || "Could not track this order.");
       }
-      setDetail(detailRes.data);
+
+      let orderDetail: OrderDetail | null = null;
+      try {
+        const detailRes = await getOrderDetailApi({ token, id });
+        if (detailRes.code === 1 && detailRes.data) {
+          orderDetail = detailRes.data;
+        }
+      } catch {
+        orderDetail = null;
+      }
+
       setTracking(trackRes.data);
+      setDetail(orderDetail);
       setRatingError(null);
       setRatingMsg(null);
     } catch (err) {
@@ -115,7 +125,7 @@ export default function TrackOrderPage() {
   };
 
   const handleSubmitRating = async () => {
-    if (!token || !detail) return;
+    if (!token || !detail || !tracking?.isDelivered) return;
     if (shopRating < 1 || shopRating > 5 || deliveryRating < 1 || deliveryRating > 5) {
       setRatingError("Ratings must be between 1 and 5.");
       return;
@@ -126,7 +136,7 @@ export default function TrackOrderPage() {
     try {
       const res = await giveOrderRatingApi({
         token,
-        id: detail.id,
+        id: tracking?.orderId ?? detail.id,
         shop_review: shopReview.trim() || "Good Service",
         shop_rating: shopRating,
         delivery_boy_review: deliveryReview.trim() || "Good Delivery",
@@ -144,7 +154,11 @@ export default function TrackOrderPage() {
     }
   };
 
-  const hasResult = detail != null && tracking != null;
+  const hasResult = tracking != null;
+  const displayOrderNumber =
+    tracking?.orderNumber ?? detail?.orderNumber ?? (tracking?.orderId ? `TL${tracking.orderId}` : "");
+  const displayPlacedAt =
+    tracking?.scheduledAt ?? (detail ? formatOrderDate(detail.placedAt) : "");
 
   return (
     <main className="min-h-screen bg-[#FAFAFA]">
@@ -240,24 +254,39 @@ export default function TrackOrderPage() {
           </section>
         )}
 
-        {hasResult && detail && tracking && (
+        {hasResult && tracking && (
           <section className="mt-8 space-y-5">
             <div className="bg-white border border-[#E8E8E8] rounded-2xl p-5 sm:p-6">
               <div className="flex items-start justify-between gap-3 mb-4">
                 <div>
                   <h2 className="text-base sm:text-lg font-bold text-[#1D1D1D]">
-                    Order #{detail.orderNumber}
+                    Order #{displayOrderNumber}
                   </h2>
-                  <p className="text-xs text-[#1D1D1D80] mt-1">{formatOrderDate(detail.placedAt)}</p>
+                  {displayPlacedAt && (
+                    <p className="text-xs text-[#1D1D1D80] mt-1">Scheduled: {displayPlacedAt}</p>
+                  )}
+                  {tracking.deliveryTime && (
+                    <p className="text-xs text-[#006B4D] mt-1 font-medium">
+                      Estimated delivery: {tracking.deliveryTime}
+                    </p>
+                  )}
                 </div>
-                <Link
-                  href="/orders"
-                  className="text-xs font-semibold text-[#006B4D] hover:underline"
+                <span
+                  className={`text-xs font-semibold px-3 py-1 rounded-full shrink-0 ${getOrderStatusBadgeClass(tracking.orderStatus, tracking.statusCode)}`}
                 >
-                  In Transit
-                </Link>
+                  {tracking.orderStatus}
+                </span>
               </div>
-              <OrderTracker steps={tracking.steps} compact />
+
+              {(tracking.isRejected || tracking.isCancelled || detail?.isRejected || detail?.isCancelled) ? (
+                <p className="text-sm text-[#1D1D1D80] bg-[#FAFAFA] border border-[#E8E8E8] rounded-xl px-4 py-3">
+                  This order is{" "}
+                  {(tracking.isRejected || detail?.isRejected) ? "rejected" : "cancelled"}.
+                  {detail?.rejectReason ? ` Reason: ${detail.rejectReason}.` : ""} Contact support if you need help.
+                </p>
+              ) : (
+                <OrderTracker steps={tracking.steps} compact />
+              )}
             </div>
 
             <div className="bg-white border border-[#E8E8E8] rounded-2xl p-5 sm:p-6">
@@ -265,50 +294,106 @@ export default function TrackOrderPage() {
                 <div>
                   <h3 className="text-sm font-bold text-[#1D1D1D] mb-3">Delivery Details</h3>
                   <div className="space-y-2 text-sm">
-                    <p className="text-[#1D1D1D80]">Delivery Partner</p>
-                    <p className="font-semibold text-[#1D1D1D]">Talli Express</p>
+                    {tracking.driverName ? (
+                      <>
+                        <p className="text-[#1D1D1D80]">Delivery Partner</p>
+                        <div className="flex items-center gap-3">
+                          {tracking.driverImage ? (
+                            <img
+                              src={tracking.driverImage}
+                              alt=""
+                              className="w-10 h-10 rounded-full object-cover border border-[#E8E8E8]"
+                            />
+                          ) : null}
+                          <div>
+                            <p className="font-semibold text-[#1D1D1D]">{tracking.driverName}</p>
+                            {tracking.driverMobile && (
+                              <a
+                                href={`tel:${tracking.driverMobile}`}
+                                className="text-xs text-[#006B4D] hover:underline"
+                              >
+                                {tracking.driverMobile}
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-[#1D1D1D80]">Delivery Partner</p>
+                        <p className="font-semibold text-[#1D1D1D]">Talli Express</p>
+                      </>
+                    )}
                     <p className="text-[#1D1D1D80] mt-3">Delivery Address</p>
-                    <p className="text-[#1D1D1D] leading-relaxed">{detail.address || "Address unavailable."}</p>
+                    <p className="text-[#1D1D1D] leading-relaxed">
+                      {detail?.address || "Address unavailable."}
+                    </p>
                   </div>
                 </div>
 
-                <div>
-                  <h3 className="text-sm font-bold text-[#1D1D1D] mb-3">Order Summary</h3>
-                  <div className="space-y-2">
-                    {detail.items.map((item, idx) => (
-                      <div key={`${item.name}-${idx}`} className="flex items-center justify-between gap-3 text-sm">
-                        <span className="text-[#1D1D1D] truncate">
-                          {item.name} <span className="text-[#1D1D1D80]">x {item.quantity}</span>
-                        </span>
-                        <span className="font-semibold text-[#1D1D1D] shrink-0">
-                          {fmtInr(item.price * item.quantity)}
-                        </span>
-                      </div>
-                    ))}
-                    <div className="pt-2 mt-2 border-t border-[#EFEFEF] space-y-1.5 text-sm">
-                      <div className="flex justify-between text-[#1D1D1D80]">
-                        <span>Subtotal</span>
-                        <span>{fmtInr(summary?.itemsTotal ?? 0)}</span>
-                      </div>
-                      <div className="flex justify-between text-[#1D1D1D80]">
-                        <span>Delivery Fee</span>
-                        <span>{fmtInr(summary?.shipping ?? 0)}</span>
-                      </div>
-                      <div className="flex justify-between text-[#1D1D1D80]">
-                        <span>Discount</span>
-                        <span>{fmtInr(-(summary?.discount ?? 0))}</span>
-                      </div>
-                      <div className="flex justify-between text-[#1D1D1D] font-bold pt-1">
-                        <span>Total Amount</span>
-                        <span className="text-[#006B4D]">{fmtInr(detail.total)}</span>
+                {detail ? (
+                  <div>
+                    <h3 className="text-sm font-bold text-[#1D1D1D] mb-3">Order Summary</h3>
+                    <div className="space-y-2">
+                      {detail.items.map((item, idx) => (
+                        <div key={`${item.name}-${idx}`} className="flex items-center justify-between gap-3 text-sm">
+                          <span className="text-[#1D1D1D] truncate">
+                            {item.name} <span className="text-[#1D1D1D80]">x {item.quantity}</span>
+                          </span>
+                          <span className="font-semibold text-[#1D1D1D] shrink-0">
+                            {fmtInr(item.price * item.quantity)}
+                          </span>
+                        </div>
+                      ))}
+                      <div className="pt-2 mt-2 border-t border-[#EFEFEF] space-y-1.5 text-sm">
+                        <div className="flex justify-between text-[#1D1D1D80]">
+                          <span>Subtotal</span>
+                          <span>{fmtInr(summary?.itemsTotal ?? 0)}</span>
+                        </div>
+                        <div className="flex justify-between text-[#1D1D1D80]">
+                          <span>Delivery Fee</span>
+                          <span>{fmtInr(summary?.shipping ?? 0)}</span>
+                        </div>
+                        {(summary?.permitCharge ?? 0) > 0 && (
+                          <div className="flex justify-between text-[#1D1D1D80]">
+                            <span>Permit fee</span>
+                            <span>{fmtInr(summary?.permitCharge ?? 0)}</span>
+                          </div>
+                        )}
+                        {(summary?.voucherAmount ?? 0) > 0 && (
+                          <div className="flex justify-between text-[#1D1D1D80]">
+                            <span>Voucher discount</span>
+                            <span>- {fmtInr(summary?.voucherAmount ?? 0)}</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between text-[#1D1D1D] font-bold pt-1">
+                          <span>Total Amount</span>
+                          <span className="text-[#006B4D]">{fmtInr(detail.total)}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
+                ) : (
+                  <div>
+                    <h3 className="text-sm font-bold text-[#1D1D1D] mb-3">Order info</h3>
+                    <dl className="space-y-2 text-sm">
+                      <div>
+                        <dt className="text-[#1D1D1D80]">Order ID</dt>
+                        <dd className="font-semibold text-[#1D1D1D]">{displayOrderNumber}</dd>
+                      </div>
+                      {tracking.deliveryTime && (
+                        <div>
+                          <dt className="text-[#1D1D1D80]">Estimated delivery</dt>
+                          <dd className="font-semibold text-[#1D1D1D]">{tracking.deliveryTime}</dd>
+                        </div>
+                      )}
+                    </dl>
+                  </div>
+                )}
               </div>
             </div>
 
-            {tracking.status?.toLowerCase().includes("deliver") && (
+            {tracking.isDelivered && detail && (
               <div className="bg-white border border-[#E8E8E8] rounded-2xl p-5 sm:p-6">
                 <h3 className="text-base font-bold text-[#1D1D1D] mb-4">Rate Your Order</h3>
                 {ratingError && (

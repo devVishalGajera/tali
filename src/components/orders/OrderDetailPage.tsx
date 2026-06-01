@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth/AuthProvider";
 import {
   getOrderDetailApi,
+  getOrderStatusBadgeClass,
   trackOrderApi,
   formatOrderDate,
   type OrderDetail,
@@ -18,13 +19,6 @@ import { fmtInr } from "@/lib/checkout/formatMoney";
 interface Props {
   orderId: string;
 }
-
-const statusColor = (status: string) => {
-  const s = status.toLowerCase();
-  if (s.includes("deliver")) return "bg-[#E8F5EF] text-[#006B4D]";
-  if (s.includes("cancel")) return "bg-red-50 text-red-700";
-  return "bg-[#FFF4E8] text-[#B45309]";
-};
 
 export default function OrderDetailPage({ orderId }: Props) {
   const router = useRouter();
@@ -61,6 +55,13 @@ export default function OrderDetailPage({ orderId }: Props) {
 
   const steps = tracking?.steps;
   const displayTotal = detail?.total ?? 0;
+  const displayStatus = tracking?.orderStatus ?? detail?.status ?? "Unknown";
+  const isTerminalFailure =
+    tracking?.isRejected ||
+    tracking?.isCancelled ||
+    detail?.isRejected ||
+    detail?.isCancelled;
+  const showTracker = steps && steps.length > 0 && !isTerminalFailure;
 
   return (
     <main className="min-h-screen bg-[#FAFAFA] py-8 px-4 sm:px-6 md:px-10">
@@ -85,8 +86,10 @@ export default function OrderDetailPage({ orderId }: Props) {
                   <h1 className="text-xl font-bold text-[#1D1D1D]">Order {detail.orderNumber}</h1>
                   <p className="text-xs text-[#1D1D1D80] mt-1">{formatOrderDate(detail.placedAt)}</p>
                 </div>
-                <span className={`text-xs font-semibold px-3 py-1 rounded-full ${statusColor(detail.status)}`}>
-                  {detail.status}
+                <span
+                  className={`text-xs font-semibold px-3 py-1 rounded-full ${getOrderStatusBadgeClass(displayStatus, detail.statusCode)}`}
+                >
+                  {displayStatus}
                 </span>
               </div>
 
@@ -106,10 +109,35 @@ export default function OrderDetailPage({ orderId }: Props) {
               </div>
             </div>
 
-            {steps && steps.length > 0 && (
+            {showTracker && (
               <div className="bg-white rounded-2xl border border-[#E8E8E8] px-5 sm:px-6 py-6">
-                <h2 className="text-sm font-bold text-[#1D1D1D] mb-5">Order status</h2>
-                <OrderTracker steps={steps} />
+                <h2 className="text-sm font-bold text-[#1D1D1D] mb-2">Order status</h2>
+                {tracking?.deliveryTime && (
+                  <p className="text-xs text-[#006B4D] mb-4 font-medium">
+                    Estimated delivery: {tracking.deliveryTime}
+                  </p>
+                )}
+                <OrderTracker steps={steps!} />
+              </div>
+            )}
+
+            {isTerminalFailure && (
+              <div className="bg-white rounded-2xl border border-[#E8E8E8] px-5 sm:px-6 py-5">
+                <p className="text-sm text-[#1D1D1D80]">
+                  This order is{" "}
+                  {(tracking?.isRejected || detail?.isRejected) ? "rejected" : "cancelled"}.
+                  {detail?.rejectReason ? ` Reason: ${detail.rejectReason}.` : ""}
+                </p>
+              </div>
+            )}
+
+            {detail.storeName && (
+              <div className="bg-white rounded-2xl border border-[#E8E8E8] px-5 py-5">
+                <h2 className="text-sm font-bold text-[#1D1D1D] mb-2">Store</h2>
+                <p className="text-sm font-semibold text-[#1D1D1D]">{detail.storeName}</p>
+                {detail.storeAddress && (
+                  <p className="text-sm text-[#1D1D1D80] mt-1 leading-relaxed">{detail.storeAddress}</p>
+                )}
               </div>
             )}
 
@@ -168,6 +196,18 @@ export default function OrderDetailPage({ orderId }: Props) {
                   <div className="flex justify-between text-sm text-[#1D1D1D80]">
                     <span>Shipping</span>
                     <span>{fmtInr(detail.shipping)}</span>
+                  </div>
+                )}
+                {detail.permitCharge != null && detail.permitCharge > 0 && (
+                  <div className="flex justify-between text-sm text-[#1D1D1D80]">
+                    <span>Permit fee</span>
+                    <span>{fmtInr(detail.permitCharge)}</span>
+                  </div>
+                )}
+                {detail.voucherAmount != null && detail.voucherAmount > 0 && (
+                  <div className="flex justify-between text-sm text-[#1D1D1D80]">
+                    <span>Voucher discount</span>
+                    <span>- {fmtInr(detail.voucherAmount)}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-sm font-bold text-[#1D1D1D] pt-1">

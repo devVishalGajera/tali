@@ -44,6 +44,28 @@ const checkoutCard =
 const checkoutMain =
   "min-h-screen bg-[#FAFAFA] py-0 sm:py-10 px-0 sm:px-6 md:px-10";
 
+function todayLocalDateValue(): string {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function toPlacedDateApi(isoDate: string): string {
+  const [y, m, d] = isoDate.split("-");
+  if (!y || !m || !d) return "";
+  return `${d}/${m}/${y}`;
+}
+
+function isDeliveryScheduleInFuture(dateIso: string, time: string): boolean {
+  const [y, mo, d] = dateIso.split("-").map(Number);
+  const [h, mi] = time.split(":").map(Number);
+  if (!y || !mo || !d || Number.isNaN(h) || Number.isNaN(mi)) return false;
+  const scheduled = new Date(y, mo - 1, d, h, mi, 0);
+  return scheduled.getTime() > Date.now();
+}
+
 const CheckoutPage = () => {
   const router = useRouter();
   const { items, summary, removeFromCart, updateQuantity, clearCart, refreshCart } = useCart();
@@ -58,6 +80,8 @@ const CheckoutPage = () => {
   const [voucherDiscount, setVoucherDiscount] = useState(0);
   const [voucherMessage, setVoucherMessage] = useState<string | null>(null);
   const [deliveryNote, setDeliveryNote] = useState("");
+  const [deliveryDate, setDeliveryDate] = useState("");
+  const [deliveryTime, setDeliveryTime] = useState("");
   const [permitNumber, setPermitNumber] = useState("");
   const [placing, setPlacing] = useState(false);
   const [orderError, setOrderError] = useState<string | null>(null);
@@ -180,14 +204,29 @@ const CheckoutPage = () => {
       setOrderError("Please add and select a delivery address.");
       return;
     }
+    if (!deliveryDate.trim()) {
+      setOrderError("Please select a delivery date.");
+      return;
+    }
+    if (!deliveryTime.trim()) {
+      setOrderError("Please select a delivery time.");
+      return;
+    }
+    if (!isDeliveryScheduleInFuture(deliveryDate, deliveryTime)) {
+      setOrderError("Delivery time must be in the future.");
+      return;
+    }
 
     setPlacing(true);
     try {
       const res = await createOrderApi({
         token,
         address_id: selectedAddressId,
+        payment_type: "Cash",
         special_instruction: deliveryNote.trim(),
         permit_number: permitNumber.trim(),
+        placed_date: toPlacedDateApi(deliveryDate),
+        time: deliveryTime,
         voucher_id: appliedVoucherId ? String(appliedVoucherId) : "",
         voucher_amount: voucherDiscount > 0 ? String(voucherDiscount) : "0.0",
       });
@@ -439,6 +478,42 @@ const CheckoutPage = () => {
                 </div>
               </div> */}
             </>
+          )}
+
+          {isAuthenticated && token && items.length > 0 && (
+            <div className={checkoutCard}>
+              <p className="text-sm font-semibold text-[#1D1D1D] mb-3">Delivery schedule</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="delivery-date" className="block text-xs font-semibold text-[#1D1D1D] mb-1.5">
+                    Delivery date
+                  </label>
+                  <input
+                    id="delivery-date"
+                    type="date"
+                    min={todayLocalDateValue()}
+                    value={deliveryDate}
+                    onChange={(e) => setDeliveryDate(e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="delivery-time" className="block text-xs font-semibold text-[#1D1D1D] mb-1.5">
+                    Delivery time
+                  </label>
+                  <input
+                    id="delivery-time"
+                    type="time"
+                    value={deliveryTime}
+                    onChange={(e) => setDeliveryTime(e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+              </div>
+              <p className="text-[11px] text-[#1D1D1D60] mt-1.5">
+                Choose when you want your order delivered (24-hour time).
+              </p>
+            </div>
           )}
 
           <div className={checkoutCard}>

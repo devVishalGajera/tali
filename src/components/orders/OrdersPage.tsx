@@ -4,17 +4,15 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { getOrdersApi, formatOrderDate, type OrderListItem } from "@/lib/api/order";
+import {
+  classifyOrderStatus,
+  formatOrderDate,
+  getOrderStatusBadgeClass,
+  getOrdersApi,
+  type OrderListItem,
+} from "@/lib/api/order";
 import { parseMoney } from "@/lib/api/cart";
 import { fmtInr } from "@/lib/checkout/formatMoney";
-const statusBadge = (status?: string) => {
-  if (!status) return "bg-[#F5F5F5] text-[#1D1D1D80]";
-  const s = status.toLowerCase();
-  if (s.includes("deliver")) return "bg-[#E8F5EF] text-[#006B4D]";
-  if (s.includes("cancel")) return "bg-red-50 text-red-700";
-  if (s.includes("process") || s.includes("pack")) return "bg-[#FFF4E8] text-[#B45309]";
-  return "bg-[#F0F7F4] text-[#006B4D]";
-};
 
 const orderTotal = (order: OrderListItem) => {
   const raw = order.total ?? order.order_total;
@@ -92,6 +90,8 @@ export default function OrdersPage() {
           {orders.map((order) => {
             const label = order.order_number ?? `TL${order.id}`;
             const date = formatOrderDate(order.placed_date ?? order.created_at ?? "");
+            const statusKind = classifyOrderStatus(order.status, order.statusCode);
+            const isFailed = statusKind === "rejected" || statusKind === "cancelled";
             return (
               <li key={order.id}>
                 <Link
@@ -103,7 +103,9 @@ export default function OrdersPage() {
                       <div className="flex flex-wrap items-center gap-2">
                         <p className="text-sm font-bold text-[#1D1D1D]">{label}</p>
                         {order.status && (
-                          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${statusBadge(order.status)}`}>
+                          <span
+                            className={`text-[10px] font-semibold px-2.5 py-0.5 rounded-full ${getOrderStatusBadgeClass(order.status, order.statusCode)}`}
+                          >
                             {order.status}
                           </span>
                         )}
@@ -114,8 +116,14 @@ export default function OrdersPage() {
                       )}
                     </div>
                     <div className="text-right shrink-0">
-                      <p className="text-sm font-bold text-[#006B4D]">{orderTotal(order)}</p>
-                      <p className="text-[10px] text-[#006B4D] mt-1">View details →</p>
+                      <p
+                        className={`text-sm font-bold ${isFailed ? "text-[#1D1D1D]" : "text-[#006B4D]"}`}
+                      >
+                        {orderTotal(order)}
+                      </p>
+                      <p className={`text-[10px] mt-1 ${isFailed ? "text-[#1D1D1D80]" : "text-[#006B4D]"}`}>
+                        View details →
+                      </p>
                     </div>
                   </div>
                 </Link>
