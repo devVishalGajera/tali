@@ -45,27 +45,55 @@ const checkoutCard =
 const checkoutMain =
   "min-h-screen bg-[#FAFAFA] py-0 sm:py-10 px-0 sm:px-6 md:px-10";
 
-function todayLocalDateValue(): string {
-  const d = new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
+const PAYMENT_OPTIONS = [
+  "Google Pay",
+  "Paytm",
+  "Credit/Debit Card",
+  "Cash",
+] as const;
+
+type PaymentType = (typeof PAYMENT_OPTIONS)[number];
+
+function paymentOptionLabel(option: PaymentType): string {
+  return option === "Cash" ? "Cash on delivery" : option;
 }
 
-function toPlacedDateApi(isoDate: string): string {
-  const [y, m, d] = isoDate.split("-");
-  if (!y || !m || !d) return "";
-  return `${d}/${m}/${y}`;
-}
+const PolicyIconWrap = ({ children }: { children: React.ReactNode }) => (
+  <span className="w-9 h-9 shrink-0 rounded-full border border-[#C9A89E] flex items-center justify-center text-[#A67B6E]">
+    {children}
+  </span>
+);
 
-function isDeliveryScheduleInFuture(dateIso: string, time: string): boolean {
-  const [y, mo, d] = dateIso.split("-").map(Number);
-  const [h, mi] = time.split(":").map(Number);
-  if (!y || !mo || !d || Number.isNaN(h) || Number.isNaN(mi)) return false;
-  const scheduled = new Date(y, mo - 1, d, h, mi, 0);
-  return scheduled.getTime() > Date.now();
-}
+const CheckoutCancellationPolicy = () => (
+  <div className={checkoutCard}>
+    <h2 className="text-sm font-bold text-[#1D1D1D] tracking-wide uppercase mb-4">
+      Cancellation Policy
+    </h2>
+    <ul className="space-y-4">
+      <li className="flex items-center gap-3">
+        <PolicyIconWrap>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 7v5l3 2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </PolicyIconWrap>
+        <p className="text-sm text-[#1D1D1D80] leading-snug">
+          Orders cannot be cancelled once out for delivery.
+        </p>
+      </li>
+      <li className="flex items-center gap-3">
+        <PolicyIconWrap>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M3 12a9 9 0 1015.5-6.5M3 4v5h5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </PolicyIconWrap>
+        <p className="text-sm text-[#1D1D1D80] leading-snug">
+          In case of cancellation or modification, please contact support.
+        </p>
+      </li>
+    </ul>
+  </div>
+);
 
 const CheckoutPage = () => {
   const router = useRouter();
@@ -81,8 +109,7 @@ const CheckoutPage = () => {
   const [voucherDiscount, setVoucherDiscount] = useState(0);
   const [voucherMessage, setVoucherMessage] = useState<string | null>(null);
   const [deliveryNote, setDeliveryNote] = useState("");
-  const [deliveryDate, setDeliveryDate] = useState("");
-  const [deliveryTime, setDeliveryTime] = useState("");
+  const [paymentType, setPaymentType] = useState<PaymentType>("Cash");
   const [permitNumber, setPermitNumber] = useState("");
   const [placing, setPlacing] = useState(false);
   const [orderError, setOrderError] = useState<string | null>(null);
@@ -210,29 +237,16 @@ const CheckoutPage = () => {
       setOrderError("Please add and select a delivery address.");
       return;
     }
-    if (!deliveryDate.trim()) {
-      setOrderError("Please select a delivery date.");
-      return;
-    }
-    if (!deliveryTime.trim()) {
-      setOrderError("Please select a delivery time.");
-      return;
-    }
-    if (!isDeliveryScheduleInFuture(deliveryDate, deliveryTime)) {
-      setOrderError("Delivery time must be in the future.");
-      return;
-    }
-
     setPlacing(true);
     try {
       const res = await createOrderApi({
         token,
         address_id: selectedAddressId,
-        payment_type: "Cash",
+        payment_type: paymentType,
         special_instruction: deliveryNote.trim(),
         permit_number: permitNumber.trim(),
-        placed_date: toPlacedDateApi(deliveryDate),
-        time: deliveryTime,
+        placed_date: "",
+        time: "",
         voucher_id: appliedVoucherId ? String(appliedVoucherId) : "",
         voucher_amount: voucherDiscount > 0 ? String(voucherDiscount) : "0.0",
       });
@@ -316,9 +330,35 @@ const CheckoutPage = () => {
       <div className="mt-4 pt-4 border-t border-[#F0F0F0] space-y-3 shrink-0">
         <div>
           <p className="text-xs font-semibold text-[#1D1D1D80] uppercase tracking-wide mb-2">Payment</p>
-          <div className="flex items-center gap-2 rounded-xl border-2 border-[#006B4D] bg-[#006B4D0D] px-3 py-2.5">
-            <span className="w-4 h-4 rounded-full border-[5px] border-[#006B4D] bg-white shrink-0" />
-            <span className="text-sm font-semibold text-[#1D1D1D]">Cash on delivery</span>
+          <div className="space-y-2" role="radiogroup" aria-label="Payment method">
+            {PAYMENT_OPTIONS.map((option) => {
+              const selected = paymentType === option;
+              return (
+                <button
+                  key={option}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  onClick={() => setPaymentType(option)}
+                  className={`w-full flex items-center gap-2.5 rounded-xl border-2 px-3 py-2.5 text-left transition-colors ${
+                    selected
+                      ? "border-[#006B4D] bg-[#006B4D0D]"
+                      : "border-[#E8E8E8] bg-white hover:border-[#CFEBDD]"
+                  }`}
+                >
+                  <span
+                    className={`w-4 h-4 rounded-full shrink-0 border-2 flex items-center justify-center ${
+                      selected ? "border-[#006B4D]" : "border-[#D0D0D0]"
+                    }`}
+                  >
+                    {selected && <span className="w-2 h-2 rounded-full bg-[#006B4D]" />}
+                  </span>
+                  <span className="text-sm font-semibold text-[#1D1D1D]">
+                    {paymentOptionLabel(option)}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -335,7 +375,7 @@ const CheckoutPage = () => {
             disabled={placing || items.length === 0 || !meetsMinimum}
             className="w-full py-3.5 bg-[#00845F] hover:bg-[#006e4f] disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-xl transition-colors"
           >
-            {placing ? "Placing order…" : "Place order (Cash)"}
+            {placing ? "Placing order…" : "Place order"}
           </button>
         ) : (
           <div className="rounded-xl border border-[#E8E8E8] bg-[#FAFAFA] px-4 py-4 text-center">
@@ -494,42 +534,6 @@ const CheckoutPage = () => {
             </>
           )}
 
-          {isAuthenticated && token && items.length > 0 && (
-            <div className={checkoutCard}>
-              <p className="text-sm font-semibold text-[#1D1D1D] mb-3">Delivery schedule</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="delivery-date" className="block text-xs font-semibold text-[#1D1D1D] mb-1.5">
-                    Delivery date
-                  </label>
-                  <input
-                    id="delivery-date"
-                    type="date"
-                    min={todayLocalDateValue()}
-                    value={deliveryDate}
-                    onChange={(e) => setDeliveryDate(e.target.value)}
-                    className={inputClass}
-                  />
-                </div>
-                <div>
-                  <label htmlFor="delivery-time" className="block text-xs font-semibold text-[#1D1D1D] mb-1.5">
-                    Delivery time
-                  </label>
-                  <input
-                    id="delivery-time"
-                    type="time"
-                    value={deliveryTime}
-                    onChange={(e) => setDeliveryTime(e.target.value)}
-                    className={inputClass}
-                  />
-                </div>
-              </div>
-              <p className="text-[11px] text-[#1D1D1D60] mt-1.5">
-                Choose when you want your order delivered (24-hour time).
-              </p>
-            </div>
-          )}
-
           <div className={checkoutCard}>
             <div className="flex items-center gap-2 mb-3">
               <p className="text-sm font-semibold text-[#1D1D1D]">Delivery instructions</p>
@@ -544,6 +548,8 @@ const CheckoutPage = () => {
             />
             <p className="text-right text-[11px] text-[#1D1D1D40] mt-1">{deliveryNote.length}/300</p>
           </div>
+
+          <CheckoutCancellationPolicy />
 
           <Link
             href="/"
