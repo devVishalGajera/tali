@@ -47,7 +47,7 @@ const MainContent = ({ categoriesData }: Props) => {
           {/* <BestsellerSection /> */}
           <TrustedSection />
           <FAQSection />
-          <VideoSection />
+          {/* <VideoSection /> */}
         </div>
       </div>
     </>

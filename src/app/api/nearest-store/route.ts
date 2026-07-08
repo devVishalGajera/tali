@@ -20,6 +20,7 @@ export async function POST(request: NextRequest) {
   if (body.city) form.append("city", body.city);
 
   try {
+    console.log(`${API_BASE_URL}/get-nearest-storeNew`);
     const res = await fetch(`${API_BASE_URL}/get-nearest-storeNew`, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },

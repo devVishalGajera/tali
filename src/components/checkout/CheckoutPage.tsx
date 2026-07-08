@@ -14,6 +14,7 @@ import { applyVoucherApi, getVouchersApi, type VoucherItem } from "@/lib/api/vou
 import CheckoutDeliveryAddress from "@/components/checkout/CheckoutDeliveryAddress";
 import MinCheckoutProgressBar from "@/components/checkout/MinCheckoutProgressBar";
 import { fmtInr } from "@/lib/checkout/formatMoney";
+import { productPath } from "@/lib/utils/product-slug";
 
 const TrashIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -416,7 +417,7 @@ const CheckoutPage = () => {
                     <div key={item.id} className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4 py-5">
                       <div className="flex gap-3 sm:contents">
                         <Link
-                          href={`/products/${item.id}`}
+                          href={productPath(item.name, item.size)}
                           className="w-[90px] h-[110px] shrink-0 bg-[#F5F5F5] rounded-xl overflow-hidden flex items-center justify-center hover:opacity-90 transition-opacity"
                         >
                           <img
@@ -427,7 +428,7 @@ const CheckoutPage = () => {
                         </Link>
                         <div className="flex-1 min-w-0">
                           <Link
-                            href={`/products/${item.id}`}
+                            href={productPath(item.name, item.size)}
                             className="text-sm font-bold text-[#1D1D1D] leading-snug line-clamp-2 hover:text-[#006B4D] transition-colors"
                           >
                             {item.name || "Product"}

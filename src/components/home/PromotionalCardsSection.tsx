@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { TALLI_STORE_IMAGE } from "@/lib/store/talli-store";
 
 const PromotionalCardsSection = () => {
   const promotionalCards = [
@@ -17,7 +18,7 @@ const PromotionalCardsSection = () => {
     {
       title: "Stores & Producers",
       description: "Browse though 100,287 wine store and Businesses.",
-      image: "/assets/images/store.png",
+      image: TALLI_STORE_IMAGE,
     },
   ];
 

@@ -7,6 +7,7 @@ import { useCart } from "@/components/modals/CartProvider";
 import { useLocation } from "@/components/modals/LocationProvider";
 import { proxyImageUrl } from "@/lib/utils/image";
 import WishlistButton from "@/components/shared/WishlistButton";
+import { productPath } from "@/lib/utils/product-slug";
 
 export interface ProductCardItem {
   id: number;
@@ -20,12 +21,13 @@ export interface ProductCardItem {
   isNewArrival?: boolean;
   store_product_volume_id?: number;
   isWishlist?: boolean;
+  href?: string;
 }
 
 interface ProductCardProps {
   product: ProductCardItem;
-  linkTo?: string;
-  /** Fill parent width (e.g. product listing grid). Default: fixed carousel width. */
+  /** Explicit URL, or omit to use /products/[slug]?size=…; pass false to disable links */
+  linkTo?: string | false;
   fullWidth?: boolean;
 }
 
@@ -33,6 +35,11 @@ const ProductCard = ({ product, linkTo, fullWidth = false }: ProductCardProps) =
   const [addedToCart, setAddedToCart] = useState(false);
   const { addToCart } = useCart();
   const { purchaseAllow } = useLocation();
+
+  const productHref =
+    linkTo === false
+      ? undefined
+      : (linkTo ?? product.href ?? productPath(product.name, product.size));
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -104,8 +111,8 @@ const ProductCard = ({ product, linkTo, fullWidth = false }: ProductCardProps) =
         fullWidth ? "" : "max-w-none md:max-w-[250px]"
       }`}
     >
-      {linkTo ? (
-        <Link href={linkTo} className="block">
+      {productHref ? (
+        <Link href={productHref} className="block">
           {imageBlock}
         </Link>
       ) : (
@@ -113,8 +120,8 @@ const ProductCard = ({ product, linkTo, fullWidth = false }: ProductCardProps) =
       )}
 
       <div className="px-3 sm:px-4 pb-3 sm:pb-4 pt-1 md:pt-2 md:mt-2 flex-1 flex items-end justify-between gap-2 min-h-[48px]">
-        {linkTo ? (
-          <Link href={linkTo} className="flex-1 min-w-0">
+        {productHref ? (
+          <Link href={productHref} className="flex-1 min-w-0">
             <h3 className="font-graphik font-bold text-[12px] sm:text-[13px] md:text-[14px] text-[#1D1D1D] text-left line-clamp-2 leading-snug sm:leading-[1.4] hover:text-[#006B4D] transition-colors uppercase">
               {product.name}
             </h3>

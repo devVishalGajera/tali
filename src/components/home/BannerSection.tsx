@@ -14,12 +14,11 @@ const BannerSection = () => {
         {/* Text Content */}
         <div className="text-center">
           <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-[#1D1D1D] mb-4 md:mb-6">
-            Lorem ipsum dolor sit amet Consectetur.
+            Get Your Favourites, All in one place.
           </h2>
           <p className="text-sm sm:text-base md:text-lg text-[#1D1D1D] max-w-3xl mx-auto leading-relaxed">
-            Lorem ipsum dolor sit amet consectetur. Netus gravida urna nunc imperdiet volutpat
-            porttitor. Turpis est porttitor morbi velit cursus sed suspendisse tortor. Nulla enim
-            consequat congue quam vel purus orci.
+            Whether It's beer for the game night, wine for dinner, or spirits for the weekend, Talli brings
+            everything together in one easy-to-shop destination.
           </p>
         </div>
       </div>

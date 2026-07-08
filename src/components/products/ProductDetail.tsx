@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { Suspense } from "react";
 import ProductCarouselSection from "@/components/shared/ProductCarouselSection";
 import ProductDetailGallery from "./ProductDetailGallery";
 import ProductDetailInfo from "./ProductDetailInfo";
@@ -10,13 +11,16 @@ import ProductDetailTabs from "./ProductDetailTabs";
 import ProductDetailDisclaimer from "./ProductDetailDisclaimer";
 import type { ProductDetailData } from "@/lib/api/product-detail";
 import { deduplicateVolumes } from "@/lib/api/product-detail";
+import { productPath, productSizesMatch } from "@/lib/utils/product-slug";
+import { TALLI_STORE_LOCATION, TALLI_STORE_NAME } from "@/lib/store/talli-store";
 
 interface Props {
   data: ProductDetailData;
   city?: string;
+  initialSize?: string;
 }
 
-export default function ProductDetail({ data, city }: Props) {
+export default function ProductDetail({ data, city, initialSize }: Props) {
   const { ProductDetail: pd, ProductVolumes, FoodPairing, TasteCharacteristics, CustomerReview, Universal, EnablePurchase } = data;
 
   const images: string[] = [];
@@ -25,6 +29,14 @@ export default function ProductDetail({ data, city }: Props) {
   if (images.length === 0) images.push("/assets/images/bottles/single-bottle.png");
 
   const volumes = deduplicateVolumes(ProductVolumes);
+  const sizeFromUrl = initialSize;
+  const activeVolume =
+    (sizeFromUrl
+      ? volumes.find((v) => productSizesMatch(v.volume, sizeFromUrl))
+      : undefined)
+    ?? volumes.find((v) => v.price)
+    ?? volumes[0]
+    ?? null;
 
   const description = pd.short_description || pd.description || "";
 
@@ -39,6 +51,7 @@ export default function ProductDetail({ data, city }: Props) {
     ratingCount: u.order_count ?? 0,
     image: u.image_full_path,
     store_product_volume_id: u.store_product_volume_id,
+    href: productPath(u.name, u.volume),
   }));
 
   return (
@@ -75,19 +88,22 @@ export default function ProductDetail({ data, city }: Props) {
             name={pd.name}
             abv={pd.alcohol_percentage}
             productId={pd.id}
-            storeProductVolumeId={volumes[0]?.store_product_volume_id ?? undefined}
-            productPrice={volumes[0]?.price ? `₹${parseFloat(volumes[0].price).toLocaleString("en-IN", { minimumFractionDigits: 2 })}` : undefined}
+            storeProductVolumeId={activeVolume?.store_product_volume_id ?? undefined}
+            productPrice={activeVolume?.price ? `₹${parseFloat(activeVolume.price).toLocaleString("en-IN", { minimumFractionDigits: 2 })}` : undefined}
           />
-          <ProductDetailInfo
-            productId={pd.id}
-            name={pd.name}
-            description={description}
-            abv={pd.alcohol_percentage}
-            country={pd.country_type}
-            volumes={volumes}
-            rating={CustomerReview?.summary?.average_rating ?? 0}
-            enablePurchase={EnablePurchase}
-          />
+          <Suspense fallback={<div className="min-h-[320px] animate-pulse bg-gray-50 rounded-lg" />}>
+            <ProductDetailInfo
+              productId={pd.id}
+              name={pd.name}
+              description={description}
+              abv={pd.alcohol_percentage}
+              country={pd.country_type}
+              volumes={volumes}
+              rating={CustomerReview?.summary?.average_rating ?? 0}
+              enablePurchase={EnablePurchase}
+              initialSize={initialSize}
+            />
+          </Suspense>
         </div>
       </div>
 
@@ -123,7 +139,7 @@ export default function ProductDetail({ data, city }: Props) {
             <h3 className="text-lg sm:text-xl font-semibold text-[#1D1D1D] mb-3">Sold By</h3>
             <div className="flex items-center gap-2 text-xs sm:text-base text-[#1D1D1D]">
               <Image src="/assets/icons/briefcase.svg" alt="Store" width={18} height={18} className="w-[18px] h-[18px]" />
-              <span>Tali Drinks (Thane, Maharashtra)</span>
+              <span>{TALLI_STORE_NAME} ({TALLI_STORE_LOCATION})</span>
             </div>
           </div>
         </div>
@@ -145,19 +161,21 @@ export default function ProductDetail({ data, city }: Props) {
       )}
 
       {/* Prices / Additional / Description tabs */}
-      <ProductDetailTabs
-        productName={pd.name}
-        description={pd.description || description}
-        country={pd.country_type}
-        alcoholPercent={pd.alcohol_percentage}
-        producer={pd.producer}
-        type={pd.type}
-        baseGrains={pd.base_grains}
-        region={pd.region}
-        whiskeyStyle={pd.whiskey_style}
-        additivesInfo={pd.additives_info}
-        alcohol={pd.alcohol}
-      />
+      <Suspense fallback={null}>
+        <ProductDetailTabs
+          productVolume={activeVolume?.volume ?? pd.volume}
+          description={pd.description || description}
+          country={pd.country_type}
+          alcoholPercent={pd.alcohol_percentage}
+          producer={pd.producer}
+          type={pd.type}
+          baseGrains={pd.base_grains}
+          region={pd.region}
+          whiskeyStyle={pd.whiskey_style}
+          additivesInfo={pd.additives_info}
+          alcohol={pd.alcohol}
+        />
+      </Suspense>
 
       {/* Reviews */}
       <ProductDetailReviews reviewData={CustomerReview} />

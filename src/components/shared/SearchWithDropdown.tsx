@@ -6,6 +6,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { fetchSearchResults, type SearchProduct } from "@/lib/api/search";
 import { proxyImageUrl } from "@/lib/utils/image";
+import { productPath } from "@/lib/utils/product-slug";
 
 type Variant = "hero" | "header";
 
@@ -187,7 +188,7 @@ export default function SearchWithDropdown({
               {results.map((product) => (
                 <li key={product.id}>
                   <Link
-                    href={`/products/${product.id}`}
+                    href={productPath(product.name, product.volume)}
                     onClick={() => setShowDrop(false)}
                     className="flex items-center gap-3 px-3 py-2.5 hover:bg-[#F7FBF9] transition-colors group"
                   >

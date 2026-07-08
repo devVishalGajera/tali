@@ -8,6 +8,7 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import { useLocation } from "@/components/modals/LocationProvider";
 import { addToWishlistApi, addCartWishlistAllApi } from "@/lib/api/wishlist";
 import { proxyImageUrl } from "@/lib/utils/image";
+import { productPath } from "@/lib/utils/product-slug";
 
 const TrashIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -189,7 +190,7 @@ export default function WishlistPage() {
                 >
                   <div className="flex gap-4">
                     <Link
-                      href={`/products/${item.productId}`}
+                      href={productPath(item.name, item.volume)}
                       className="w-[80px] h-[100px] shrink-0 bg-[#F5F5F5] rounded-xl overflow-hidden flex items-center justify-center"
                     >
                       <img src={imageSrc} alt={item.name} className="h-full w-full object-contain p-2" />
@@ -199,7 +200,7 @@ export default function WishlistPage() {
                       <div>
                         <div className="flex items-start justify-between gap-2">
                           <Link
-                            href={`/products/${item.productId}`}
+                            href={productPath(item.name, item.volume)}
                             className="text-sm font-bold text-[#1D1D1D] leading-snug hover:text-[#00845F] transition-colors"
                           >
                             {item.name}

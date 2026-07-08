@@ -6,27 +6,27 @@ const WhyTalliDrinks = () => {
   const features = [
     {
       image: "/assets/images/drink-glass.png",
-      title: "Premium Quality Selection",
+      title: "🍻 Your Favourites, All in One Place",
       description:
-        "Curated collection of finest spirits and beverages from around the world, ensuring exceptional taste and quality.",
+        "Browse beers, wines, spirits, and mixers from top local and global brands."
     },
     {
       image: "/assets/images/drinks.png",
-      title: "Expert Mixology",
+      title: "✨ Curated for Every Occasion",
       description:
-        "Discover expertly crafted cocktails and drinks that elevate your drinking experience to new heights.",
+        "Whether it’s a house party, date night, or celebration, find the perfect drink.",
     },
     {
       image: "/assets/images/hand-bottle.png",
-      title: "Authentic Craftsmanship",
+      title: "🌎 Discover Something New",
       description:
-        "Experience the art of traditional distilling and brewing with our handpicked selection of artisanal drinks.",
+        "Explore trending brands, hidden gems, and unique flavours.",
     },
     {
       image: "/assets/images/bar-bottels.png",
-      title: "Wide Variety",
+      title: "🥂 Made for Drink Lovers",
       description:
-        "Explore an extensive range of premium brands and unique flavors to suit every taste and occasion.",
+        "A smarter way to discover, compare, and choose your next drink.",
     },
   ];
 
@@ -51,9 +51,8 @@ const WhyTalliDrinks = () => {
             return (
               <div
                 key={index}
-                className={`flex items-center gap-3 md:gap-5 py-4 pr-4 md:py-5 md:pr-6 pl-0 ${
-                  index === 0 || index === 2 ? "md:!pl-0" : "md:pl-5"
-                } ${borderClass}`}
+                className={`flex items-center gap-3 md:gap-5 py-4 pr-4 md:py-5 md:pr-6 pl-0 ${index === 0 || index === 2 ? "md:!pl-0" : "md:pl-5"
+                  } ${borderClass}`}
               >
                 {/* Circular Image */}
                 <div className="flex-shrink-0">

@@ -3,11 +3,25 @@
 import { useState }  from "react";
 import Image         from "next/image";
 import StarRating    from "@/components/shared/StarRating";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import {
+  TALLI_STORE_ADDRESS,
+  TALLI_STORE_COUNTRY,
+  TALLI_STORE_EXPRESS_DELIVERY,
+  TALLI_STORE_HOURS,
+  TALLI_STORE_IMAGE,
+  TALLI_STORE_NAME,
+  TALLI_STORE_STATE,
+  talliStoreListItem,
+  talliStorePath,
+} from "@/lib/store/talli-store";
 
 type TabKey = "prices" | "additional" | "description";
 
 interface Props {
-  productName:    string;
+  storeId?:       number | string;
+  productVolume?: string;
   description:    string;
   country:        string;
   alcoholPercent: string;
@@ -29,21 +43,21 @@ const TABS: { key: TabKey; label: string; shortLabel: string }[] = [
 /* Static shop data — will be replaced once a stores-by-product API is available */
 const MOCK_SHOPS = [
   {
-    id:       1,
-    name:     "Delhi Duty Free (Departures Terminal 3, IGI Airport)",
-    image:    "/assets/images/shops/delhi-duty-free.png",
-    location: "New Delhi",
-    country:  "India",
+    id:       talliStoreListItem.id,
+    name:     TALLI_STORE_NAME,
+    address:  TALLI_STORE_ADDRESS,
+    image:    TALLI_STORE_IMAGE,
+    location: TALLI_STORE_STATE,
+    country:  TALLI_STORE_COUNTRY,
     flagIcon: "/assets/icons/indianFlag.svg",
-    hours:    "Mon - Sat,  09:00am - 10:00pm",
-    rating:   4,
-    delivery: "Standard delivery 1-2 weeks",
-    volume:   "750ml",
+    hours:    TALLI_STORE_HOURS,
+    rating:   talliStoreListItem.storeRating,
+    delivery: TALLI_STORE_EXPRESS_DELIVERY,
   },
 ];
 
 export default function ProductDetailTabs({
-  productName,
+  productVolume,
   description,
   country,
   alcoholPercent,
@@ -55,6 +69,10 @@ export default function ProductDetailTabs({
   additivesInfo,
   alcohol,
 }: Props) {
+  const searchParams = useSearchParams();
+  const sizeFromUrl = searchParams.get("size");
+  const displayVolume = sizeFromUrl ?? productVolume;
+
   const [activeTab,        setActiveTab]        = useState<TabKey>("prices");
   const [selectedLocation, setSelectedLocation] = useState("Maharashtra");
 
@@ -116,57 +134,71 @@ export default function ProductDetailTabs({
                   key={shop.id}
                   className="border border-[#E5E5E5] rounded-lg p-4 sm:p-5 flex flex-col lg:flex-row gap-4 lg:gap-5"
                 >
-                  <div className="relative w-[260px] h-[168px] rounded-lg overflow-hidden flex-shrink-0">
-                    <Image src={shop.image} alt={shop.name} fill className="object-cover" />
-                  </div>
+                  <Link
+                    href={talliStorePath()}
+                    className="relative w-full sm:w-[260px] h-[168px] rounded-lg overflow-hidden flex-shrink-0 block hover:opacity-95 transition-opacity"
+                  >
+                    <Image src={shop.image} alt={shop.name} fill className="object-cover" sizes="260px" />
+                  </Link>
 
-                  <div className="flex-1 min-w-0 gap-7.5 flex flex-col">
-                    <div>
-                      <div className="flex items-start justify-between gap-3 mb-2">
-                        <h4 className="text-base sm:text-lg font-medium text-[#1D1D1D] leading-tight">
-                          {productName}
-                        </h4>
+                  <div className="flex-1 min-w-0 flex flex-col gap-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <h4 className="text-base sm:text-lg font-semibold text-[#1D1D1D] leading-snug">
+                        {shop.name}
+                      </h4>
+                      {displayVolume && (
                         <span className="flex-shrink-0 px-3 py-1 bg-[#FCCCC5] text-[#1D1D1D] text-xs font-medium rounded-full">
-                          {shop.volume}
+                          {displayVolume}
                         </span>
-                      </div>
+                      )}
                     </div>
 
-                    <div className="flex flex-col gap-2.5">
-                      <div className="flex items-center gap-2">
-                        <Image src="/assets/icons/briefcase.svg" alt="Store" width={14} height={14} className="w-3.5 h-3.5 opacity-70" />
-                        <span className="text-sm text-[#1D1D1D]">{shop.name}</span>
+                    <div className="flex items-start gap-2">
+                      <Image
+                        src="/assets/icons/location-pin.svg"
+                        alt=""
+                        width={14}
+                        height={14}
+                        className="w-3.5 h-3.5 mt-0.5 shrink-0 opacity-70"
+                      />
+                      <span className="text-sm text-[#1D1D1D] leading-relaxed">
+                        {shop.address}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-0.5">
+                      <StarRating score={shop.rating} />
+                    </div>
+
+                    <div className="flex flex-wrap items-start gap-x-5 gap-y-2 text-sm">
+                      <div className="flex items-center gap-1.5">
+                        <Image src={shop.flagIcon} alt={shop.country} width={18} height={18} className="w-[18px] h-[18px]" />
+                        <span className="text-[#00A624] font-medium">{shop.country}:</span>
+                        <span className="text-[#00A624]">{shop.location}</span>
                       </div>
-                      <div className="flex items-center gap-0.5">
-                        <StarRating score={shop.rating} />
+                      <div className="flex items-center gap-1.5 text-[#6B7280]">
+                        <Image src="/assets/icons/time.svg" alt="Clock" width={18} height={18} className="w-[18px] h-[18px]" />
+                        <span>{shop.hours}</span>
                       </div>
-                      <div className="flex flex-wrap items-start gap-x-5 gap-y-2 text-sm">
+                      <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-1.5">
-                          <Image src={shop.flagIcon} alt={shop.country} width={18} height={18} className="w-[18px] h-[18px]" />
-                          <span className="text-[#00A624] font-medium">{shop.country}:</span>
-                          <span className="text-[#00A624]">{shop.location}</span>
+                          <Image src="/assets/icons/truck_orange.svg" alt="Delivery" width={18} height={18} className="w-[18px] h-[18px]" />
+                          <span className="text-[#FF9900]">{shop.delivery}</span>
                         </div>
-                        <div className="flex items-center gap-1.5 text-[#6B7280]">
-                          <Image src="/assets/icons/time.svg" alt="Clock" width={18} height={18} className="w-[18px] h-[18px]" />
-                          <span>{shop.hours}</span>
-                        </div>
-                        <div className="flex flex-col gap-1">
-                          <div className="flex items-center gap-1.5">
-                            <Image src="/assets/icons/truck_orange.svg" alt="Delivery" width={18} height={18} className="w-[18px] h-[18px]" />
-                            <span className="text-[#FF9900]">{shop.delivery}</span>
-                          </div>
-                          <a href="#" className="text-sm text-[#1D1D1D] underline">
-                            More shipping info
-                          </a>
-                        </div>
+                        <a href="#" className="text-sm text-[#1D1D1D] underline">
+                          More shipping info
+                        </a>
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex flex-col h-full justify-end items-end">
-                    <button className="w-full lg:w-auto px-6 py-2.5 border border-[#FF5C00] text-[#FF5C00] rounded-lg text-sm font-medium hover:bg-[#FFF0E8] transition-colors cursor-pointer whitespace-nowrap mt-auto">
+                  <div className="flex flex-col justify-end items-stretch lg:items-end shrink-0">
+                    <Link
+                      href={talliStorePath()}
+                      className="w-full lg:w-auto px-6 py-2.5 border border-[#FF5C00] text-[#FF5C00] rounded-lg text-sm font-medium hover:bg-[#FFF0E8] transition-colors text-center whitespace-nowrap"
+                    >
                       Go to Shop
-                    </button>
+                    </Link>
                   </div>
                 </div>
               ))}

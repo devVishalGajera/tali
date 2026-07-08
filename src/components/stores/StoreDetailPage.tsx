@@ -13,7 +13,7 @@ import StoreDetailMenu from "./detail/StoreDetailMenu";
 import StoreDetailReviews from "./detail/StoreDetailReviews";
 import StoreDetailSignInCTA from "./detail/StoreDetailSignInCTA";
 
-const StoreDetailPage = ({ storeId }: { storeId: string }) => {
+const StoreDetailPage = ({ storeSlug }: { storeSlug: string }) => {
   const store = mockStore;
 
   return (

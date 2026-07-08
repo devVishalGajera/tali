@@ -66,7 +66,7 @@ const ProductCarouselSection = ({
             >
               <ProductCard
                 product={product}
-                linkTo={linkProducts ? `/products/${product.id}` : undefined}
+                linkTo={linkProducts ? undefined : false}
               />
             </SwiperSlide>
           ))}

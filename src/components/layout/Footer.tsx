@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { NavCategory } from "@/lib/api/categories";
+import { TALLI_FOOTER_SOCIAL_LINKS } from "@/lib/social-links";
 
 interface FooterLink {
   label: string;
@@ -82,11 +83,7 @@ const Footer = ({ navCategories = [] }: Props) => {
     { label: "Track Order", href: "/track-order" },
   ];
 
-  const socialLinks = [
-    { label: "Facebook", href: "https://facebook.com" },
-    { label: "Instagram", href: "https://instagram.com" },
-    { label: "Twitter", href: "https://twitter.com" },
-  ];
+  const socialLinks = TALLI_FOOTER_SOCIAL_LINKS;
 
   const renderLinkList = (items: FooterLink[]) =>
     items.map((item) => (
@@ -132,8 +129,8 @@ const Footer = ({ navCategories = [] }: Props) => {
                 +91 7779027171
               </a>
               <p className="text-sm mb-6 leading-relaxed">
-                Address: Shop no.1, amanda shopping center, HIRANANDANI
-                MEADOWS, Manpada, Thane West, Thane, Maharashtra 400610
+                Address: HIRANANDANI MEADOWS, Shop no.1, amanda shopping center,
+                Thane West, Thane, Maharashtra 400610
               </p>
               <div className="flex gap-4">
                 {socialLinks.map((s) => (
@@ -219,8 +216,8 @@ const Footer = ({ navCategories = [] }: Props) => {
               +91 7779027171
             </a>
             <p className="text-sm mb-6 leading-relaxed">
-              Address: Shop no.1, amanda shopping center, HIRANANDANI MEADOWS,
-              Manpada, Thane West, Thane, Maharashtra 400610
+              Address: HIRANANDANI MEADOWS, Shop no.1, amanda shopping center,
+              Thane West, Thane, Maharashtra 400610
             </p>
             <div className="flex gap-4 mb-8">
               {socialLinks.map((s) => (

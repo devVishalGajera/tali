@@ -5,6 +5,7 @@ import { useCart } from "./CartProvider";
 import { fmtInr } from "@/lib/checkout/formatMoney";
 import { MIN_CHECKOUT_ORDER } from "@/lib/api/cart";
 import MinCheckoutProgressBar from "@/components/checkout/MinCheckoutProgressBar";
+import { productPath } from "@/lib/utils/product-slug";
 
 const TrashIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -97,7 +98,7 @@ const CartDrawer = () => {
               return (
                 <div key={item.id} className="flex gap-4 pb-4 border-b border-[#F0F0F0] last:border-0">
                   <Link
-                    href={`/products/${item.id}`}
+                    href={productPath(item.name, item.size)}
                     onClick={closeDrawer}
                     className="w-[90px] h-[110px] shrink-0 bg-[#F5F5F5] rounded-xl overflow-hidden flex items-center justify-center hover:opacity-90 transition-opacity"
                   >
@@ -112,7 +113,7 @@ const CartDrawer = () => {
                     <div>
                       <div className="flex items-start justify-between gap-2">
                         <Link
-                          href={`/products/${item.id}`}
+                          href={productPath(item.name, item.size)}
                           onClick={closeDrawer}
                           className="text-sm font-bold text-[#1D1D1D] leading-snug line-clamp-2 hover:text-[#006B4D] transition-colors"
                         >

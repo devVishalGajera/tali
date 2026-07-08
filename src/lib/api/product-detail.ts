@@ -8,6 +8,7 @@
 
 import { TAGS } from "./cache-tags";
 import { API_BASE_URL } from "./base-url";
+import { productNameFromSlug } from "@/lib/utils/product-slug";
 
 /* ── Types ──────────────────────────────────────────────────── */
 
@@ -125,12 +126,13 @@ export interface ProductDetailApiResponse {
 /* ── Params ─────────────────────────────────────────────────── */
 
 export interface GetProductDetailParams {
-  Product_id: number | string;
-  lat?:       string;
-  long?:      string;
-  city?:      string;
-  store_id?:  number | string;
-  token?:     string;
+  Product_id?:   number | string;
+  Product_name?: string;
+  lat?:          string;
+  long?:         string;
+  city?:         string;
+  store_id?:     number | string;
+  token?:        string;
 }
 
 /* ── Fetcher ─────────────────────────────────────────────────── */
@@ -141,7 +143,13 @@ export async function getProductDetail(
   const { token, ...p } = params;
 
   const body = new URLSearchParams();
-  body.append("Product_id", String(p.Product_id));
+  if (p.Product_name) {
+    body.append("Product_name", p.Product_name);
+  } else if (p.Product_id !== undefined) {
+    body.append("Product_id", String(p.Product_id));
+  } else {
+    throw new Error("ProductDetail API requires Product_id or Product_name");
+  }
   if (p.lat)      body.append("lat",      p.lat);
   if (p.long)     body.append("long",     p.long);
   if (p.city)     body.append("city",     p.city);
@@ -156,7 +164,7 @@ export async function getProductDetail(
     method:  "POST",
     headers,
     body:    body.toString(),
-    next:    { tags: [TAGS.product(p.Product_id)], revalidate: 600 },
+    next:    { tags: [TAGS.product(p.Product_name ?? p.Product_id ?? "unknown")], revalidate: 600 },
   });
 
   if (!res.ok) {
@@ -170,6 +178,17 @@ export async function getProductDetail(
   }
 
   return json.data;
+}
+
+/** Load product detail from a URL slug segment. */
+export async function getProductDetailBySlug(
+  slug: string,
+  params: Omit<GetProductDetailParams, "Product_id" | "Product_name"> = {},
+): Promise<ProductDetailData> {
+  return getProductDetail({
+    ...params,
+    Product_name: productNameFromSlug(slug),
+  });
 }
 
 /* ── Helpers ─────────────────────────────────────────────────── */

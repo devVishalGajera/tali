@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { proxyImageUrl } from "@/lib/utils/image";
 import WishlistButton from "@/components/shared/WishlistButton";
+import { TALLI_SOCIAL } from "@/lib/social-links";
 
 interface Props {
   images: string[];
@@ -98,7 +99,7 @@ export default function ProductDetailGallery({ images, name, abv, productId, sto
       if (label === "Instagram") {
         // Instagram has no direct web share URL — copy the link, then take the user to Instagram
         await copyLink("Link copied! Paste it in your Instagram story or post");
-        window.open("https://www.instagram.com/", "_blank", "noopener,noreferrer");
+        window.open(TALLI_SOCIAL.instagram, "_blank", "noopener,noreferrer");
         return;
       }
       if (label === "Share") {

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import StarRating from "@/components/shared/StarRating";
+import { talliStorePath } from "@/lib/store/talli-store";
 
 export interface StoreListItem {
   id: number;
@@ -17,14 +18,17 @@ export interface StoreListItem {
 const StoresListCard = ({ store }: { store: StoreListItem }) => (
   <div className="flex flex-col sm:flex-row border border-[#E8E8E8] rounded-2xl bg-white hover:shadow-md transition-shadow overflow-hidden">
 
-    <div className="w-full sm:w-[180px] md:w-[210px] shrink-0 p-3 sm:p-3">
+    <Link
+      href={talliStorePath()}
+      className="w-full sm:w-[180px] md:w-[210px] shrink-0 p-3 sm:p-3 block"
+    >
       <img
         src={store.image}
         alt={store.name}
         loading="lazy"
-        className="w-full h-[160px] sm:h-[174px] object-cover rounded-xl"
+        className="w-full h-[160px] sm:h-[174px] object-cover rounded-xl hover:opacity-95 transition-opacity"
       />
-    </div>
+    </Link>
 
     <div className="flex-1 min-w-0 px-4 sm:px-6 py-4 sm:py-5 flex flex-col">
       <div className="flex-1">
@@ -75,14 +79,14 @@ const StoresListCard = ({ store }: { store: StoreListItem }) => (
       </div>
 
       <Link
-        href={`/stores/${store.id}`}
+        href={talliStorePath()}
         className="sm:hidden mt-4 block w-full text-center py-3 bg-[#00845F] hover:bg-[#006e4f] text-white text-sm font-semibold rounded-xl transition-colors"
       >
         View Details
       </Link>
 
       <Link
-        href={`/stores/${store.id}`}
+        href={talliStorePath()}
         className="hidden sm:flex items-center gap-0.5 mt-3 text-sm text-[#1D1D1D80] hover:text-[#1D1D1D] transition-colors w-fit"
       >
         Show more
@@ -117,7 +121,7 @@ const StoresListCard = ({ store }: { store: StoreListItem }) => (
       </div>
 
       <Link
-        href={`/stores/${store.id}`}
+        href={talliStorePath()}
         className="mt-6 block w-full text-center py-3.5 bg-[#00845F] hover:bg-[#006e4f] text-white text-sm font-semibold rounded-xl transition-colors"
       >
         View Details

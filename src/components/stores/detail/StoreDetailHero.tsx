@@ -1,3 +1,4 @@
+import Image from "next/image";
 import type { StoreDetail } from "./storeDetailTypes";
 
 interface Props {
@@ -9,32 +10,23 @@ interface Props {
 }
 
 const StoreDetailHero = ({ name, description, heroImage, isVerified, isPremium }: Props) => (
-  <section
-    className="relative w-full h-[240px] sm:h-[320px] md:h-[420px] bg-cover bg-center overflow-hidden"
-    style={{ backgroundImage: `url(${heroImage})` }}
-  >
-    {/* Very light full-image vignette so edges stay visible */}
-    <div className="absolute inset-0 bg-black/25" />
-
-    {/* Circular radial blur — only blurs the centre behind the text */}
-    <div
-      className="absolute inset-0"
-      style={{
-        backdropFilter: "blur(61px)",
-        WebkitBackdropFilter: "blur(61px)",
-        maskImage:
-          "radial-gradient(ellipse 55% 75% at 50% 50%, black 3%, transparent 70%)",
-        WebkitMaskImage:
-          "radial-gradient(ellipse 55% 75% at 50% 50%, black 3%, transparent 70%)",
-      }}
+  <section className="relative w-full h-[240px] sm:h-[320px] md:h-[420px] overflow-hidden">
+    <Image
+      src={heroImage}
+      alt={name}
+      fill
+      priority
+      quality={90}
+      sizes="100vw"
+      className="object-cover object-center"
     />
+    <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/35 to-black/55" />
 
-    {/* Content */}
     <div className="relative z-10 h-full flex flex-col items-center justify-center text-center px-4">
-      <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold text-white mb-2 sm:mb-3 drop-shadow-lg px-1">
+      <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold text-white mb-2 sm:mb-3 drop-shadow-md px-1">
         {name}
       </h1>
-      <p className="text-sm sm:text-base text-white/85 max-w-xl mb-6 leading-relaxed drop-shadow">
+      <p className="text-sm sm:text-base text-white/90 max-w-xl mb-6 leading-relaxed drop-shadow">
         {description}
       </p>
 

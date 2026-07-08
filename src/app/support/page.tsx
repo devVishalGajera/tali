@@ -2,6 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import SupportForm from "@/components/support/SupportForm";
 import { getFaqApi } from "@/lib/api/guest";
+import {
+  TALLI_STORE_ADDRESS,
+  TALLI_STORE_NAME,
+} from "@/lib/store/talli-store";
 
 export const metadata: Metadata = {
   title:       "Customer Support",
@@ -17,12 +21,8 @@ interface Location {
 
 const LOCATIONS: Location[] = [
   {
-    name:    "Talli Beer & Wines, Hiranandani Meadows",
-    address: "Shop No.1, Amanda Shopping Center, Hiranandani Meadows, Thane West, 400607",
-  },
-  {
-    name:    "Talli Beer & Wines, Brahmand",
-    address: "Shop No., Alya, Kabra Galaxy Star 3, near Axis Bank, Brahmand, Thane West, 400607",
+    name:    TALLI_STORE_NAME,
+    address: TALLI_STORE_ADDRESS,
   },
 ];
 

@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useCart } from "@/components/modals/CartProvider";
 import { useLocation } from "@/components/modals/LocationProvider";
 import type { ProductVolume } from "@/lib/api/product-detail";
+import { productSizesMatch } from "@/lib/utils/product-slug";
 
 interface Props {
   productId:      number;
@@ -14,6 +16,7 @@ interface Props {
   volumes:        ProductVolume[];
   rating:         number;
   enablePurchase: boolean;
+  initialSize?:   string;
 }
 
 export default function ProductDetailInfo({
@@ -25,15 +28,25 @@ export default function ProductDetailInfo({
   volumes,
   rating,
   enablePurchase,
+  initialSize,
 }: Props) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { addToCart, items, updateQuantity } = useCart();
   const { purchaseAllow } = useLocation();
 
   const canBuy = purchaseAllow && enablePurchase;
 
   const defaultVolume = volumes.find((v) => v.price) ?? volumes[0] ?? null;
+
+  const sizeFromUrl = searchParams.get("size") ?? initialSize ?? null;
+  const volumeFromSize = sizeFromUrl
+    ? volumes.find((v) => productSizesMatch(v.volume, sizeFromUrl))
+    : undefined;
+
   const [selectedVolumeId, setSelectedVolumeId] = useState<number | null>(
-    defaultVolume?.volume_id ?? null,
+    volumeFromSize?.volume_id ?? defaultVolume?.volume_id ?? null,
   );
   const [quantity, setQuantity] = useState(1);
   const [addedToCart, setAddedToCart] = useState(false);
@@ -61,6 +74,21 @@ export default function ProductDetailInfo({
       setQuantity(1);
     }
   }, [selectedVolumeId, cartLine?.quantity, cartLine?.store_product_volume_id]);
+
+  useEffect(() => {
+    if (!sizeFromUrl) return;
+    const match = volumes.find((v) => productSizesMatch(v.volume, sizeFromUrl));
+    if (match) setSelectedVolumeId(match.volume_id);
+  }, [sizeFromUrl, volumes]);
+
+  const selectVolume = (volumeId: number) => {
+    setSelectedVolumeId(volumeId);
+    const vol = volumes.find((v) => v.volume_id === volumeId);
+    if (!vol?.volume) return;
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("size", vol.volume);
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  };
 
   const changeQty = (delta: number) => {
     const next = quantity + delta;
@@ -155,7 +183,7 @@ export default function ProductDetailInfo({
             {volumes.map((v) => (
               <button
                 key={v.volume_id}
-                onClick={() => setSelectedVolumeId(v.volume_id)}
+                onClick={() => selectVolume(v.volume_id)}
                 className={`px-2 py-2.5 rounded-md border-2 text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
                   selectedVolumeId === v.volume_id
                     ? "border-[#006B4D] text-[#006B4D] bg-[#006B4D0D]"
